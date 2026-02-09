@@ -1,0 +1,17 @@
+<div class="summary-card" [attr.data-color]="color">
+  <div class="card-header">
+    <div class="icon-container" [attr.data-color]="color">
+      <span class="material-icons">{{ icon }}</span>
+    </div>
+    <div class="trend-indicator" [attr.data-trend]="trend">
+      <span class="material-icons">
+        {{ trend === 'up' ? 'arrow_upward' : trend === 'down' ? 'arrow_downward' : 'remove' }}
+      </span>
+    </div>
+  </div>
+
+  <div class="card-body">
+    <p class="card-title">{{ title }}</p>
+    <h2 class="card-value">{{ formattedValue }}</h2>
+  </div>
+</div>

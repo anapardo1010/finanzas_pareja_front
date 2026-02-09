@@ -1,0 +1,400 @@
+@use '../../../styles/variables' as *;
+
+// Dashboard compacto y moderno
+.dashboard-compact {
+  padding: 16px;
+  max-width: 1400px;
+  margin: 0 auto;
+  animation: fadeIn 0.3s ease;
+}
+
+// Header
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+
+  .dashboard-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: $text-primary;
+    margin: 0 0 4px 0;
+  }
+
+  .dashboard-date {
+    font-size: 14px;
+    color: $text-secondary;
+    margin: 0;
+  }
+}
+
+// Loading/Empty states
+.loading-state,
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    margin: 0 auto 20px;
+    border: 3px solid $border-primary;
+    border-top-color: $accent-purple;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  lucide-icon {
+    color: $text-secondary;
+    margin-bottom: 16px;
+  }
+
+  h3 {
+    font-size: 18px;
+    color: $text-primary;
+    margin: 0 0 8px 0;
+  }
+
+  p {
+    font-size: 14px;
+    color: $text-secondary;
+    margin: 0 0 20px 0;
+  }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, $accent-purple 0%, #7c3aed 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(147, 51, 234, 0.3);
+    }
+  }
+}
+
+// Métricas principales
+.metrics-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.metric-card {
+  background: $surface-secondary;
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid $border-primary;
+  transition: all 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  &.primary {
+    border-left: 3px solid $accent-purple;
+  }
+
+  &.success {
+    border-left: 3px solid $accent-green;
+  }
+
+  &.danger {
+    border-left: 3px solid $accent-red;
+  }
+
+  &.warning {
+    border-left: 3px solid $accent-orange;
+  }
+}
+
+.metric-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+
+  lucide-icon {
+    color: $text-secondary;
+  }
+
+  span {
+    font-size: 13px;
+    font-weight: 600;
+    color: $text-secondary;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+}
+
+.metric-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: $text-primary;
+  margin-bottom: 8px;
+  line-height: 1;
+}
+
+.metric-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+
+  .metric-change {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 6px;
+
+    &.positive {
+      color: $accent-green;
+      background: rgba($accent-green, 0.1);
+
+      lucide-icon {
+        color: $accent-green;
+      }
+    }
+
+    &.negative {
+      color: $accent-red;
+      background: rgba($accent-red, 0.1);
+
+      lucide-icon {
+        color: $accent-red;
+      }
+    }
+  }
+
+  .metric-label {
+    color: $text-secondary;
+  }
+}
+
+// Sección de categorías
+.categories-section {
+  background: $surface-secondary;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  border: 1px solid $border-primary;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    lucide-icon {
+      color: $accent-purple;
+    }
+
+    h2 {
+      font-size: 16px;
+      font-weight: 600;
+      color: $text-primary;
+      margin: 0;
+    }
+  }
+
+  .btn-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: transparent;
+    border: 1px solid $border-primary;
+    border-radius: 6px;
+    color: $text-primary;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    lucide-icon {
+      color: $text-secondary;
+    }
+
+    &:hover {
+      background: $surface-tertiary;
+      border-color: $accent-purple;
+
+      lucide-icon {
+        color: $accent-purple;
+      }
+    }
+  }
+}
+
+// Gráfico de categorías
+.categories-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.category-bar {
+  display: grid;
+  grid-template-columns: minmax(150px, 200px) 1fr 60px;
+  align-items: center;
+  gap: 16px;
+}
+
+.category-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  .category-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: $text-primary;
+  }
+
+  .category-amount {
+    font-size: 13px;
+    font-weight: 600;
+    color: $text-secondary;
+  }
+}
+
+.category-bar-container {
+  width: 100%;
+  height: 10px;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.category-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+
+  &.bar-1 {
+    background: linear-gradient(90deg, $accent-purple 0%, #9f67ea 100%);
+  }
+
+  &.bar-2 {
+    background: linear-gradient(90deg, $accent-blue 0%, #3b82f6 100%);
+  }
+
+  &.bar-3 {
+    background: linear-gradient(90deg, $accent-teal 0%, #14b8a6 100%);
+  }
+}
+
+.category-percentage {
+  font-size: 13px;
+  font-weight: 600;
+  color: $text-secondary;
+  text-align: right;
+}
+
+// Acciones rápidas
+.quick-actions {
+  background: $surface-secondary;
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid $border-primary;
+}
+
+.actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: white;
+  border: 1px solid $border-primary;
+  border-radius: 8px;
+  color: $text-primary;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  lucide-icon {
+    color: $text-secondary;
+  }
+
+  &:hover {
+    background: $surface-tertiary;
+    border-color: $accent-purple;
+    transform: translateY(-1px);
+
+    lucide-icon {
+      color: $accent-purple;
+    }
+  }
+}
+
+// Animations
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .dashboard-compact {
+    padding: 12px;
+  }
+
+  .metrics-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .metric-value {
+    font-size: 22px;
+  }
+
+  .category-bar {
+    grid-template-columns: 1fr auto;
+
+    .category-percentage {
+      display: none;
+    }
+  }
+
+  .actions-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,49 @@
+<div class="app-container">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <lucide-icon [img]="Wallet" [size]="24"></lucide-icon>
+      <h1 class="logo">ParejaFinanzas</h1>
+    </div>
+    
+    <nav class="sidebar-nav">
+      <a routerLink="/main/dashboard" routerLinkActive="active" class="nav-link">
+        <lucide-icon [img]="LayoutDashboard" [size]="20"></lucide-icon>
+        <span class="nav-label">Dashboard</span>
+      </a>
+      <a routerLink="/main/transactions" routerLinkActive="active" class="nav-link">
+        <lucide-icon [img]="CreditCard" [size]="20"></lucide-icon>
+        <span class="nav-label">Transacciones</span>
+      </a>
+      <a routerLink="/main/reports" routerLinkActive="active" class="nav-link">
+        <lucide-icon [img]="TrendingUp" [size]="20"></lucide-icon>
+        <span class="nav-label">Reportes</span>
+      </a>
+      <a routerLink="/main/couple" routerLinkActive="active" class="nav-link">
+        <lucide-icon [img]="Users" [size]="20"></lucide-icon>
+        <span class="nav-label">Pareja</span>
+      </a>
+      <a routerLink="/main/settings" routerLinkActive="active" class="nav-link">
+        <lucide-icon [img]="Settings" [size]="20"></lucide-icon>
+        <span class="nav-label">Configuración</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="user-avatar">{{ userName.charAt(0).toUpperCase() }}</div>
+        <div class="user-details">
+          <div class="user-name">{{ userName }}</div>
+          <div class="user-role" [title]="userEmail">{{ userEmailShort || 'Usuario' }}</div>
+        </div>
+      </div>
+      <button class="logout-btn" (click)="logout()" title="Cerrar sesión">
+        <lucide-icon [img]="LogOut" [size]="18"></lucide-icon>
+        <span class="logout-label">Cerrar sesión</span>
+      </button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <router-outlet></router-outlet>
+  </main>
+</div>

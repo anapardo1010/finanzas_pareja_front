@@ -1,0 +1,72 @@
+<div class="modal-overlay" (click)="onCancel()">
+  <div class="modal-content glass-modal" (click)="$event.stopPropagation()">
+    <!-- Header -->
+    <header class="modal-header">
+      <h2>{{ isEditing ? 'Editar Categoría' : 'Nueva Categoría' }}</h2>
+      <button class="btn-close" (click)="onCancel()" title="Cerrar">
+        <span>✕</span>
+      </button>
+    </header>
+
+    <!-- Form -->
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <!-- Error Alert -->
+      @if (error()) {
+        <div class="alert alert-error">
+          <span class="alert-icon">⚠️</span>
+          <span>{{ error() }}</span>
+        </div>
+      }
+
+      <!-- Name Field -->
+      <div class="form-group">
+        <label for="name" class="form-label">
+          Nombre <span class="required">*</span>
+        </label>
+        <input
+          type="text"
+          id="name"
+          class="form-input"
+          formControlName="name"
+          placeholder="Ej: Comida, Transporte, Entretenimiento"
+          [class.error]="hasError('name')"
+          autocomplete="off">
+        @if (hasError('name')) {
+          <span class="error-message">{{ getErrorMessage('name') }}</span>
+        }
+      </div>
+
+      <!-- Description Field -->
+      <div class="form-group">
+        <label for="description" class="form-label">
+          Descripción
+        </label>
+        <textarea
+          id="description"
+          class="form-textarea"
+          formControlName="description"
+          placeholder="Descripción opcional de la categoría"
+          rows="3"
+          [class.error]="hasError('description')"></textarea>
+        @if (hasError('description')) {
+          <span class="error-message">{{ getErrorMessage('description') }}</span>
+        }
+      </div>
+
+      <!-- Actions -->
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" (click)="onCancel()" [disabled]="submitting()">
+          Cancelar
+        </button>
+        <button type="submit" class="btn btn-primary" [disabled]="submitting() || form.invalid">
+          @if (submitting()) {
+            <span class="spinner-small"></span>
+            Guardando...
+          } @else {
+            {{ isEditing ? 'Actualizar' : 'Crear' }}
+          }
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

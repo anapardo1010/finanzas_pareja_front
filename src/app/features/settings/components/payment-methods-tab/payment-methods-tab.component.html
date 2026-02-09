@@ -1,0 +1,113 @@
+<div class="payment-methods-tab">
+  <!-- Loading State -->
+  @if (loading()) {
+    <div class="loading-container">
+      <div class="spinner"></div>
+      <p>Cargando tarjetas...</p>
+    </div>
+  }
+
+  <!-- Empty State -->
+  @else if (paymentMethods().length === 0) {
+    <div class="empty-state">
+      <div class="empty-icon">💳</div>
+      <h3>Sin tarjetas registradas</h3>
+      <p>Agrega tus tarjetas bancarias para gestionar tus pagos</p>
+      <div class="button-group">
+        <button class="btn-primary" (click)="openCreateForm()">
+          <span class="icon">+</span>
+          Agregar Tarjeta
+        </button>
+        <button class="btn-secondary" (click)="createPredefinedOptions()">
+          <span class="icon">⚡</span>
+          Opciones Predefinidas
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- Payment Methods Grid -->
+  @else {
+    <div class="cards-grid">
+      @for (method of paymentMethods(); track method.id) {
+        <div class="credit-card" [style.background]="getBankColor(method.bankName)">
+          <!-- Card Header -->
+          <div class="card-chip">
+            <svg width="40" height="32" viewBox="0 0 40 32" fill="none">
+              <rect width="40" height="32" rx="4" fill="url(#chip-gradient)"/>
+              <defs>
+                <linearGradient id="chip-gradient" x1="0" y1="0" x2="40" y2="32">
+                  <stop offset="0%" stop-color="#FFD700"/>
+                  <stop offset="100%" stop-color="#FFA500"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+
+          <!-- Card Actions -->
+          <div class="card-actions">
+            <button class="btn-card-icon" (click)="editPaymentMethod(method)" title="Editar">
+              <lucide-icon [img]="Edit2" [size]="16"></lucide-icon>
+            </button>
+            <button class="btn-card-icon" (click)="deletePaymentMethod(method)" title="Eliminar">
+              <span>🗑️</span>
+            </button>
+          </div>
+
+          <!-- Card Body -->
+          <div class="card-body">
+            @if (method.alias) {
+              <div class="card-alias">{{ method.alias }}</div>
+            }
+            <div class="card-number">•••• •••• •••• ••••</div>
+            <div class="card-info">
+              <div class="card-holder">
+                <span class="label">Banco</span>
+                <span class="value">{{ method.bankName }}</span>
+              </div>
+              <div class="card-type">
+                <span class="label">Tipo</span>
+                <span class="value">{{ method.accountType }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card Footer -->
+          <div class="card-footer">
+            <div class="payment-info">
+              <div class="info-item">
+                <span class="info-label">Corte</span>
+                <span class="info-value">Día {{ method.cutDay }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Pago</span>
+                <span class="info-value">Día {{ method.paymentDay }}</span>
+              </div>
+            </div>
+            <div class="card-status">
+              <span class="status-badge" [class.active]="method.isActive">
+                {{ method.isActive ? '✓' : '✕' }}
+              </span>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Floating Action Button -->
+  @if (paymentMethods().length > 0 && !loading()) {
+    <button class="fab" (click)="openCreateForm()" title="Agregar tarjeta">
+      <span class="fab-icon">+</span>
+    </button>
+  }
+
+  <!-- Form Modal -->
+  @if (showForm()) {
+    <app-payment-method-form
+      [paymentMethod]="selectedPaymentMethod()"
+      (save)="handleFormSave()"
+      (cancel)="closeForm()">
+    </app-payment-method-form>
+  }
+</div>

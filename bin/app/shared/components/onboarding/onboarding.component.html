@@ -1,0 +1,86 @@
+<!-- Onboarding Modal Glassmorphism -->
+<div class="onboarding-modal glass" role="dialog" aria-modal="true" aria-label="Asistente de configuración inicial">
+  <div class="modal-header">
+    <h2>Bienvenido a ParejaFinanzas</h2>
+    <p>Configura tu cuenta en 3 pasos</p>
+  </div>
+
+  <div class="modal-body">
+    <ng-container [ngSwitch]="step">
+      <!-- Paso 1: Tenant -->
+      <form *ngSwitchCase="1" (ngSubmit)="submitTenant()" autocomplete="off" role="form" aria-label="Crear grupo">
+        <h3>1. Crear Grupo/Tenant</h3>
+        <div class="form-group">
+          <label for="groupName">Nombre del grupo</label>
+          <input id="groupName" type="text" [(ngModel)]="tenantForm.groupName" name="groupName" required aria-required="true" />
+        </div>
+        <div class="form-group">
+          <label for="planType">Plan</label>
+          <select id="planType" [(ngModel)]="tenantForm.planType" name="planType" aria-label="Tipo de plan">
+            <option value="FREE">Gratis</option>
+            <option value="PREMIUM">Premium</option>
+          </select>
+        </div>
+        <button class="btn-primary" type="submit" [disabled]="loading" aria-label="Crear grupo">Crear Grupo</button>
+      </form>
+
+      <!-- Paso 2: Usuario -->
+      <form *ngSwitchCase="2" (ngSubmit)="submitUser()" autocomplete="off" role="form" aria-label="Crear usuario">
+        <h3>2. Crear Usuario</h3>
+        <div class="form-group">
+          <label for="userName">Nombre</label>
+          <input id="userName" type="text" [(ngModel)]="userForm.name" name="name" required aria-required="true" />
+        </div>
+        <div class="form-group">
+          <label for="userEmail">Email</label>
+          <input id="userEmail" type="email" [(ngModel)]="userForm.email" name="email" required aria-required="true" />
+        </div>
+        <div class="form-group">
+          <label for="contributionPercentage">Porcentaje de contribución</label>
+          <input id="contributionPercentage" type="number" [(ngModel)]="userForm.contributionPercentage" name="contributionPercentage" min="0" max="100" required aria-required="true" />
+        </div>
+        <button class="btn-primary" type="submit" [disabled]="loading" aria-label="Crear usuario">Crear Usuario</button>
+        <button class="btn-secondary" type="button" (click)="prevStep()" aria-label="Volver al paso anterior">Atrás</button>
+      </form>
+
+      <!-- Paso 3: Método de Pago -->
+      <form *ngSwitchCase="3" (ngSubmit)="submitPaymentMethod()" autocomplete="off" role="form" aria-label="Crear método de pago">
+        <h3>3. Método de Pago</h3>
+        <div class="form-group">
+          <label for="bankName">Banco</label>
+          <input id="bankName" type="text" [(ngModel)]="paymentForm.bankName" name="bankName" required aria-required="true" />
+        </div>
+        <div class="form-group">
+          <label for="accountType">Tipo de cuenta</label>
+          <select id="accountType" [(ngModel)]="paymentForm.accountType" name="accountType" aria-label="Tipo de cuenta">
+            <option value="CREDIT">Crédito</option>
+            <option value="DEBIT">Débito</option>
+            <option value="SAVINGS">Ahorro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="cutDay">Día de corte</label>
+          <input id="cutDay" type="number" [(ngModel)]="paymentForm.cutDay" name="cutDay" min="1" max="31" required aria-required="true" />
+        </div>
+        <div class="form-group">
+          <label for="paymentDay">Día de pago</label>
+          <input id="paymentDay" type="number" [(ngModel)]="paymentForm.paymentDay" name="paymentDay" min="1" max="31" required aria-required="true" />
+        </div>
+        <button class="btn-primary" type="submit" [disabled]="loading" aria-label="Crear método de pago">Crear Método de Pago</button>
+        <button class="btn-secondary" type="button" (click)="prevStep()" aria-label="Volver al paso anterior">Atrás</button>
+      </form>
+
+      <!-- Paso 4: Fin -->
+      <div *ngSwitchCase="4" class="success-step" role="status" aria-live="polite">
+        <h3>¡Listo!</h3>
+        <p>Tu cuenta está configurada. Puedes empezar a registrar transacciones.</p>
+        <button class="btn-primary" type="button" (click)="step = 1" aria-label="Configurar otro grupo">Configurar otro grupo</button>
+      </div>
+    </ng-container>
+
+    <div *ngIf="error" class="error-message" role="alert">
+      <span class="material-icons" aria-hidden="true">error_outline</span>
+      {{ error }}
+    </div>
+  </div>
+</div>

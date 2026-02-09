@@ -1,0 +1,123 @@
+/* Apple minimalista glassmorphism */
+.auth-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 2rem;
+}
+
+.auth-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  padding: 3rem 2.5rem;
+  min-width: 360px;
+  max-width: 420px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+h2 {
+  font-family: 'Inter', 'SF Pro Display', sans-serif;
+  font-weight: 700;
+  font-size: 28px;
+  margin-bottom: 0.5rem;
+  color: #1D1D1F;
+  text-align: center;
+  letter-spacing: -0.5px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #6E6E73;
+  margin-bottom: 0.25rem;
+}
+
+input {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  padding: 0.875rem 1rem;
+  font-size: 16px;
+  background: #FFFFFF;
+  color: #1D1D1F;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+input:focus {
+  border-color: #007AFF;
+  box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
+  background: #FFFFFF;
+}
+
+input::placeholder {
+  color: #C7C7CC;
+}
+
+.btn-primary {
+  background: #007AFF;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 0.875rem 1.5rem;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #0051D5;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0, 122, 255, 0.4);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-primary:disabled {
+  background: #C7C7CC;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: #007AFF;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 0.5rem;
+  transition: color 0.2s ease;
+}
+
+.btn-link:hover {
+  color: #0051D5;
+}
+
+.error-message {
+  color: #FF3B30;
+  font-size: 14px;
+  font-weight: 500;
+  margin-top: 0.5rem;
+  text-align: center;
+  background: rgba(255, 59, 48, 0.1);
+  padding: 0.75rem;
+  border-radius: 8px;
+}

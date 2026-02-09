@@ -1,0 +1,67 @@
+<div class="categories-tab-compact">
+  <!-- Loading State -->
+  @if (loading()) {
+    <div class="loading-container">
+      <div class="spinner"></div>
+      <p>Cargando categorías...</p>
+    </div>
+  }
+
+  <!-- Empty State -->
+  @else if (categories().length === 0) {
+    <div class="empty-state">
+      <lucide-icon [img]="Folder" [size]="48"></lucide-icon>
+      <h3>Sin categorías</h3>
+      <p>Crea tu primera categoría para organizar tus transacciones</p>
+      <button class="btn-primary" (click)="openCreateForm()">
+        <lucide-icon [img]="Plus" [size]="18"></lucide-icon>
+        Crear Categoría
+      </button>
+    </div>
+  }
+
+  <!-- Categories Grid -->
+  @else {
+    <div class="categories-grid-compact">
+      @for (category of categories(); track category.id) {
+        <div class="category-card-compact">
+          <div class="card-content">
+            <div class="category-info">
+              <h3 class="category-name">{{ category.name }}</h3>
+              <p class="category-description">{{ category.description || 'Sin descripción' }}</p>
+            </div>
+            <div class="card-footer">
+              <span class="badge" [class.active]="category.isActive">
+                {{ category.isActive ? 'Activa' : 'Inactiva' }}
+              </span>
+            </div>
+          </div>
+          <div class="category-actions">
+            <button class="btn-icon-compact" (click)="editCategory(category)" title="Editar">
+              <lucide-icon [img]="Edit2" [size]="16"></lucide-icon>
+            </button>
+            <button class="btn-icon-compact delete" (click)="deleteCategory(category)" title="Eliminar">
+              <lucide-icon [img]="Trash2" [size]="16"></lucide-icon>
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Floating Action Button -->
+  @if (categories().length > 0 && !loading()) {
+    <button class="fab-compact" (click)="openCreateForm()" title="Crear categoría">
+      <lucide-icon [img]="Plus" [size]="20"></lucide-icon>
+    </button>
+  }
+
+  <!-- Form Modal -->
+  @if (showForm()) {
+    <app-category-form
+      [category]="selectedCategory()"
+      (save)="handleFormSave()"
+      (cancel)="closeForm()">
+    </app-category-form>
+  }
+</div>

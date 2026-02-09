@@ -1,0 +1,160 @@
+@use '../../../styles/variables' as *;
+
+.settings-container {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  animation: fadeIn 0.4s ease-out;
+}
+
+.settings-header {
+  margin-bottom: 2rem;
+
+  h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: $label-primary;
+    margin: 0 0 0.5rem 0;
+    letter-spacing: -0.02em;
+  }
+
+  .subtitle {
+    font-size: 1rem;
+    color: $label-secondary;
+    margin: 0;
+  }
+}
+
+// iOS-style Tabs
+.tabs-container {
+  margin-bottom: 2rem;
+}
+
+.tab-selector {
+  position: relative;
+  display: flex;
+  background: $glass-bg;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 14px;
+  padding: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.tab-button {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: $label-secondary;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 2;
+
+  lucide-icon {
+    transition: transform 0.3s ease;
+    color: inherit;
+  }
+
+  .tab-label {
+    transition: color 0.3s ease;
+  }
+
+  &:hover {
+    color: $label-primary;
+
+    lucide-icon {
+      transform: scale(1.1);
+    }
+  }
+
+  &.active {
+    color: $accent-blue;
+
+    lucide-icon {
+      transform: scale(1.15);
+    }
+  }
+}
+
+.tab-indicator {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: calc(50% - 4px);
+  height: calc(100% - 8px);
+  background: white;
+  border-radius: 10px;
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
+
+  &.right {
+    transform: translateX(calc(100% + 4px));
+  }
+}
+
+// Tab Content
+.tab-content {
+  animation: slideIn 0.3s ease-out;
+}
+
+// Animations
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .settings-container {
+    padding: 1rem;
+  }
+
+  .settings-header h1 {
+    font-size: 2rem;
+  }
+
+  .tab-button {
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.75rem 1rem;
+
+    lucide-icon {
+      width: 20px;
+      height: 20px;
+    }
+
+    .tab-label {
+      font-size: 0.75rem;
+    }
+  }
+}

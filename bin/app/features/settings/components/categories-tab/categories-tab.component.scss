@@ -1,0 +1,252 @@
+@use '../../../../../styles/variables' as *;
+
+// Diseño compacto
+.categories-tab-compact {
+  position: relative;
+  min-height: 300px;
+}
+
+// Loading State
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: $label-secondary;
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(0, 122, 255, 0.1);
+    border-top-color: $accent-blue;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  p {
+    margin-top: 12px;
+    font-size: 14px;
+  }
+}
+
+// Empty State
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+
+  lucide-icon {
+    color: $label-tertiary;
+    margin-bottom: 16px;
+  }
+
+  h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: $label-primary;
+    margin: 0 0 8px 0;
+  }
+
+  p {
+    font-size: 14px;
+    color: $label-secondary;
+    margin: 0 0 24px 0;
+    max-width: 400px;
+  }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, $accent-blue 0%, #0051D5 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+    }
+  }
+}
+
+// Categories Grid Compacto
+.categories-grid-compact {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.category-card-compact {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: $surface-secondary;
+  border-radius: 10px;
+  border: 1px solid $border-primary;
+  transition: all 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  .card-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .category-info {
+    margin-bottom: 8px;
+
+    .category-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: $label-primary;
+      margin: 0 0 4px 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .category-description {
+      font-size: 13px;
+      color: $label-secondary;
+      margin: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  .card-footer {
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      background: rgba(142, 142, 147, 0.12);
+      color: $label-secondary;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+
+      &.active {
+        background: rgba(52, 199, 89, 0.15);
+        color: #34C759;
+      }
+    }
+  }
+
+  .category-actions {
+    display: flex;
+    gap: 6px;
+    margin-left: 12px;
+  }
+
+  .btn-icon-compact {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid $border-primary;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: $label-secondary;
+
+    &:hover {
+      background: $surface-tertiary;
+      border-color: $accent-blue;
+      color: $accent-blue;
+    }
+
+    &.delete:hover {
+      border-color: $accent-red;
+      color: $accent-red;
+      background: rgba($accent-red, 0.1);
+    }
+  }
+}
+
+// Floating Action Button Compacto
+.fab-compact {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, $accent-blue 0%, #0051D5 100%);
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, $accent-blue 0%, #0051D5 100%);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 100;
+
+  &:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(0, 122, 255, 0.4);
+  }
+
+  &:active {
+    transform: scale(1.05);
+  }
+}
+
+// Animations
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .categories-grid-compact {
+    grid-template-columns: 1fr;
+  }
+
+  .fab-compact {
+    bottom: 16px;
+    right: 16px;
+    width: 48px;
+    height: 48px;
+  }
+}

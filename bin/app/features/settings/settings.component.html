@@ -1,0 +1,37 @@
+<div class="settings-container">
+  <!-- Header -->
+  <header class="settings-header">
+    <h1>Ajustes</h1>
+    <p class="subtitle">Gestiona categorías y métodos de pago</p>
+  </header>
+
+  <!-- iOS-style Tabs -->
+  <div class="tabs-container">
+    <div class="tab-selector">
+      <button 
+        class="tab-button" 
+        [class.active]="activeTab() === 'categories'"
+        (click)="switchTab('categories')">
+        <lucide-icon [img]="Folder" [size]="18"></lucide-icon>
+        <span class="tab-label">Categorías</span>
+      </button>
+      <button 
+        class="tab-button" 
+        [class.active]="activeTab() === 'payment-methods'"
+        (click)="switchTab('payment-methods')">
+        <lucide-icon [img]="CreditCard" [size]="18"></lucide-icon>
+        <span class="tab-label">Métodos de Pago</span>
+      </button>
+      <div class="tab-indicator" [class.right]="activeTab() === 'payment-methods'"></div>
+    </div>
+  </div>
+
+  <!-- Tab Content -->
+  <div class="tab-content">
+    @if (activeTab() === 'categories') {
+      <app-categories-tab></app-categories-tab>
+    } @else {
+      <app-payment-methods-tab></app-payment-methods-tab>
+    }
+  </div>
+</div>

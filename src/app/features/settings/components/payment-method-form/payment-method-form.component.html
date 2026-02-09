@@ -1,0 +1,145 @@
+<div class="modal-overlay" (click)="onCancel()">
+  <div class="modal-content glass-modal" (click)="$event.stopPropagation()">
+    <!-- Header -->
+    <header class="modal-header">
+      <h2>{{ isEditing ? 'Editar Tarjeta' : 'Nueva Tarjeta' }}</h2>
+      <button class="btn-close" (click)="onCancel()" title="Cerrar">
+        <span>✕</span>
+      </button>
+    </header>
+
+    <!-- Form -->
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <!-- Error Alert -->
+      @if (error()) {
+        <div class="alert alert-error">
+          <span class="alert-icon">⚠️</span>
+          <span>{{ error() }}</span>
+        </div>
+      }
+
+      <!-- Bank Name Field -->
+      <div class="form-group">
+        <label for="bankName" class="form-label">
+          Banco <span class="required">*</span>
+        </label>
+        <select
+          id="bankName"
+          class="form-select"
+          formControlName="bankName"
+          [class.error]="hasError('bankName')">
+          <option value="" disabled>Selecciona un banco</option>
+          @for (bank of banks; track bank) {
+            <option [value]="bank">{{ bank }}</option>
+          }
+        </select>
+        @if (hasError('bankName')) {
+          <span class="error-message">{{ getErrorMessage('bankName') }}</span>
+        }
+      </div>
+
+      <!-- Account Type Field -->
+      <div class="form-group">
+        <label for="accountType" class="form-label">
+          Tipo de Cuenta <span class="required">*</span>
+        </label>
+        <select
+          id="accountType"
+          class="form-select"
+          formControlName="accountType"
+          [class.error]="hasError('accountType')">
+          @for (type of accountTypes; track type.value) {
+            <option [value]="type.value">{{ type.label }}</option>
+          }
+        </select>
+        @if (hasError('accountType')) {
+          <span class="error-message">{{ getErrorMessage('accountType') }}</span>
+        }
+      </div>
+
+      <!-- Alias Field -->
+      <div class="form-group">
+        <label for="alias" class="form-label">
+          Alias
+          <span class="optional">(opcional)</span>
+        </label>
+        <input
+          type="text"
+          id="alias"
+          class="form-input"
+          formControlName="alias"
+          placeholder="ej: Visa personal, Tarjeta nómina"
+          maxlength="50"
+          [class.error]="hasError('alias')">
+        <small class="form-hint">Dale un nombre personalizado para identificarla fácilmente</small>
+        @if (hasError('alias')) {
+          <span class="error-message">{{ getErrorMessage('alias') }}</span>
+        }
+      </div>
+
+      <!-- Cut and Payment Days (solo para tarjetas de crédito) -->
+      @if (isCreditCard) {
+        <div class="form-row">
+          <!-- Cut Day -->
+          <div class="form-group">
+            <label for="cutDay" class="form-label">
+              Día de Corte <span class="required">*</span>
+            </label>
+            <input
+              type="number"
+              id="cutDay"
+              class="form-input"
+              formControlName="cutDay"
+              placeholder="1-31"
+              min="1"
+              max="31"
+              [class.error]="hasError('cutDay')">
+            @if (hasError('cutDay')) {
+              <span class="error-message">{{ getErrorMessage('cutDay') }}</span>
+            }
+          </div>
+
+          <!-- Payment Day -->
+          <div class="form-group">
+            <label for="paymentDay" class="form-label">
+              Día de Pago <span class="required">*</span>
+            </label>
+            <input
+              type="number"
+              id="paymentDay"
+              class="form-input"
+              formControlName="paymentDay"
+              placeholder="1-31"
+              min="1"
+              max="31"
+              [class.error]="hasError('paymentDay')">
+            @if (hasError('paymentDay')) {
+              <span class="error-message">{{ getErrorMessage('paymentDay') }}</span>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Info Note -->
+      <div class="info-note">
+        <span class="info-icon">ℹ️</span>
+        <p>Los días de corte y pago son importantes para calcular tus períodos de facturación y MSI.</p>
+      </div>
+
+      <!-- Actions -->
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" (click)="onCancel()" [disabled]="submitting()">
+          Cancelar
+        </button>
+        <button type="submit" class="btn btn-primary" [disabled]="submitting() || form.invalid">
+          @if (submitting()) {
+            <span class="spinner-small"></span>
+            Guardando...
+          } @else {
+            {{ isEditing ? 'Actualizar' : 'Crear' }}
+          }
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

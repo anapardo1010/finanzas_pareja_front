@@ -1,0 +1,38 @@
+<aside class="sidebar" [class.collapsed]="isCollapsed">
+  <!-- Header del Sidebar -->
+  <div class="sidebar-header">
+    <div class="logo-container">
+      <div class="logo-icon">💑</div>
+      <span class="logo-text" *ngIf="!isCollapsed">ParejaFinanzas</span>
+    </div>
+  </div>
+
+  <!-- Navigation Menu -->
+  <nav class="sidebar-nav">
+    <ul class="menu-list">
+      <li *ngFor="let item of menuItems" class="menu-item">
+        <a 
+          [routerLink]="item.route" 
+          routerLinkActive="active"
+          class="menu-link"
+          [title]="item.label">
+          <span class="material-icons menu-icon">{{ item.icon }}</span>
+          <span class="menu-label" *ngIf="!isCollapsed">{{ item.label }}</span>
+          <span class="badge" *ngIf="item.badge && !isCollapsed">{{ item.badge }}</span>
+        </a>
+      </li>
+    </ul>
+  </nav>
+
+  <!-- Footer Toggle Button -->
+  <div class="sidebar-footer">
+    <button 
+      class="toggle-btn" 
+      (click)="toggleSidebar()"
+      [title]="isCollapsed ? 'Expandir' : 'Contraer'">
+      <span class="material-icons">
+        {{ isCollapsed ? 'chevron_right' : 'chevron_left' }}
+      </span>
+    </button>
+  </div>
+</aside>

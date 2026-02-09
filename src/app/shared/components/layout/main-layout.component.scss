@@ -1,0 +1,253 @@
+@use '../../../../styles/variables' as *;
+
+/* Main Layout Container */
+.app-container {
+  display: flex;
+  height: 100vh;
+  background: $bg-light;
+  position: relative;
+}
+
+// Sidebar
+.sidebar {
+  width: 260px;
+  background: white;
+  border-right: 1px solid rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100vh;
+  z-index: 100;
+}
+
+.sidebar-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  lucide-icon {
+    color: $accent-blue;
+    flex-shrink: 0;
+  }
+
+  .logo {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: $label-primary;
+    margin: 0;
+    letter-spacing: -0.02em;
+  }
+}
+
+.sidebar-nav {
+  padding: 1.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.875rem 1rem;
+  background: transparent;
+  border: none;
+  border-radius: 12px;
+  color: $label-secondary;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  cursor: pointer;
+
+  lucide-icon {
+    transition: transform 0.2s ease;
+    color: inherit;
+    flex-shrink: 0;
+  }
+
+  .nav-label {
+    flex: 1;
+  }
+
+  &:hover {
+    background: rgba(0, 122, 255, 0.08);
+    color: $accent-blue;
+
+    lucide-icon {
+      transform: scale(1.1);
+    }
+  }
+
+  &.active {
+    background: linear-gradient(135deg, rgba(0, 122, 255, 0.1) 0%, rgba(0, 122, 255, 0.15) 100%);
+    color: $accent-blue;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0, 122, 255, 0.15);
+  }
+}
+
+// Sidebar Footer
+.sidebar-footer {
+  margin-top: auto;
+  padding: 1.5rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.75rem;
+  background: rgba(0, 122, 255, 0.06);
+  border-radius: 12px;
+  margin-bottom: 0.75rem;
+
+  .user-avatar {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.125rem;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .user-details {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .user-name {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #1d1d1f;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .user-role {
+    font-size: 0.8125rem;
+    color: #6e6e73;
+  }
+}
+
+.logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.875rem 1rem;
+  background: transparent;
+  border: 1px solid rgba(255, 59, 48, 0.2);
+  border-radius: 12px;
+  color: #FF3B30;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  lucide-icon {
+    color: inherit;
+    flex-shrink: 0;
+  }
+
+  .logout-label {
+    flex: 1;
+    text-align: left;
+  }
+
+  &:hover {
+    background: rgba(255, 59, 48, 0.08);
+    border-color: rgba(255, 59, 48, 0.4);
+    transform: translateX(2px);
+  }
+
+  &:active {
+    transform: translateX(0);
+  }
+}
+
+/* Main Content Area */
+.main-content {
+  flex: 1;
+  margin-left: 260px;
+  min-height: 100vh;
+  overflow-y: auto;
+  background: $bg-light;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Fade-in animation for page transitions */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;
+    border-right: none;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  }
+
+  .sidebar-nav {
+    flex-direction: row;
+    overflow-x: auto;
+    padding: 1rem;
+  }
+
+  .nav-link {
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.75rem 1rem;
+    min-width: 80px;
+
+    .nav-icon {
+      font-size: 1.5rem;
+    }
+
+    .nav-label {
+      font-size: 0.75rem;
+    }
+  }
+
+  .main-content {
+    margin-left: 0;
+  }
+
+  .sidebar-footer {
+    padding: 1rem;
+  }
+
+  .user-info {
+    .user-name {
+      font-size: 0.875rem;
+    }
+  }
+
+  .logout-btn {
+    padding: 0.75rem;
+    font-size: 0.875rem;
+  }
+}

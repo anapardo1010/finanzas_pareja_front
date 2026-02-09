@@ -1,0 +1,50 @@
+<div class="upcoming-payments-card">
+  <div class="card-header">
+    <div class="header-left">
+      <h3 class="title">Próximos Pagos MSI</h3>
+      <span class="badge" *ngIf="pendingCount > 0">{{ pendingCount }} pendientes</span>
+    </div>
+    <button class="view-all-btn">
+      Ver todos
+      <span class="material-icons">chevron_right</span>
+    </button>
+  </div>
+
+  <div class="payments-list" *ngIf="payments.length > 0; else noPayments">
+    <div 
+      class="payment-item" 
+      *ngFor="let payment of payments"
+      [class.overdue]="isOverdue(payment.dueDate)">
+      
+      <div class="payment-date">
+        <span class="day">{{ formatDate(payment.dueDate) }}</span>
+        <span 
+          class="status-text"
+          [class.overdue-text]="isOverdue(payment.dueDate)">
+          {{ isOverdue(payment.dueDate) ? 'Vencido' : getDaysUntil(payment.dueDate) + ' días' }}
+        </span>
+      </div>
+
+      <div class="payment-info">
+        <p class="payment-description">{{ payment.description }}</p>
+        <p class="payment-installment">
+          Cuota {{ payment.installmentNumber }} de {{ payment.totalInstallments }}
+        </p>
+      </div>
+
+      <div class="payment-amount">
+        <span class="amount">{{ formatCurrency(payment.amount) }}</span>
+        <button class="pay-btn">
+          <span class="material-icons">check_circle</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <ng-template #noPayments>
+    <div class="empty-state">
+      <span class="material-icons">event_available</span>
+      <p>No hay pagos próximos</p>
+    </div>
+  </ng-template>
+</div>

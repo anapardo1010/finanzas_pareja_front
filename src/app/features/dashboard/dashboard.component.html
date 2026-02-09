@@ -1,0 +1,142 @@
+<div class="dashboard-compact">
+  <!-- Header compacto -->
+  <div class="dashboard-header">
+    <div>
+      <h1 class="dashboard-title">Hola, {{ userName() }}</h1>
+      <p class="dashboard-date">{{ currentDate() }}</p>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Cargando datos...</p>
+    </div>
+  } @else if (transactions().length > 0 || monthlyBalances().length > 0) {
+    <!-- Métricas principales -->
+    <div class="metrics-row">
+      <!-- Balance Total -->
+      <div class="metric-card primary">
+        <div class="metric-header">
+          <lucide-icon [img]="Wallet" [size]="20"></lucide-icon>
+          <span>Balance</span>
+        </div>
+        <div class="metric-value">{{ balanceComparison().current | currency:'USD':'symbol':'1.0-0' }}</div>
+        <div class="metric-footer">
+          @if (balanceComparison().percentChange !== 0) {
+            <span class="metric-change" [class.positive]="balanceComparison().percentChange > 0" [class.negative]="balanceComparison().percentChange < 0">
+              <lucide-icon [img]="balanceComparison().percentChange > 0 ? TrendingUp : TrendingDown" [size]="14"></lucide-icon>
+              {{ balanceComparison().percentChange | number:'1.1-1' }}%
+            </span>
+            <span class="metric-label">vs mes anterior</span>
+          }
+        </div>
+      </div>
+
+      <!-- Ingresos -->
+      <div class="metric-card success">
+        <div class="metric-header">
+          <lucide-icon [img]="TrendingUp" [size]="20"></lucide-icon>
+          <span>Ingresos</span>
+        </div>
+        <div class="metric-value">{{ summary().totalIncome | currency:'USD':'symbol':'1.0-0' }}</div>
+        <div class="metric-footer">
+          <span class="metric-label">Este mes</span>
+        </div>
+      </div>
+
+      <!-- Gastos -->
+      <div class="metric-card danger">
+        <div class="metric-header">
+          <lucide-icon [img]="TrendingDown" [size]="20"></lucide-icon>
+          <span>Gastos</span>
+        </div>
+        <div class="metric-value">{{ summary().totalExpense | currency:'USD':'symbol':'1.0-0' }}</div>
+        <div class="metric-footer">
+          <span class="metric-label">Este mes</span>
+        </div>
+      </div>
+
+      <!-- Cuotas MSI -->
+      <div class="metric-card warning">
+        <div class="metric-header">
+          <lucide-icon [img]="CreditCard" [size]="20"></lucide-icon>
+          <span>Cuotas MSI</span>
+        </div>
+        <div class="metric-value">{{ totalUpcomingInstallments() | currency:'USD':'symbol':'1.0-0' }}</div>
+        <div class="metric-footer">
+          <span class="metric-label">Próximas</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sección de categorías -->
+    @if (topExpenseCategories().length > 0) {
+      <div class="categories-section">
+        <div class="section-header">
+          <div class="section-title">
+            <lucide-icon [img]="PieChart" [size]="20"></lucide-icon>
+            <h2>Top Gastos por Categoría</h2>
+          </div>
+          <button class="btn-link" (click)="navigateToReports()">
+            Ver todo
+            <lucide-icon [img]="ArrowRight" [size]="16"></lucide-icon>
+          </button>
+        </div>
+
+        <div class="categories-chart">
+          @for (category of topExpenseCategories(); track category.name) {
+            <div class="category-bar">
+              <div class="category-info">
+                <span class="category-name">{{ category.name }}</span>
+                <span class="category-amount">{{ category.totalAmount | currency:'USD':'symbol':'1.0-0' }}</span>
+              </div>
+              <div class="category-bar-container">
+                <div 
+                  class="category-bar-fill" 
+                  [style.width.%]="category.percentage"
+                  [ngClass]="'bar-' + ($index + 1)">
+                </div>
+              </div>
+              <span class="category-percentage">{{ category.percentage | number:'1.0-0' }}%</span>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Acciones rápidas compactas -->
+    <div class="quick-actions">
+      <div class="section-header">
+        <div class="section-title">
+          <lucide-icon [img]="Plus" [size]="20"></lucide-icon>
+          <h2>Acciones Rápidas</h2>
+        </div>
+      </div>
+      <div class="actions-grid">
+        <button class="action-btn" (click)="navigateToTransactions()">
+          <lucide-icon [img]="Plus" [size]="18"></lucide-icon>
+          Nueva Transacción
+        </button>
+        <button class="action-btn" (click)="navigateToReports()">
+          <lucide-icon [img]="PieChart" [size]="18"></lucide-icon>
+          Ver Reportes
+        </button>
+        <button class="action-btn" (click)="navigateToSettings()">
+          <lucide-icon [img]="CreditCard" [size]="18"></lucide-icon>
+          Configuración
+        </button>
+      </div>
+    </div>
+  } @else {
+    <div class="empty-state">
+      <lucide-icon [img]="AlertCircle" [size]="48"></lucide-icon>
+      <h3>No hay datos disponibles</h3>
+      <p>Comienza agregando transacciones para ver tu resumen financiero</p>
+      <button class="btn-primary" (click)="navigateToTransactions()">
+        <lucide-icon [img]="Plus" [size]="18"></lucide-icon>
+        Nueva Transacción
+      </button>
+    </div>
+  }
+</div>

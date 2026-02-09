@@ -1,0 +1,401 @@
+@use '../../../../../styles/variables' as *;
+
+.payment-methods-tab {
+  position: relative;
+  min-height: 400px;
+}
+
+// Loading State
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  color: $label-secondary;
+
+  .spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid rgba(0, 122, 255, 0.1);
+    border-top-color: $accent-blue;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  p {
+    margin-top: 1rem;
+    font-size: 0.9375rem;
+  }
+}
+
+// Empty State
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+
+  .empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.6;
+  }
+
+  h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: $label-primary;
+    margin: 0 0 0.5rem 0;
+  }
+
+  p {
+    font-size: 0.9375rem;
+    color: $label-secondary;
+    margin: 0 0 2rem 0;
+    max-width: 400px;
+  }
+
+  .button-group {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .btn-primary, .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.875rem 1.75rem;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    .icon {
+      font-size: 1.25rem;
+    }
+
+    &:hover {
+      transform: translateY(-2px);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, $accent-blue 0%, #0051D5 100%);
+    box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+
+    &:hover {
+      box-shadow: 0 6px 20px rgba(0, 122, 255, 0.4);
+    }
+  }
+
+  .btn-secondary {
+    background: linear-gradient(135deg, $accent-purple 0%, #8E44AD 100%);
+    box-shadow: 0 4px 12px rgba(142, 68, 173, 0.3);
+
+    &:hover {
+      box-shadow: 0 6px 20px rgba(142, 68, 173, 0.4);
+    }
+  }
+}
+
+// Cards Grid
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 2rem;
+  animation: fadeIn 0.4s ease-out;
+}
+
+// Credit Card (Apple Card Style)
+.credit-card {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1.586; // Proporción tarjeta de crédito estándar
+  padding: 1.75rem;
+  border-radius: 20px;
+  color: white;
+  box-shadow: 
+    0 10px 40px rgba(0, 0, 0, 0.2),
+    0 2px 8px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  overflow: hidden;
+
+  // Glass reflection effect
+  &::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(
+      circle at 30% 30%,
+      rgba(255, 255, 255, 0.15) 0%,
+      transparent 60%
+    );
+    pointer-events: none;
+  }
+
+  &:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 
+      0 20px 60px rgba(0, 0, 0, 0.3),
+      0 4px 16px rgba(0, 0, 0, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  }
+
+  // Card Chip
+  .card-chip {
+    margin-bottom: 1.5rem;
+    animation: shimmer 3s ease-in-out infinite;
+  }
+
+  // Card Actions
+  .card-actions {
+    position: absolute;
+    top: 1.75rem;
+    right: 1.75rem;
+    display: flex;
+    gap: 0.5rem;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  &:hover .card-actions {
+    opacity: 1;
+  }
+
+  .btn-card-icon {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.875rem;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(1.1);
+    }
+
+    &:active {
+      transform: scale(0.95);
+    }
+  }
+
+  // Card Body
+  .card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .card-alias {
+    font-size: 1.125rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    margin-bottom: -0.5rem;
+    opacity: 0.95;
+  }
+
+  .card-number {
+    font-size: 1.5rem;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    font-family: 'SF Mono', 'Courier New', monospace;
+  }
+
+  .card-info {
+    display: flex;
+    gap: 2rem;
+  }
+
+  .card-holder,
+  .card-type {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+
+    .label {
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      opacity: 0.8;
+      font-weight: 500;
+    }
+
+    .value {
+      font-size: 1rem;
+      font-weight: 600;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+  }
+
+  // Card Footer
+  .card-footer {
+    position: absolute;
+    bottom: 1.75rem;
+    left: 1.75rem;
+    right: 1.75rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+
+  .payment-info {
+    display: flex;
+    gap: 1.5rem;
+
+    .info-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+
+      .info-label {
+        font-size: 0.625rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        opacity: 0.8;
+        font-weight: 500;
+      }
+
+      .info-value {
+        font-size: 0.875rem;
+        font-weight: 600;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+      }
+    }
+  }
+
+  .card-status {
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      font-size: 0.875rem;
+      font-weight: 600;
+
+      &.active {
+        background: rgba(52, 199, 89, 0.3);
+        border-color: rgba(52, 199, 89, 0.5);
+      }
+
+      &:not(.active) {
+        background: rgba(255, 59, 48, 0.3);
+        border-color: rgba(255, 59, 48, 0.5);
+      }
+    }
+  }
+}
+
+// Floating Action Button
+.fab {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, $accent-blue 0%, #0051D5 100%);
+  border: none;
+  border-radius: 50%;
+  box-shadow: 
+    0 8px 24px rgba(0, 122, 255, 0.4),
+    0 2px 8px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 100;
+
+  .fab-icon {
+    font-size: 2rem;
+    font-weight: 300;
+    color: white;
+    line-height: 1;
+  }
+
+  &:hover {
+    transform: scale(1.1) rotate(90deg);
+    box-shadow: 
+      0 12px 32px rgba(0, 122, 255, 0.5),
+      0 4px 12px rgba(0, 0, 0, 0.16);
+  }
+
+  &:active {
+    transform: scale(1.05) rotate(90deg);
+  }
+}
+
+// Animations
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes shimmer {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .fab {
+    bottom: 1.5rem;
+    right: 1.5rem;
+    width: 56px;
+    height: 56px;
+
+    .fab-icon {
+      font-size: 1.75rem;
+    }
+  }
+}

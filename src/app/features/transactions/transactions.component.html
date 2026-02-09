@@ -1,0 +1,218 @@
+<div class="transactions-page">
+  <div class="page-header">
+    <h1 class="page-title">Transacciones</h1>
+    <div class="summary-cards">
+      <div class="summary-card income">
+        <span class="label">Ingresos</span>
+        <span class="amount">{{ totalIncomes() | currency }}</span>
+      </div>
+      <div class="summary-card expense">
+        <span class="label">Gastos</span>
+        <span class="amount">{{ totalExpenses() | currency }}</span>
+      </div>
+      <div class="summary-card balance" [class.negative]="balance() < 0">
+        <span class="label">Balance</span>
+        <span class="amount">{{ balance() | currency }}</span>
+      </div>
+    </div>
+    <div class="action-buttons">
+      <button class="btn-action income-btn" (click)="openCreateForm('INCOME')">
+        <span class="icon">+</span>
+        Ingreso
+      </button>
+      <button class="btn-action expense-btn" (click)="openCreateForm('EXPENSE')">
+        <span class="icon">+</span>
+        Gasto
+      </button>
+    </div>
+  </div>
+
+  <!-- Filtros compactos -->
+  <div class="filters-section">
+    <div class="filters-compact">
+      <div class="filter-group">
+        <label>Desde:</label>
+        <input 
+          type="date" 
+          [value]="filterStartDate()" 
+          (change)="filterStartDate.set($any($event.target).value)"
+          class="filter-input">
+      </div>
+      <div class="filter-group">
+        <label>Hasta:</label>
+        <input 
+          type="date" 
+          [value]="filterEndDate()" 
+          (change)="filterEndDate.set($any($event.target).value)"
+          class="filter-input">
+      </div>
+      <button class="btn-filter-apply" (click)="applyDateFilter()">Buscar</button>
+      
+      @if (transactions().length > 0) {
+        <div class="divider"></div>
+        <div class="filter-group">
+          <label>Usuario:</label>
+          <select 
+            [value]="filterUserId() ?? ''" 
+            (change)="filterUserId.set($any($event.target).value ? +$any($event.target).value : null)"
+            class="filter-select">
+            <option value="">Todos</option>
+            @for (user of availableUsers; track user.id) {
+              <option [value]="user.id">{{ user.name }}</option>
+            }
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Tarjeta:</label>
+          <select 
+            [value]="filterPaymentMethodId() ?? ''" 
+            (change)="filterPaymentMethodId.set($any($event.target).value ? +$any($event.target).value : null)"
+            class="filter-select">
+            <option value="">Todas</option>
+            @for (pm of paymentMethods(); track pm.id) {
+              <option [value]="pm.id">{{ pm.alias ? (pm.bankName + ' — ' + pm.alias) : pm.bankName }}</option>
+            }
+          </select>
+        </div>
+        @if (filterUserId() !== null || filterPaymentMethodId() !== null) {
+          <button class="btn-clear-filters" (click)="clearFilters()">
+            ✕ Limpiar
+          </button>
+        }
+      }
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Cargando transacciones...</p>
+    </div>
+  } @else if (filteredTransactions().length === 0) {
+    <div class="empty-state">
+      <div class="empty-icon">📊</div>
+      <h3>No hay transacciones</h3>
+      <p>{{ transactions().length > 0 ? 'No se encontraron transacciones con los filtros aplicados' : 'Crea tu primera transacción para comenzar' }}</p>
+    </div>
+  } @else {
+    <div class="transactions-table">
+      @for (transaction of filteredTransactions(); track transaction.id) {
+        <div class="transaction-row" [class.income]="transaction.transactionType === 'INCOME'">
+          <div class="transaction-date">{{ transaction.date | date:'dd/MM' }}</div>
+          <div class="transaction-main-info">
+            <div class="transaction-description">{{ transaction.description }}</div>
+            <div class="transaction-details">
+              <span class="detail-item">{{ getCategoryName(transaction.categoryId) }}</span>
+              <span class="separator">•</span>
+              <span class="detail-item">{{ getPaymentMethodName(transaction.paymentMethodId) }}</span>
+              @if (transaction.isShared) {
+                <span class="badge-shared">👥</span>
+              }
+            </div>
+          </div>
+          <div class="transaction-amount" [class.income]="transaction.transactionType === 'INCOME'">
+            {{ transaction.transactionType === 'INCOME' ? '+' : '-' }}{{ transaction.amount | currency:'USD':'symbol':'1.0-0' }}
+          </div>
+          <div class="transaction-actions">
+            <button class="btn-icon" (click)="editTransaction(transaction)" title="Editar"><lucide-icon [img]="Edit2" [size]="16"></lucide-icon></button>
+            <button class="btn-icon delete" (click)="deleteTransaction(transaction)" title="Eliminar">🗑️</button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+@if (showForm()) {
+  <div class="modal-overlay" (click)="closeForm()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ selectedTransaction() ? 'Editar' : 'Nueva' }} Transacción</h2>
+        <button class="btn-close" (click)="closeForm()">×</button>
+      </div>
+      
+      <form [formGroup]="transactionForm" (ngSubmit)="onSubmit()">
+        <div class="form-body">
+          <div class="form-group">
+            <label>Tipo</label>
+            <div class="type-selector">
+              <label class="type-option" [class.active]="transactionForm.get('transactionType')?.value === 'EXPENSE'">
+                <input type="radio" formControlName="transactionType" value="EXPENSE">
+                <span>Gasto</span>
+              </label>
+              <label class="type-option" [class.active]="transactionForm.get('transactionType')?.value === 'INCOME'">
+                <input type="radio" formControlName="transactionType" value="INCOME">
+                <span>Ingreso</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="description">Descripción</label>
+            <input id="description" type="text" formControlName="description" placeholder="¿En qué gastaste o qué ingresó?">
+          </div>
+
+          <div class="form-group">
+            <label for="amount">Monto</label>
+            <input id="amount" type="number" formControlName="amount" placeholder="0.00" step="0.01">
+          </div>
+
+          <div class="form-group">
+            <label for="date">Fecha</label>
+            <input id="date" type="date" formControlName="date">
+          </div>
+
+          <div class="form-group">
+            <label for="categoryId">Categoría</label>
+            <select id="categoryId" formControlName="categoryId">
+              <option [value]="null">Selecciona una categoría</option>
+              @for (category of categories(); track category.id) {
+                <option [value]="category.id">{{ category.name }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="paymentMethodId">Método de Pago</label>
+            <select id="paymentMethodId" formControlName="paymentMethodId">
+              <option [value]="null">Selecciona un método</option>
+              @for (pm of paymentMethods(); track pm.id) {
+                <option [value]="pm.id">
+                  {{ pm.alias ? (pm.bankName + ' — ' + pm.alias) : (pm.bankName + ' - ' + pm.accountType) }}
+                </option>
+              }
+            </select>
+          </div>
+
+          <div class="form-group checkbox-group">
+            <label>
+              <input type="checkbox" formControlName="isShared">
+              <span>Gasto compartido con la pareja</span>
+            </label>
+          </div>
+
+          <div class="form-group checkbox-group">
+            <label>
+              <input type="checkbox" formControlName="hasInstallments">
+              <span>Meses sin intereses</span>
+            </label>
+          </div>
+
+          @if (transactionForm.get('hasInstallments')?.value) {
+            <div class="form-group">
+              <label for="totalInstallments">Número de meses</label>
+              <input id="totalInstallments" type="number" formControlName="totalInstallments" min="1" max="24">
+            </div>
+          }
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeForm()">Cancelar</button>
+          <button type="submit" class="btn btn-primary" [disabled]="transactionForm.invalid">
+            {{ selectedTransaction() ? 'Actualizar' : 'Crear' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
