@@ -3,7 +3,7 @@
  */
 export const environment = {
   production: true,
-  apiUrl: 'https://api.parejafinanzas.com/api',
+  apiUrl: 'https://finanzas-pareja-back.onrender.com/api/v1',
   apiTimeout: 30000,
   enableDebugLogs: false
 };
