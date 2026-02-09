@@ -6,10 +6,11 @@ import { LoginRequest, RegisterRequest, AuthResponse } from '../models/auth.mode
 import { ResponseModel } from '../models/response.model';
 import { User } from '../models/user.model';
 import { TokenService } from './token.service';
+import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private readonly apiUrl = '/api/auth';
+  private readonly apiUrl = `${environment.apiUrl}/auth`;
   private readonly USER_KEY = 'current_user';
   private readonly TENANT_KEY = 'tenant_id';
 
