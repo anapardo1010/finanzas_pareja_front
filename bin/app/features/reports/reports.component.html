@@ -1,99 +1,111 @@
 <div class="reports-page">
   <div class="page-header">
-    <h1 class="page-title">Saldos de Tarjetas</h1>
-    <button class="btn-refresh" (click)="loadCards()" [disabled]="loading()">
-      <lucide-icon [img]="icons.CreditCard" [size]="18"></lucide-icon>
-      Actualizar
-    </button>
+    <h1 class="page-title">Reportes</h1>
   </div>
 
-  @if (loading()) {
-    <div class="loading-state"><div class="spinner"></div></div>
-  } @else {
-    
-    @if (finalSettlement(); as s) {
-      <div class="settlement-summary-card">
-        <h4 class="summary-title">
-          <lucide-icon [img]="icons.BarChart3" [size]="20"></lucide-icon>
-          Resumen de Liquidación
-        </h4>
-        <div class="settlement-breakdown">
-          <div class="breakdown-row">
-            <span class="label">Me deben (mis tarjetas):</span>
-            <span class="amount positive">{{ formatCurrency(s.owedToMe) }}</span>
+  <nav class="reports-submenu">
+    <button [class.active]="activeTab === 'cards'" (click)="activeTab = 'cards'">Saldos de Tarjetas</button>
+    <button [class.active]="activeTab === 'msi'" (click)="activeTab = 'msi'">MSI</button>
+  </nav>
+
+  <ng-container *ngIf="activeTab === 'cards'">
+    <div class="page-header">
+      <h2 class="page-title">Saldos de Tarjetas</h2>
+      <button class="btn-refresh" (click)="loadCards()" [disabled]="loading()">
+        <lucide-icon [img]="icons.CreditCard" [size]="18"></lucide-icon>
+        Actualizar
+      </button>
+    </div>
+
+    @if (loading()) {
+      <div class="loading-state"><div class="spinner"></div></div>
+    } @else {
+      @if (finalSettlement(); as s) {
+        <div class="settlement-summary-card">
+          <h4 class="summary-title">
+            <lucide-icon [img]="icons.BarChart3" [size]="20"></lucide-icon>
+            Resumen de Liquidación
+          </h4>
+          <div class="settlement-breakdown">
+            <div class="breakdown-row">
+              <span class="label">Me deben (mis tarjetas):</span>
+              <span class="amount positive">{{ formatCurrency(s.owedToMe) }}</span>
+            </div>
+            <div class="breakdown-row">
+              <span class="label">Debo (tarjetas de {{ s.partnerName }}):</span>
+              <span class="amount negative">{{ formatCurrency(s.iOwe) }}</span>
+            </div>
           </div>
-          <div class="breakdown-row">
-            <span class="label">Debo (tarjetas de {{ s.partnerName }}):</span>
-            <span class="amount negative">{{ formatCurrency(s.iOwe) }}</span>
+          <div class="final-settlement">
+            <div class="settlement-result">
+              <span class="settlement-text">{{ s.message }}</span>
+              <span class="settlement-amount">{{ formatCurrency(s.netDifference) }}</span>
+            </div>
           </div>
         </div>
-        <div class="final-settlement">
-          <div class="settlement-result">
-            <span class="settlement-text">{{ s.message }}</span>
-            <span class="settlement-amount">{{ formatCurrency(s.netDifference) }}</span>
-          </div>
-        </div>
-      </div>
-    }
+      }
 
-    <div class="cards-balances-grid">
-      @for (card of cards(); track card.paymentMethodId) {
-        <div class="card-balance-item" 
-             [class.selected]="card.selected" 
-             [class]="'status-' + getStatusClass(card.paymentStatus)"
-             (click)="toggleSelection(card)">
-          
-          <div class="card-header">
-            <div class="title-group">
-              <h3 class="bank-name">{{ card.bankName }}</h3>
-              <span class="alias">{{ card.alias }}</span>
+      <div class="cards-balances-grid">
+        @for (card of cards(); track card.paymentMethodId) {
+          <div class="card-balance-item" 
+               [class.selected]="card.selected" 
+               [class]="'status-' + getStatusClass(card.paymentStatus)"
+               (click)="toggleSelection(card)">
+            <div class="card-header">
+              <div class="title-group">
+                <h3 class="bank-name">{{ card.bankName }}</h3>
+                <span class="alias">{{ card.alias }}</span>
+              </div>
+              <span class="status-badge" [class]="getStatusClass(card.paymentStatus)">
+                {{ card.paymentStatus }}
+              </span>
             </div>
-            <span class="status-badge" [class]="getStatusClass(card.paymentStatus)">
-              {{ card.paymentStatus }}
-            </span>
-          </div>
-
-          <div class="card-balance-details">
-            <div class="balance-row total-due">
-              <span class="label">Total a pagar:</span>
-              <span class="value">{{ formatCurrency(card.totalDue) }}</span>
+            <div class="card-balance-details">
+              <div class="balance-row total-due">
+                <span class="label">Total a pagar:</span>
+                <span class="value">{{ formatCurrency(card.totalDue) }}</span>
+              </div>
+              <div class="balance-row">
+                <span class="label">Gastos mes:</span>
+                <span class="value">{{ formatCurrency(card.currentBalance) }}</span>
+              </div>
             </div>
-            <div class="balance-row">
-              <span class="label">Gastos mes:</span>
-              <span class="value">{{ formatCurrency(card.currentBalance) }}</span>
+            <div class="user-shares-compact">
+              @for (share of card.userShares; track share.userId) {
+                <div class="share-row">
+                  <span class="share-user">{{ share.userName }}</span>
+                  <span class="share-amount">{{ formatCurrency(share.amountToPay) }}</span>
+                </div>
+              }
             </div>
-          </div>
-
-          <div class="user-shares-compact">
-            @for (share of card.userShares; track share.userId) {
-              <div class="share-row">
-                <span class="share-user">{{ share.userName }}</span>
-                <span class="share-amount">{{ formatCurrency(share.amountToPay) }}</span>
+            <div class="card-dates">
+              <div class="date-item">
+                <lucide-icon [img]="icons.Calendar" [size]="14"></lucide-icon>
+                <span>Corte: <strong>{{ formatDate(card.cutDate) }}</strong></span>
+              </div>
+              <div class="date-item">
+                <lucide-icon [img]="icons.DollarSign" [size]="14"></lucide-icon>
+                <span>Pago: <strong>{{ formatDate(card.paymentDate) }}</strong></span>
+              </div>
+            </div>
+            @if (card.paymentStatus !== 'PAID') {
+              <div class="card-actions">
+                <button class="btn-mark-paid" (click)="markAsPaid(card, $event)">
+                  <lucide-icon [img]="icons.CreditCard" [size]="16"></lucide-icon>
+                  Marcar como Pagado
+                </button>
               </div>
             }
           </div>
+        }
+      </div>
+    }
+  </ng-container>
 
-          <div class="card-dates">
-            <div class="date-item">
-              <lucide-icon [img]="icons.Calendar" [size]="14"></lucide-icon>
-              <span>Corte: <strong>{{ formatDate(card.cutDate) }}</strong></span>
-            </div>
-            <div class="date-item">
-              <lucide-icon [img]="icons.DollarSign" [size]="14"></lucide-icon>
-              <span>Pago: <strong>{{ formatDate(card.paymentDate) }}</strong></span>
-            </div>
-          </div>
-
-          @if (card.paymentStatus !== 'PAID') {
-            <div class="card-actions">
-              <button class="btn-mark-paid" (click)="markAsPaid(card, $event)">
-                <lucide-icon [img]="icons.CreditCard" [size]="16"></lucide-icon>
-                Marcar como Pagado
-              </button>
-            </div>
-          }
-        </div>
-      }
+  <ng-container *ngIf="activeTab === 'msi'">
+    <div class="page-header">
+      <h2 class="page-title">MSI</h2>
     </div>
-  }
+    <div class="msi-empty">(Próximamente)</div>
+  </ng-container>
 </div>

@@ -13,6 +13,7 @@ import { AuthService } from '../../core/services/auth.service';
   styleUrl: './reports.component.scss'
 })
 export class ReportsComponent implements OnInit {
+    activeTab: 'cards' | 'msi' = 'cards';
   private readonly financeService = inject(FinanceReportService);
   private readonly authService = inject(AuthService);
 

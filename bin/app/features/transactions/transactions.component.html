@@ -94,6 +94,9 @@
             @if (t.isShared) {
               <span class="badge-shared {{ t.transactionType.toLowerCase() }}">COMPARTIDO</span>
             }
+            @if (t.hasInstallments) {
+              <span class="badge-shared {{ t.transactionType.toLowerCase() }}">MSI</span>
+            }
           </div>
           <button class="btn-more {{ t.transactionType.toLowerCase() }}" (click)="$event.stopPropagation(); deleteTransaction(t)" title="Eliminar">
             <lucide-icon [img]="icons.X" [size]="18"></lucide-icon>
