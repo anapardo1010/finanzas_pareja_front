@@ -29,28 +29,45 @@ export class PaymentMethodFormComponent implements OnInit {
   submitting = signal(false);
   error = signal<string | null>(null);
 
-  // Opciones de bancos comunes en México
-  readonly banks = [
-    'BBVA',
-    'Santander',
-    'HSBC',
-    'Banamex',
-    'Banorte',
-    'ScotiaBank',
-    'Inbursa',
-    'Azteca',
-    'BanBajio',
-    'BanRegio',
-    'Otro'
-  ];
+
+  /** Lista de bancos/tarjetas, recibida del padre */
+  @Input() banks: { name: string; value: string; color: string }[] = [];
 
   // Tipos de cuenta
   readonly accountTypes = [
-    { value: 'CREDIT', label: 'Crédito' },
+    { value: 'CASH', label: 'Efectivo' },
     { value: 'DEBIT', label: 'Débito' },
-    { value: 'DIGITAL', label: 'Tarjeta Digital' },
-    { value: 'CASH', label: 'Efectivo' }
+    { value: 'CREDIT', label: 'Crédito' }
   ];
+
+  // Lista de bancos, fintechs y apps (con colores)
+  readonly defaultBanks = [
+    { name: 'BBVA México', value: 'BBVA', color: 'rgb(0,68,129)' },
+    { name: 'Banorte', value: 'Banorte', color: 'rgb(235,0,45)' },
+    { name: 'Santander', value: 'Santander', color: 'rgb(236,0,0)' },
+    { name: 'Citibanamex', value: 'Citibanamex', color: 'rgb(0,45,114)' },
+    { name: 'HSBC', value: 'HSBC', color: 'rgb(219,0,11)' },
+    { name: 'Scotiabank', value: 'Scotiabank', color: 'rgb(237,7,18)' },
+    { name: 'Banco Azteca', value: 'Banco Azteca', color: 'rgb(0,106,77)' },
+    { name: 'Banregio', value: 'Banregio', color: 'rgb(255,102,0)' },
+    // Fintechs
+    { name: 'Nu México', value: 'Nu', color: 'rgb(130,10,209)' },
+    { name: 'Stori', value: 'Stori', color: 'rgb(200,255,0)' },
+    { name: 'RappiCard', value: 'RappiCard', color: 'rgb(255,80,75)' },
+    { name: 'Mercado Pago', value: 'Mercado Pago', color: 'rgb(0,158,227)' },
+    { name: 'Ualá', value: 'Ualá', color: 'rgb(0,122,255)' },
+    { name: 'Vexi', value: 'Vexi', color: 'rgb(0,199,179)' },
+    { name: 'Fondeadora', value: 'Fondeadora', color: 'rgb(0,0,0)' },
+    // Apps de servicios
+    { name: 'Uber Pro Card', value: 'Uber', color: 'rgb(0,0,0)' },
+    { name: 'Didi Card', value: 'Didi', color: 'rgb(255,122,0)' },
+    { name: 'Spin by OXXO', value: 'Spin', color: 'rgb(110,35,130)' },
+    { name: 'Klar', value: 'Klar', color: 'rgb(16,24,32)' }
+  ];
+
+  get banksList() {
+    return this.banks.length > 0 ? this.banks : this.defaultBanks;
+  }
 
   ngOnInit(): void {
     this.initForm();
@@ -61,20 +78,19 @@ export class PaymentMethodFormComponent implements OnInit {
    * Inicializar formulario
    */
   private initForm(): void {
-    const isCreditCard = !this.paymentMethod || this.paymentMethod.accountType === 'CREDIT';
-    
+    const type = this.paymentMethod?.accountType || 'CASH';
     this.form = this.fb.group({
-      bankName: [this.paymentMethod?.bankName || '', [Validators.required]],
-      accountType: [this.paymentMethod?.accountType || 'CREDIT', [Validators.required]],
+      accountType: [type, [Validators.required]],
+      alias: [this.paymentMethod?.alias || '', [Validators.maxLength(50)]],
+      bankName: [this.paymentMethod?.bankName || '', type === 'DEBIT' || type === 'CREDIT' ? [Validators.required] : []],
       cutDay: [
-        { value: this.paymentMethod?.cutDay || 1, disabled: !isCreditCard },
-        isCreditCard ? [Validators.required, Validators.min(1), Validators.max(31)] : []
+        { value: this.paymentMethod?.cutDay || 1, disabled: type !== 'CREDIT' },
+        type === 'CREDIT' ? [Validators.required, Validators.min(1), Validators.max(31)] : []
       ],
       paymentDay: [
-        { value: this.paymentMethod?.paymentDay || 1, disabled: !isCreditCard },
-        isCreditCard ? [Validators.required, Validators.min(1), Validators.max(31)] : []
-      ],
-      alias: [this.paymentMethod?.alias || '', [Validators.maxLength(50)]]
+        { value: this.paymentMethod?.paymentDay || 1, disabled: type !== 'CREDIT' },
+        type === 'CREDIT' ? [Validators.required, Validators.min(1), Validators.max(31)] : []
+      ]
     });
   }
 
@@ -83,17 +99,29 @@ export class PaymentMethodFormComponent implements OnInit {
    */
   private setupAccountTypeListener(): void {
     this.form.get('accountType')?.valueChanges.subscribe((accountType: string) => {
+      const bankNameControl = this.form.get('bankName');
       const cutDayControl = this.form.get('cutDay');
       const paymentDayControl = this.form.get('paymentDay');
 
+      // Alias siempre habilitado
+      // Banco solo para débito o crédito
+      if (accountType === 'DEBIT' || accountType === 'CREDIT') {
+        bankNameControl?.setValidators([Validators.required]);
+        bankNameControl?.enable();
+      } else {
+        bankNameControl?.clearValidators();
+        bankNameControl?.setValue('');
+        bankNameControl?.disable();
+      }
+      bankNameControl?.updateValueAndValidity();
+
+      // Corte y pago solo para crédito
       if (accountType === 'CREDIT') {
-        // Habilitar y hacer requeridos para tarjetas de crédito
         cutDayControl?.enable();
         paymentDayControl?.enable();
         cutDayControl?.setValidators([Validators.required, Validators.min(1), Validators.max(31)]);
         paymentDayControl?.setValidators([Validators.required, Validators.min(1), Validators.max(31)]);
       } else {
-        // Deshabilitar y remover validadores para otros tipos
         cutDayControl?.disable();
         paymentDayControl?.disable();
         cutDayControl?.clearValidators();
@@ -101,7 +129,6 @@ export class PaymentMethodFormComponent implements OnInit {
         cutDayControl?.setValue(null);
         paymentDayControl?.setValue(null);
       }
-
       cutDayControl?.updateValueAndValidity();
       paymentDayControl?.updateValueAndValidity();
     });
@@ -142,10 +169,11 @@ export class PaymentMethodFormComponent implements OnInit {
 
     const accountType = this.form.value.accountType;
     const isCreditCard = accountType === 'CREDIT';
+    const isDebit = accountType === 'DEBIT';
 
     const request: PaymentMethodRequest = {
       userId,
-      bankName: this.form.value.bankName,
+      bankName: isDebit || isCreditCard ? this.form.value.bankName : 'Efectivo',
       accountType: accountType,
       cutDay: isCreditCard ? parseInt(this.form.get('cutDay')?.value) : 1,
       paymentDay: isCreditCard ? parseInt(this.form.get('paymentDay')?.value) : 1,

@@ -30,15 +30,19 @@
   @else {
     <div class="cards-grid">
       @for (method of paymentMethods(); track method.id) {
-        <div class="credit-card" [style.background]="getBankColor(method.bankName)">
+        <div
+          class="credit-card"
+          *ngIf="method.accountType !== 'CASH'"
+          [style.background]="getBankColor(method.bankName)"
+        >
           <!-- Card Header -->
           <div class="card-chip">
             <svg width="40" height="32" viewBox="0 0 40 32" fill="none">
-              <rect width="40" height="32" rx="4" fill="url(#chip-gradient)"/>
+              <rect width="40" height="32" rx="4" fill="url(#chip-gradient)" />
               <defs>
                 <linearGradient id="chip-gradient" x1="0" y1="0" x2="40" y2="32">
-                  <stop offset="0%" stop-color="#FFD700"/>
-                  <stop offset="100%" stop-color="#FFA500"/>
+                  <stop offset="0%" stop-color="#FFD700" />
+                  <stop offset="100%" stop-color="#FFA500" />
                 </linearGradient>
               </defs>
             </svg>
@@ -46,10 +50,18 @@
 
           <!-- Card Actions -->
           <div class="card-actions">
-            <button class="btn-card-icon" (click)="editPaymentMethod(method)" title="Editar">
+            <button
+              class="btn-card-icon"
+              (click)="editPaymentMethod(method)"
+              title="Editar"
+            >
               <lucide-icon [img]="Edit2" [size]="16"></lucide-icon>
             </button>
-            <button class="btn-card-icon" (click)="deletePaymentMethod(method)" title="Eliminar">
+            <button
+              class="btn-card-icon"
+              (click)="deletePaymentMethod(method)"
+              title="Eliminar"
+            >
               <span>🗑️</span>
             </button>
           </div>
@@ -73,7 +85,7 @@
           </div>
 
           <!-- Card Footer -->
-          <div class="card-footer">
+          <div class="card-footer" *ngIf="method.accountType === 'CREDIT'">
             <div class="payment-info">
               <div class="info-item">
                 <span class="info-label">Corte</span>
@@ -84,11 +96,27 @@
                 <span class="info-value">Día {{ method.paymentDay }}</span>
               </div>
             </div>
-            <div class="card-status">
-              <span class="status-badge" [class.active]="method.isActive">
-                {{ method.isActive ? '✓' : '✕' }}
-              </span>
-            </div>
+          </div>
+        </div>
+
+        <!-- Cash Representation -->
+        <div *ngIf="method.accountType === 'CASH'" class="cash-card">
+          <div class="cash-icon">
+            <lucide-icon [img]="Wallet" [size]="32"></lucide-icon>
+          </div>
+          <div class="cash-info">
+            <h4 class="cash-title">{{ method.alias || 'Efectivo' }}</h4>
+            <p class="cash-description">
+              Para fines prácticos, este monedero virtual representa el efectivo físico que tienes.
+            </p>
+          </div>
+          <div class="card-actions">
+            <button class="btn-card-icon" (click)="editPaymentMethod(method)" title="Editar">
+              <lucide-icon [img]="Edit2" [size]="16"></lucide-icon>
+            </button>
+            <button class="btn-card-icon" (click)="deletePaymentMethod(method)" title="Eliminar">
+              <lucide-icon [img]="Trash2" [size]="16"></lucide-icon>
+            </button>
           </div>
         </div>
       }
@@ -107,7 +135,7 @@
     <app-payment-method-form
       [paymentMethod]="selectedPaymentMethod()"
       (save)="handleFormSave()"
-      (cancel)="closeForm()">
-    </app-payment-method-form>
+      (cancel)="closeForm()"
+    ></app-payment-method-form>
   }
 </div>

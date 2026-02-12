@@ -1,152 +1,123 @@
 <div class="couple-page">
-  <div class="page-header">
-    <h1 class="page-title">Gestión de Pareja</h1>
-    <p class="subtitle">Configura las contribuciones de cada integrante</p>
-  </div>
+  <header class="header">
+    <h1>Gestión de Pareja</h1>
+    <p>Configura las aportaciones de cada integrante</p>
+  </header>
 
   @if (loading()) {
-    <div class="loading-state">
-      <div class="spinner"></div>
-      <p>Cargando usuarios...</p>
-    </div>
+    <div class="loader">Cargando...</div>
   } @else {
     <div class="users-grid">
       @for (user of users(); track user.id) {
         <div class="user-card">
-          <div class="user-avatar">
-            {{ user.name.charAt(0).toUpperCase() }}
-          </div>
           <div class="user-info">
-            <h3 class="user-name">{{ user.name }}</h3>
-            <p class="user-email">{{ user.email }}</p>
-            <div class="contribution-badge">
-              <span class="percentage">{{ user.contributionPercentage || 0 }}%</span>
-              <span class="label">de contribución</span>
+            <div class="avatar">{{ user.name.charAt(0) }}</div>
+            <div class="text">
+              <h3>{{ user.name }}</h3>
+              <p>{{ user.email }}</p>
             </div>
           </div>
-          <button class="btn-edit" (click)="openEditForm(user)">
-            <lucide-icon [img]="Edit2" [size]="16" style="vertical-align: middle; margin-right: 4px;"></lucide-icon>Editar
+          
+          <div class="contribution-box">
+            <span class="label">Aportación</span>
+            <span class="value">{{ user.contributionPercentage || 0 }}%</span>
+          </div>
+
+          <button class="btn-edit-user" (click)="openEditForm(user)">
+            <lucide-icon [img]="icons.Edit2" [size]="16"></lucide-icon>
+            Editar Perfil
           </button>
         </div>
       }
 
       @if (users().length < 2) {
-        <div class="invite-card" (click)="openInviteForm()">
-          <div class="invite-icon">👫</div>
-          <h3>Invita a tu pareja</h3>
-          <p>Agrega a tu pareja para compartir finanzas</p>
+        <div class="add-partner" (click)="openInviteForm()">
+          <lucide-icon [img]="icons.UserPlus" [size]="32"></lucide-icon>
+          <span>Añadir Pareja</span>
         </div>
       }
     </div>
 
     @if (users().length === 2) {
-      <div class="summary-card">
-        <h3>Resumen de Contribuciones</h3>
-        <div class="summary-content">
-          <div class="summary-item">
-            <span class="label">Total configurado:</span>
-            <span class="value" [class.warning]="getTotalPercentage() !== 100">
-              {{ getTotalPercentage() }}%
-            </span>
-          </div>
-          @if (getTotalPercentage() !== 100) {
-            <div class="alert-warning">
-              ⚠️ El total debe sumar 100% para repartir gastos correctamente
-            </div>
-          }
-        </div>
+      <div class="total-status" [class.is-error]="getTotalPercentage() !== 100">
+        <lucide-icon [img]="icons.Info" [size]="20"></lucide-icon>
+        <span>Suma total: <strong>{{ getTotalPercentage() }}%</strong></span>
       </div>
     }
   }
 </div>
 
-<!-- Modal Invitar -->
 @if (showInviteForm()) {
-  <div class="modal-overlay" (click)="closeInviteForm()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
+  <div class="modal-container">
+    <div class="modal-overlay" (click)="closeInviteForm()"></div>
+    <div class="modal-body">
       <div class="modal-header">
-        <h2>Invitar a tu pareja</h2>
-        <button class="btn-close" (click)="closeInviteForm()">×</button>
+        <h2>Añadir Pareja</h2>
+        <button class="close-btn" (click)="closeInviteForm()">×</button>
       </div>
 
       <form [formGroup]="inviteForm" (ngSubmit)="onInviteSubmit()">
-        <div class="form-body">
-          <div class="form-group">
-            <label for="name">Nombre</label>
-            <input id="name" type="text" formControlName="name" placeholder="Nombre completo">
+        <div class="modal-content">
+          <div class="field">
+            <label>Nombre</label>
+            <input type="text" formControlName="name" placeholder="Ej. Ana García" [class.error]="inviteForm.get('name')?.invalid && inviteForm.get('name')?.touched">
+            @if (inviteForm.get('name')?.invalid && inviteForm.get('name')?.touched) {
+              <small class="error-msg">Nombre requerido (mín. 2 caracteres)</small>
+            }
           </div>
-
-          <div class="form-group">
-            <label for="email">Email</label>
-            <input id="email" type="email" formControlName="email" placeholder="correo@ejemplo.com">
+          <div class="field">
+            <label>Email</label>
+            <input type="email" formControlName="email" placeholder="correo@pareja.com" [class.error]="inviteForm.get('email')?.invalid && inviteForm.get('email')?.touched">
+            @if (inviteForm.get('email')?.invalid && inviteForm.get('email')?.touched) {
+              <small class="error-msg">Email válido requerido</small>
+            }
           </div>
-
-          <div class="form-group">
-            <label for="password">Contraseña</label>
-            <input id="password" type="password" formControlName="password" placeholder="Mínimo 6 caracteres">
-          </div>
-
-          <div class="info-box">
-            <span class="icon">ℹ️</span>
-            <p>Tu pareja podrá iniciar sesión con este email y contraseña para acceder a las finanzas compartidas.</p>
+          <div class="field">
+            <label>Contraseña Temporal</label>
+            <input type="password" formControlName="password" [class.error]="inviteForm.get('password')?.invalid && inviteForm.get('password')?.touched">
+            @if (inviteForm.get('password')?.invalid && inviteForm.get('password')?.touched) {
+              <small class="error-msg">Contraseña requerida (mín. 6 caracteres)</small>
+            }
           </div>
         </div>
 
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" (click)="closeInviteForm()">
-            Cancelar
-          </button>
-          <button type="submit" class="btn btn-primary" [disabled]="inviteForm.invalid">
-            Enviar Invitación
-          </button>
+        <div class="modal-actions">
+          <button type="button" class="btn-cancel" (click)="closeInviteForm()">Cancelar</button>
+          <button type="submit" class="btn-save" [disabled]="inviteForm.invalid">Invitar</button>
         </div>
       </form>
     </div>
   </div>
 }
 
-<!-- Modal Editar -->
 @if (showEditForm()) {
-  <div class="modal-overlay" (click)="closeEditForm()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
+  <div class="modal-container">
+    <div class="modal-overlay" (click)="closeEditForm()"></div>
+    <div class="modal-body">
       <div class="modal-header">
-        <h2>Editar Usuario</h2>
-        <button class="btn-close" (click)="closeEditForm()">×</button>
+        <h2>Editar Integrante</h2>
+        <button class="close-btn" (click)="closeEditForm()">×</button>
       </div>
 
       <form [formGroup]="editForm" (ngSubmit)="onEditSubmit()">
-        <div class="form-body">
-          <div class="form-group">
-            <label for="edit-name">Nombre</label>
-            <input id="edit-name" type="text" formControlName="name" placeholder="Nombre completo">
+        <div class="modal-content">
+          <div class="field">
+            <label>Nombre</label>
+            <input type="text" formControlName="name">
           </div>
-
-          <div class="form-group">
-            <label for="edit-email">Email</label>
-            <input id="edit-email" type="email" formControlName="email" placeholder="correo@ejemplo.com">
+          <div class="field">
+            <label>Email</label>
+            <input type="email" formControlName="email" readonly>
           </div>
-
-          <div class="form-group">
-            <label for="contribution">Porcentaje de Contribución (%)</label>
-            <input 
-              id="contribution" 
-              type="number" 
-              formControlName="contributionPercentage" 
-              min="0" 
-              max="100"
-              placeholder="50"
-            >
-            <small class="form-hint">Indica qué porcentaje de los gastos compartidos asumirá este usuario</small>
+          <div class="field">
+            <label>Porcentaje de Aportación (%)</label>
+            <input type="number" formControlName="contributionPercentage">
           </div>
         </div>
 
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" (click)="closeEditForm()">
-            Cancelar
-          </button>
-          <button type="submit" class="btn btn-primary" [disabled]="editForm.invalid">
-            Guardar Cambios
-          </button>
+        <div class="modal-actions">
+          <button type="button" class="btn-cancel" (click)="closeEditForm()">Cancelar</button>
+          <button type="submit" class="btn-save" [disabled]="editForm.invalid">Guardar</button>
         </div>
       </form>
     </div>

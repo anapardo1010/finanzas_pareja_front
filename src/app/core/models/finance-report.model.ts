@@ -45,6 +45,22 @@ export interface PaymentMethodReport {
 }
 
 /**
+ * Balance por método de pago (Mis Cuentas)
+ */
+export interface PaymentMethodBalance {
+  paymentMethodId: number;
+  paymentMethodName: string;
+  alias: string;
+  accountType: 'DEBIT' | 'CREDIT' | 'CASH' | 'OTHER';
+  balance: number;
+  totalIncome: number;
+  totalExpenses: number;
+  transfersIn: number;
+  transfersOut: number;
+  transactionCount: number;
+}
+
+/**
  * Parámetros para generar reportes
  */
 export interface ReportParams {

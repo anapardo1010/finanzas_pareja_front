@@ -1,0 +1,55 @@
+<div class="transaction-form-modal">
+  <div class="modal-content">
+    <h2>{{ transaction ? 'Editar Transacción' : 'Nueva Transacción' }}</h2>
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <label>Descripción</label>
+      <input formControlName="description" type="text" placeholder="Descripción" />
+
+      <label>Monto</label>
+      <input formControlName="amount" type="number" min="0.01" step="0.01" />
+
+      <label>Fecha</label>
+      <input formControlName="date" type="date" />
+
+      <label>Método de Pago</label>
+      <select formControlName="paymentMethodId">
+        <option *ngFor="let pm of paymentMethods" [value]="pm.id">{{ pm.alias || pm.bankName }}</option>
+      </select>
+
+      <label>Tipo</label>
+      <select formControlName="transactionType">
+        <option value="EXPENSE">Gasto</option>
+        <option value="INCOME">Ingreso</option>
+        <option value="CREDIT_PAYMENT">Pago TC</option>
+        <option value="TRANSFER">Transferencia</option>
+      </select>
+
+      <label *ngIf="form.get('categoryId')?.enabled">Categoría</label>
+      <select *ngIf="form.get('categoryId')?.enabled" formControlName="categoryId">
+        <option *ngFor="let cat of categories" [value]="cat.id">{{ cat.name }}</option>
+      </select>
+
+      <label *ngIf="form.get('destinationPaymentMethodId')?.enabled">Destino</label>
+      <select *ngIf="form.get('destinationPaymentMethodId')?.enabled" formControlName="destinationPaymentMethodId">
+        <option *ngFor="let pm of paymentMethods" [value]="pm.id">{{ pm.alias || pm.bankName }}</option>
+      </select>
+
+      <div class="checkbox-label">
+        <input type="checkbox" formControlName="isShared" />
+        <span>Compartido</span>
+      </div>
+      <div class="checkbox-label" *ngIf="form.get('hasInstallments')?.enabled">
+        <input type="checkbox" formControlName="hasInstallments" />
+        <span>MSI</span>
+      </div>
+
+      <label *ngIf="form.get('totalInstallments')?.enabled">Total MSI</label>
+      <input *ngIf="form.get('totalInstallments')?.enabled" type="number" formControlName="totalInstallments" min="1" />
+
+      <div class="modal-actions">
+        <button type="button" (click)="onClose()">Cancelar</button>
+        <button type="submit" [disabled]="form.invalid || submitting">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>

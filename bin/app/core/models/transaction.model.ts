@@ -5,13 +5,14 @@ export type Transaction = {
   id: number;
   tenantId: number;
   userId: number;
-  categoryId: number;
+  categoryId?: number; // Opcional: no existe para TRANSFER ni CREDIT_PAYMENT
   paymentMethodId: number;
+  destinationPaymentMethodId?: number; // Para TRANSFER y CREDIT_PAYMENT
   description: string;
   amount: number;
   date: string;
   isShared: boolean;
-  transactionType: 'EXPENSE' | 'INCOME';
+  transactionType: 'EXPENSE' | 'INCOME' | 'TRANSFER' | 'CREDIT_PAYMENT';
   hasInstallments: boolean;
   totalInstallments: number;
   createdAt: string;
@@ -24,13 +25,14 @@ export type Transaction = {
 export type TransactionRequest = {
   tenantId: number;
   userId: number;
-  categoryId: number;
+  categoryId?: number; // Opcional: no requerido para TRANSFER ni CREDIT_PAYMENT
   paymentMethodId: number;
+  destinationPaymentMethodId?: number; // Para TRANSFER y CREDIT_PAYMENT
   description: string;
   amount: number;
   date: string;
   isShared: boolean;
-  transactionType: 'EXPENSE' | 'INCOME';
+  transactionType: 'EXPENSE' | 'INCOME' | 'TRANSFER' | 'CREDIT_PAYMENT';
   hasInstallments: boolean;
   totalInstallments: number;
 };
@@ -41,7 +43,7 @@ export type TransactionRequest = {
 export interface TransactionFilters {
   startDate?: string;
   endDate?: string;
-  type?: 'EXPENSE' | 'INCOME';
+  type?: 'EXPENSE' | 'INCOME' | 'TRANSFER' | 'CREDIT_PAYMENT';
   categoryId?: number;
   paymentMethodId?: number;
   userId?: number;

@@ -7,6 +7,7 @@ import {
   FinancialSummary,
   CategoryReport,
   PaymentMethodReport,
+  PaymentMethodBalance,
   ReportParams,
   MonthlyBalance,
   ProportionalSettlement,
@@ -99,11 +100,18 @@ export class FinanceReportService {
   /**
    * Obtener balance mensual de un tenant
    * GET /api/v1/finance-reports/tenant/{tenantId}/monthly-balance
+   * @param mode 'accrual' (devengo - gastos cuando ocurren) o 'cash' (caja - salida efectiva)
    */
-  getMonthlyBalance(tenantId: number, startDate?: string, endDate?: string): Observable<MonthlyBalance[]> {
+  getMonthlyBalance(
+    tenantId: number, 
+    startDate?: string, 
+    endDate?: string,
+    mode: 'accrual' | 'cash' = 'accrual'
+  ): Observable<MonthlyBalance[]> {
     let httpParams = new HttpParams();
     if (startDate) httpParams = httpParams.set('startDate', startDate);
     if (endDate) httpParams = httpParams.set('endDate', endDate);
+    httpParams = httpParams.set('mode', mode);
 
     return this.http
       .get<ResponseModel<MonthlyBalance[]>>(
@@ -186,6 +194,23 @@ export class FinanceReportService {
     return this.http
       .get<ResponseModel<CreditCardProportionalPayment[]>>(
         `${this.apiUrl}/tenant/${tenantId}/credit-card-proportional-payments`
+      )
+      .pipe(map(response => response.data));
+  }
+
+  /**
+   * Obtener balance por método de pago (efectivo, débito, crédito)
+   * GET /api/v1/finance-reports/tenant/{tenantId}/balance-by-payment-method
+   */
+  getBalanceByPaymentMethod(tenantId: number, year?: number, month?: number): Observable<PaymentMethodBalance[]> {
+    let httpParams = new HttpParams();
+    if (year) httpParams = httpParams.set('year', year.toString());
+    if (month) httpParams = httpParams.set('month', month.toString());
+
+    return this.http
+      .get<ResponseModel<PaymentMethodBalance[]>>(
+        `${this.apiUrl}/tenant/${tenantId}/balance-by-payment-method`,
+        { params: httpParams }
       )
       .pipe(map(response => response.data));
   }

@@ -21,7 +21,7 @@
 // Modal Content
 .modal-content {
   width: 100%;
-  max-width: 500px;
+  max-width: 500px; /* Adjusted width to make the modal smaller */
   background: white;
   border-radius: 20px;
   box-shadow: 
@@ -29,6 +29,7 @@
     0 4px 16px rgba(0, 0, 0, 0.1);
   animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
+  padding: 20px; /* Reduced padding for a more compact design */
 }
 
 .glass-modal {
@@ -47,7 +48,7 @@
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 
   h2 {
-    font-size: 1.5rem;
+    font-size: 1.5rem; /* Slightly smaller header text */
     font-weight: 600;
     color: $label-primary;
     margin: 0;
@@ -112,6 +113,8 @@ form {
   &:last-of-type {
     margin-bottom: 0;
   }
+
+  margin-bottom: 10px; /* Reduced spacing between form groups */
 }
 
 .form-row {
@@ -232,6 +235,10 @@ form {
   padding-top: 1.5rem;
   margin-top: 1.5rem;
   border-top: 1px solid rgba(0, 0, 0, 0.06);
+
+  display: flex;
+  justify-content: space-between;
+  margin-top: 15px; /* Reduced top margin for actions */
 }
 
 .btn {

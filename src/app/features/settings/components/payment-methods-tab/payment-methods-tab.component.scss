@@ -399,3 +399,43 @@
     }
   }
 }
+
+.cash-card {
+  background-color: #f9f9f9; /* Light background for visibility */
+  color: #333; /* Dark text for contrast */
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease; /* Hover effect */
+  cursor: pointer;
+}
+
+.cash-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.cash-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #e0e0e0;
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+}
+
+.cash-title {
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin: 0;
+}
+
+.cash-description {
+  font-size: 0.875rem;
+  color: #666;
+  margin: 0;
+}

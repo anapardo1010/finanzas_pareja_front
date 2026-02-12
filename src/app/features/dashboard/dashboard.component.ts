@@ -6,7 +6,7 @@ import { FinanceReportService } from '../../core/services/finance-report.service
 import { TransactionService } from '../../core/services/transaction.service';
 import { CategoryService } from '../../core/services/category.service';
 import { LucideAngularModule, TrendingUp, TrendingDown, Wallet, CreditCard, PieChart, AlertCircle, Plus, ArrowRight } from 'lucide-angular';
-import { MonthlyBalance, Transaction, InstallmentMSI, Category } from '../../core/models';
+import { MonthlyBalance, Transaction, InstallmentMSI, Category, PaymentMethodBalance } from '../../core/models';
 
 @Component({
   selector: 'app-dashboard',
@@ -40,6 +40,7 @@ export class DashboardComponent implements OnInit {
   monthlyBalances = signal<MonthlyBalance[]>([]);
   upcomingInstallments = signal<InstallmentMSI[]>([]);
   categories = signal<Category[]>([]);
+  paymentMethodBalances = signal<PaymentMethodBalance[]>([]);
   
   // Fecha actual
   currentDate = computed(() => {
@@ -65,13 +66,35 @@ export class DashboardComponent implements OnInit {
     return this.upcomingInstallments().reduce((sum, inst) => sum + inst.amount, 0);
   });
 
+  // Cuentas agrupadas por tipo
+  cashAccounts = computed(() => 
+    this.paymentMethodBalances().filter(pm => pm.accountType === 'CASH')
+  );
+
+  debitAccounts = computed(() => 
+    this.paymentMethodBalances().filter(pm => pm.accountType === 'DEBIT')
+  );
+
+  creditAccounts = computed(() => 
+    this.paymentMethodBalances().filter(pm => pm.accountType === 'CREDIT')
+  );
+
+  // Balance total disponible (efectivo + débito)
+  totalAvailable = computed(() => {
+    const balances = this.paymentMethodBalances();
+    return balances
+      .filter(pm => pm.accountType === 'CASH' || pm.accountType === 'DEBIT')
+      .reduce((sum, pm) => sum + pm.balance, 0);
+  });
+
   // Top 3 categorías de gastos
   topExpenseCategories = computed(() => {
-    const txs = this.transactions().filter(t => t.transactionType === 'EXPENSE');
+    const txs = this.transactions().filter(t => t.transactionType === 'EXPENSE' && t.categoryId != null);
     const cats = this.categories();
     const categoryMap = new Map<number, { name: string, totalAmount: number, percentage: number }>();
     
     txs.forEach(t => {
+      if (!t.categoryId) return; // Skip si no tiene categoría
       const category = cats.find(c => c.id === t.categoryId);
       const catName = category?.name || 'Sin categoría';
       const current = categoryMap.get(t.categoryId) || { name: catName, totalAmount: 0, percentage: 0 };
@@ -126,17 +149,20 @@ export class DashboardComponent implements OnInit {
     Promise.all([
       // Transacciones del mes actual
       this.transactionService.getTransactionsByDateRange(tenantId, startOfMonth, endDate).toPromise(),
-      // Balances mensuales para comparación (últimos 2 meses)
-      this.financeReportService.getMonthlyBalance(tenantId, startOfPrevMonth, endDate).toPromise(),
+      // Balances mensuales para comparación (últimos 2 meses) - modo accrual (devengo)
+      this.financeReportService.getMonthlyBalance(tenantId, startOfPrevMonth, endDate, 'accrual').toPromise(),
       // Cuotas MSI próximas
       this.financeReportService.getUpcomingInstallments(tenantId).toPromise(),
       // Categorías
-      this.categoryService.getByTenant(tenantId, 0, 100).toPromise()
-    ]).then(([transactions, balances, installments, categoriesResponse]) => {
+      this.categoryService.getByTenant(tenantId, 0, 100).toPromise(),
+      // Balances por método de pago
+      this.financeReportService.getBalanceByPaymentMethod(tenantId, now.getFullYear(), now.getMonth() + 1).toPromise()
+    ]).then(([transactions, balances, installments, categoriesResponse, paymentBalances]) => {
       this.transactions.set(transactions || []);
       this.monthlyBalances.set(balances || []);
       this.upcomingInstallments.set(installments || []);
       this.categories.set(categoriesResponse?.content || []);
+      this.paymentMethodBalances.set(paymentBalances || []);
       this.loading.set(false);
     }).catch(err => {
       console.error('❌ Error cargando dashboard:', err);

@@ -1,444 +1,99 @@
 <div class="reports-page">
   <div class="page-header">
-    <h1 class="page-title">Reportes Financieros</h1>
-    <form [formGroup]="dateFilterForm" (ngSubmit)="onFilterSubmit()" class="date-filter">
-      <div class="filter-group">
-        <input type="date" formControlName="startDate" class="date-input">
-        <span class="separator">a</span>
-        <input type="date" formControlName="endDate" class="date-input">
-      </div>
-      <button type="submit" class="btn-filter">Aplicar</button>
-    </form>
-  </div>
-
-  <!-- Tabs -->
-  <div class="tabs">
-    <button 
-      class="tab" 
-      [class.active]="activeTab() === 'balance'"
-      (click)="setActiveTab('balance')">
-      <lucide-icon [img]="BarChart3" [size]="18"></lucide-icon>
-      <span>Balance Mensual</span>
-    </button>
-    <button 
-      class="tab" 
-      [class.active]="activeTab() === 'settlement'"
-      (click)="setActiveTab('settlement')">
-      <lucide-icon [img]="DollarSign" [size]="18"></lucide-icon>
-      <span>Liquidación</span>
-    </button>
-    <button 
-      class="tab" 
-      [class.active]="activeTab() === 'installments'"
-      (click)="setActiveTab('installments')">
-      <lucide-icon [img]="Calendar" [size]="18"></lucide-icon>
-      <span>Cuotas MSI</span>
-    </button>
-    <button 
-      class="tab" 
-      [class.active]="activeTab() === 'shared'"
-      (click)="setActiveTab('shared')">
-      <lucide-icon [img]="Users" [size]="18"></lucide-icon>
-      <span>Gastos Compartidos</span>
-    </button>
-    <button 
-      class="tab" 
-      [class.active]="activeTab() === 'cards'"
-      (click)="setActiveTab('cards')">
-      <lucide-icon [img]="CreditCard" [size]="18"></lucide-icon>
-      <span>Saldos de Tarjetas</span>
+    <h1 class="page-title">Saldos de Tarjetas</h1>
+    <button class="btn-refresh" (click)="loadCards()" [disabled]="loading()">
+      <lucide-icon [img]="icons.CreditCard" [size]="18"></lucide-icon>
+      Actualizar
     </button>
   </div>
 
   @if (loading()) {
-    <div class="loading-state">
-      <div class="spinner"></div>
-      <p>Cargando reportes...</p>
-    </div>
+    <div class="loading-state"><div class="spinner"></div></div>
   } @else {
-    <!-- Balance Mensual -->
-    @if (activeTab() === 'balance') {
-      <div class="report-section">
-        <h2 class="section-title">Balance Mensual</h2>
-        @if (monthlyBalance().length === 0) {
-          <div class="empty-state">
-            <p>No hay datos de balance para este período</p>
+    
+    @if (finalSettlement(); as s) {
+      <div class="settlement-summary-card">
+        <h4 class="summary-title">
+          <lucide-icon [img]="icons.BarChart3" [size]="20"></lucide-icon>
+          Resumen de Liquidación
+        </h4>
+        <div class="settlement-breakdown">
+          <div class="breakdown-row">
+            <span class="label">Me deben (mis tarjetas):</span>
+            <span class="amount positive">{{ formatCurrency(s.owedToMe) }}</span>
           </div>
-        } @else {
-          <div class="balance-summary-card">
-            <div class="summary-item">
-              <lucide-icon [img]="DollarSign" [size]="28" class="icon income"></lucide-icon>
-              <div class="summary-label">Ingresos</div>
-              <div class="summary-value income">{{ formatCurrency(currentMonthBalance.totalIncome) }}</div>
-            </div>
-            <div class="divider"></div>
-            <div class="summary-item">
-              <lucide-icon [img]="CreditCard" [size]="28" class="icon expense"></lucide-icon>
-              <div class="summary-label">Gastos</div>
-              <div class="summary-value expense">{{ formatCurrency(currentMonthBalance.totalExpenses) }}</div>
-            </div>
-            <div class="divider"></div>
-            <div class="summary-item">
-              <lucide-icon [img]="BarChart3" [size]="28" class="icon balance"></lucide-icon>
-              <div class="summary-label">Balance</div>
-              <div class="summary-value" [class.positive]="currentMonthBalance.balance >= 0" [class.negative]="currentMonthBalance.balance < 0">{{ formatCurrency(currentMonthBalance.balance) }}</div>
-            </div>
-          </div>
-          <div class="balance-grid">
-            @for (balance of monthlyBalance(); track balance.month) {
-              <div class="balance-card">
-                <h3 class="month-title">{{ balance.month }}</h3>
-                <div class="balance-details">
-                  <div class="balance-item income">
-                    <span class="label">Ingresos</span>
-                    <span class="amount">{{ formatCurrency(balance.totalIncome) }}</span>
-                  </div>
-                  <div class="balance-item expense">
-                    <span class="label">Gastos</span>
-                    <span class="amount">{{ formatCurrency(balance.totalExpenses) }}</span>
-                  </div>
-                  <div class="balance-item total" [class.negative]="balance.balance < 0">
-                    <span class="label">Balance</span>
-                    <span class="amount">{{ formatCurrency(balance.balance) }}</span>
-                  </div>
-                  @if (balance.user1Contribution > 0 || balance.user2Contribution > 0) {
-                    <div class="contributions">
-                      <div class="contribution-item">
-                        <span class="label">Usuario 1</span>
-                        <span class="value">{{ formatCurrency(balance.user1Contribution) }}</span>
-                      </div>
-                      <div class="contribution-item">
-                        <span class="label">Usuario 2</span>
-                        <span class="value">{{ formatCurrency(balance.user2Contribution) }}</span>
-                      </div>
-                    </div>
-                  }
-                </div>
-              </div>
-            }
-          </div>
-        }
-      </div>
-    }
-
-    <!-- Liquidación Proporcional -->
-    @if (activeTab() === 'settlement') {
-      <div class="report-section">
-        <h2 class="section-title">Liquidación Proporcional</h2>
-        @if (!settlement()) {
-          <div class="empty-state">
-            <p>No hay datos de liquidación para este período</p>
-          </div>
-        } @else {
-          <div class="settlement-container">
-            <div class="settlement-summary">
-              <div class="summary-card">
-                <h3>Total Gastos Compartidos</h3>
-                <p class="big-amount">{{ formatCurrency(settlement()!.totalSharedExpenses) }}</p>
-              </div>
-              <div class="summary-card result">
-                <h3>Resultado</h3>
-                <p class="settlement-amount">{{ formatCurrency(settlement()!.settlementAmount) }}</p>
-                <p class="settlement-text">
-                  <strong>{{ settlement()!.whoOwes }}</strong> debe pagar a 
-                  <strong>{{ settlement()!.whoReceives }}</strong>
-                </p>
-              </div>
-            </div>
-
-            <div class="users-comparison">
-              <div class="user-card">
-                <h4>{{ settlement()!.user1Name }}</h4>
-                <div class="user-details">
-                  <div class="detail-row">
-                    <span class="label">Contribución:</span>
-                    <span class="value">{{ settlement()!.user1Contribution }}%</span>
-                  </div>
-                  <div class="detail-row">
-                    <span class="label">Pagó:</span>
-                    <span class="value">{{ formatCurrency(settlement()!.user1TotalPaid) }}</span>
-                  </div>
-                  <div class="detail-row">
-                    <span class="label">Debería pagar:</span>
-                    <span class="value">{{ formatCurrency(settlement()!.user1ShouldPay) }}</span>
-                  </div>
-                  <div class="detail-row total" [class.positive]="settlement()!.user1Balance > 0" [class.negative]="settlement()!.user1Balance < 0">
-                    <span class="label">Balance:</span>
-                    <span class="value">{{ formatCurrency(settlement()!.user1Balance) }}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="user-card">
-                <h4>{{ settlement()!.user2Name }}</h4>
-                <div class="user-details">
-                  <div class="detail-row">
-                    <span class="label">Contribución:</span>
-                    <span class="value">{{ settlement()!.user2Contribution }}%</span>
-                  </div>
-                  <div class="detail-row">
-                    <span class="label">Pagó:</span>
-                    <span class="value">{{ formatCurrency(settlement()!.user2TotalPaid) }}</span>
-                  </div>
-                  <div class="detail-row">
-                    <span class="label">Debería pagar:</span>
-                    <span class="value">{{ formatCurrency(settlement()!.user2ShouldPay) }}</span>
-                  </div>
-                  <div class="detail-row total" [class.positive]="settlement()!.user2Balance > 0" [class.negative]="settlement()!.user2Balance < 0">
-                    <span class="label">Balance:</span>
-                    <span class="value">{{ formatCurrency(settlement()!.user2Balance) }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        }
-      </div>
-    }
-
-    <!-- Cuotas MSI -->
-    @if (activeTab() === 'installments') {
-      <div class="report-section">
-        <h2 class="section-title">Cuotas MSI (Meses Sin Intereses)</h2>
-        
-        <!-- Resumen -->
-        <div class="installments-summary">
-          <div class="summary-item upcoming">
-            <div class="icon">📅</div>
-            <div class="info">
-              <span class="count">{{ upcomingInstallments().length }}</span>
-              <span class="label">Próximas</span>
-              <span class="amount">{{ formatCurrency(totalUpcomingAmount()) }}</span>
-            </div>
-          </div>
-          <div class="summary-item overdue">
-            <div class="icon">⚠️</div>
-            <div class="info">
-              <span class="count">{{ overdueInstallments().length }}</span>
-              <span class="label">Vencidas</span>
-              <span class="amount">{{ formatCurrency(totalOverdueAmount()) }}</span>
-            </div>
+          <div class="breakdown-row">
+            <span class="label">Debo (tarjetas de {{ s.partnerName }}):</span>
+            <span class="amount negative">{{ formatCurrency(s.iOwe) }}</span>
           </div>
         </div>
-
-        <!-- Cuotas Vencidas -->
-        @if (overdueInstallments().length > 0) {
-          <div class="installments-group overdue">
-            <h3 class="group-title">⚠️ Cuotas Vencidas</h3>
-            <div class="installments-list">
-              @for (inst of overdueInstallments(); track inst.id) {
-                <div class="installment-card overdue">
-                  <div class="installment-header">
-                    <h4 class="description">{{ inst.description }}</h4>
-                    <span class="amount">{{ formatCurrency(inst.amount) }}</span>
-                  </div>
-                  <div class="installment-details">
-                    <span class="detail">{{ getInstallmentPaymentMethodName(inst) }}</span>
-                    <span class="separator">•</span>
-                    <span class="detail">Cuota {{ inst.installmentNumber }} de {{ inst.totalInstallments }}</span>
-                    <span class="separator">•</span>
-                    <span class="detail due-date">Vencida: {{ formatDate(inst.dueDate) }}</span>
-                  </div>
-                  <div class="progress-bar">
-                    <div class="progress-fill" [style.width.%]="getInstallmentProgress(inst.installmentNumber, inst.totalInstallments)"></div>
-                  </div>
-                </div>
-              }
-            </div>
+        <div class="final-settlement">
+          <div class="settlement-result">
+            <span class="settlement-text">{{ s.message }}</span>
+            <span class="settlement-amount">{{ formatCurrency(s.netDifference) }}</span>
           </div>
-        }
-
-        <!-- Cuotas Próximas -->
-        @if (upcomingInstallments().length > 0) {
-          <div class="installments-group upcoming">
-            <h3 class="group-title">📅 Próximas Cuotas</h3>
-            <div class="installments-list">
-              @for (inst of upcomingInstallments(); track inst.id) {
-                <div class="installment-card">
-                  <div class="installment-header">
-                    <h4 class="description">{{ inst.description }}</h4>
-                    <span class="amount">{{ formatCurrency(inst.amount) }}</span>
-                  </div>
-                  <div class="installment-details">
-                    <span class="detail">{{ getInstallmentPaymentMethodName(inst) }}</span>
-                    <span class="separator">•</span>
-                    <span class="detail">Cuota {{ inst.installmentNumber }} de {{ inst.totalInstallments }}</span>
-                    <span class="separator">•</span>
-                    <span class="detail">{{ formatDate(inst.dueDate) }}</span>
-                  </div>
-                  <div class="progress-bar">
-                    <div class="progress-fill" [style.width.%]="getInstallmentProgress(inst.installmentNumber, inst.totalInstallments)"></div>
-                  </div>
-                </div>
-              }
-            </div>
-          </div>
-        }
-
-        @if (upcomingInstallments().length === 0 && overdueInstallments().length === 0) {
-          <div class="empty-state">
-            <p>No hay cuotas MSI pendientes</p>
-          </div>
-        }
+        </div>
       </div>
     }
 
-    <!-- Gastos Compartidos -->
-    @if (activeTab() === 'shared') {
-      <div class="report-section">
-        <h2 class="section-title">Gastos Compartidos</h2>
-        @if (sharedTransactions().length === 0) {
-          <div class="empty-state">
-            <p>No hay gastos compartidos en este período</p>
+    <div class="cards-balances-grid">
+      @for (card of cards(); track card.paymentMethodId) {
+        <div class="card-balance-item" 
+             [class.selected]="card.selected" 
+             [class]="'status-' + getStatusClass(card.paymentStatus)"
+             (click)="toggleSelection(card)">
+          
+          <div class="card-header">
+            <div class="title-group">
+              <h3 class="bank-name">{{ card.bankName }}</h3>
+              <span class="alias">{{ card.alias }}</span>
+            </div>
+            <span class="status-badge" [class]="getStatusClass(card.paymentStatus)">
+              {{ card.paymentStatus }}
+            </span>
           </div>
-        } @else {
-          <div class="transactions-list">
-            @for (transaction of sharedTransactions(); track transaction.id) {
-              <div class="transaction-card">
-                <div class="transaction-main">
-                  <div class="transaction-info">
-                    <h4 class="description">{{ transaction.description }}</h4>
-                    <div class="transaction-meta">
-                      <span class="meta-item">{{ formatDate(transaction.date) }}</span>
-                      @if (transaction.hasInstallments) {
-                        <span class="badge msi">{{ transaction.totalInstallments }} MSI</span>
-                      }
-                    </div>
-                  </div>
-                  <span class="amount expense">{{ formatCurrency(transaction.amount) }}</span>
-                </div>
+
+          <div class="card-balance-details">
+            <div class="balance-row total-due">
+              <span class="label">Total a pagar:</span>
+              <span class="value">{{ formatCurrency(card.totalDue) }}</span>
+            </div>
+            <div class="balance-row">
+              <span class="label">Gastos mes:</span>
+              <span class="value">{{ formatCurrency(card.currentBalance) }}</span>
+            </div>
+          </div>
+
+          <div class="user-shares-compact">
+            @for (share of card.userShares; track share.userId) {
+              <div class="share-row">
+                <span class="share-user">{{ share.userName }}</span>
+                <span class="share-amount">{{ formatCurrency(share.amountToPay) }}</span>
               </div>
             }
           </div>
-        }
-      </div>
-    }
 
-    <!-- Saldos de Tarjetas -->
-    @if (activeTab() === 'cards') {
-      <div class="report-section">
-        <h2 class="section-title">Saldos de Tarjetas de Crédito</h2>
-
-        @if (cardProportionalPayments().length === 0) {
-          <div class="empty-state">
-            <p>No hay tarjetas registradas</p>
+          <div class="card-dates">
+            <div class="date-item">
+              <lucide-icon [img]="icons.Calendar" [size]="14"></lucide-icon>
+              <span>Corte: <strong>{{ formatDate(card.cutDate) }}</strong></span>
+            </div>
+            <div class="date-item">
+              <lucide-icon [img]="icons.DollarSign" [size]="14"></lucide-icon>
+              <span>Pago: <strong>{{ formatDate(card.paymentDate) }}</strong></span>
+            </div>
           </div>
-        } @else {
-          <!-- Resumen de Liquidación -->
-          @if (selectedCards().length > 0 && finalSettlement()) {
-            <div class="settlement-summary-card">
-              <h4 class="summary-title"><lucide-icon [img]="BarChart3" [size]="18" style="vertical-align: middle; margin-right: 6px;"></lucide-icon>Resumen de Liquidación</h4>
-              
-              <div class="settlement-breakdown">
-                <div class="breakdown-row">
-                  <div class="breakdown-label">
-                    <lucide-icon [img]="DollarSign" [size]="18" class="icon"></lucide-icon>
-                    <span>Me deben de mis tarjetas:</span>
-                  </div>
-                  <span class="breakdown-amount positive">{{ formatCurrency(amountOwedToMe()) }}</span>
-                </div>
-                
-                <div class="breakdown-row">
-                  <div class="breakdown-label">
-                    <lucide-icon [img]="CreditCard" [size]="18" class="icon"></lucide-icon>
-                    <span>Debo de tarjetas de {{ finalSettlement()!.partnerName }}:</span>
-                  </div>
-                  <span class="breakdown-amount negative">{{ formatCurrency(amountIOwe()) }}</span>
-                </div>
-              </div>
 
-              <div class="final-settlement">
-                <div class="settlement-result">
-                  <span class="settlement-text">{{ finalSettlement()!.message }}</span>
-                  <span class="settlement-amount">{{ formatCurrency(finalSettlement()!.netDifference) }}</span>
-                </div>
-              </div>
+          @if (card.paymentStatus !== 'PAID') {
+            <div class="card-actions">
+              <button class="btn-mark-paid" (click)="markAsPaid(card, $event)">
+                <lucide-icon [img]="icons.CreditCard" [size]="16"></lucide-icon>
+                Marcar como Pagado
+              </button>
             </div>
           }
-
-          <!-- Grid de Tarjetas -->
-          <div class="cards-balances-grid">
-            @for (card of cardProportionalPayments(); track card.paymentMethodId) {
-              <div class="card-balance-item" [class.selected]="card.selected" [class]="'status-' + getProportionalCardStatus(card)">
-                <!-- Checkbox -->
-                <div class="card-checkbox-corner" style="margin-right: 4px;">
-                  <input 
-                    type="checkbox" 
-                    [id]="'card-checkbox-' + card.paymentMethodId"
-                    [checked]="card.selected"
-                    (change)="toggleCardSelection(card)"
-                    style="width: 18px; height: 18px; margin: 0;"
-                  />
-                </div>
-
-                <div class="card-header">
-                  <h3 class="bank-name" style="font-size: 1.05rem; margin: 0;">{{ getCardDisplayName(card) }}</h3>
-                  <span class="status-badge" [class]="getProportionalCardStatus(card)" style="font-size: 0.95rem; padding: 2px 8px; min-width: 70px; text-align: center;">
-                    {{ getProportionalCardStatusLabel(card) }}
-                  </span>
-                </div>
-
-                <div class="card-balance-details">
-                  <div class="balance-row total-due" style="font-size: 0.98rem;">
-                    <span class="label">Total a pagar:</span>
-                    <span class="value">{{ formatCurrency(card.totalDue) }}</span>
-                  </div>
-                  <div class="balance-row" style="font-size: 0.93rem;">
-                    <span class="label">Gastos del periodo:</span>
-                    <span class="value">{{ formatCurrency(card.currentBalance) }}</span>
-                  </div>
-                  <div class="balance-row" style="font-size: 0.93rem;">
-                    <span class="label">Cuotas MSI:</span>
-                    <span class="value">{{ formatCurrency(card.pendingInstallments) }}</span>
-                  </div>
-                </div>
-
-                <!-- Desglose por Usuario -->
-                <div class="user-shares-compact">
-                  <div class="shares-title" style="font-size: 0.93rem;">Distribución:</div>
-                  @for (share of card.userShares; track share.userId) {
-                    <div class="share-row" style="font-size: 0.93rem; padding: 0 2px;">
-                      <span class="share-user-name">{{ share.userName }} ({{ share.contributionPercentage }}%)</span>
-                      <span class="share-user-amount">{{ formatCurrency(share.amountToPay) }}</span>
-                    </div>
-                  }
-                </div>
-
-                <div class="card-dates">
-                  <div class="date-item">
-                    <lucide-icon [img]="Calendar" [size]="16" class="icon"></lucide-icon>
-                    <div class="date-info">
-                      <span class="date-label">Corte</span>
-                      <span class="date-value">{{ formatDate(card.cutDate) }}</span>
-                      <span class="days-until" [class.negative]="isDatePast(card.cutDate)">
-                        {{ getDaysUntilText(card.cutDate, 0) }}
-                      </span>
-                    </div>
-                  </div>
-                  <div class="date-item">
-                    <lucide-icon [img]="DollarSign" [size]="16" class="icon"></lucide-icon>
-                    <div class="date-info">
-                      <span class="date-label">Pago</span>
-                      <span class="date-value">{{ formatDate(card.paymentDate) }}</span>
-                      <span class="days-until" [class.negative]="isDatePast(card.paymentDate)">
-                        {{ getDaysUntilText(card.paymentDate, 0) }}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                @if (card.paymentStatus !== 'PAID') {
-                  <div class="card-actions">
-                    <button class="btn-mark-paid" (click)="markProportionalCardAsPaid(card)">
-                      ✓ Marcar como Pagado
-                    </button>
-                  </div>
-                }
-              </div>
-            }
-          </div>
-        }
-      </div>
-    }
+        </div>
+      }
+    </div>
   }
 </div>

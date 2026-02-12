@@ -5,6 +5,8 @@ import { PaymentMethodService } from '../../../../core/services/payment-method.s
 import { AuthService } from '../../../../core/services/auth.service';
 import { PaymentMethodFormComponent } from '../payment-method-form/payment-method-form.component';
 import { LucideAngularModule, Edit2 } from 'lucide-angular';
+import { Wallet } from 'lucide-angular';
+import { Trash2 } from 'lucide-angular';
 
 /**
  * PaymentMethodsTabComponent - Tab para gestionar métodos de pago (tarjetas)
@@ -18,6 +20,9 @@ import { LucideAngularModule, Edit2 } from 'lucide-angular';
 })
 export class PaymentMethodsTabComponent implements OnInit {
     readonly Edit2 = Edit2;
+    readonly Wallet = Wallet; // Added Wallet icon reference
+    readonly Trash2 = Trash2; // Added Trash2 icon reference
+
   // Field initializers - lugar válido para inject()
   private readonly paymentMethodService = inject(PaymentMethodService);
   private readonly authService = inject(AuthService);
