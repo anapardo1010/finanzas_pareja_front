@@ -4,8 +4,8 @@
   </div>
 
   <nav class="reports-submenu">
-    <button [class.active]="activeTab === 'cards'" (click)="activeTab = 'cards'">Saldos de Tarjetas</button>
-    <button [class.active]="activeTab === 'msi'" (click)="activeTab = 'msi'">MSI</button>
+    <button [class.active]="activeTab === 'cards'" (click)="activeTabWithLoad = 'cards'">Saldos de Tarjetas</button>
+    <button [class.active]="activeTab === 'msi'" (click)="activeTabWithLoad = 'msi'">MSI</button>
   </nav>
 
   <ng-container *ngIf="activeTab === 'cards'">
@@ -103,9 +103,66 @@
   </ng-container>
 
   <ng-container *ngIf="activeTab === 'msi'">
-    <div class="page-header">
-      <h2 class="page-title">MSI</h2>
+  <div class="page-header">
+    <div class="title-group">
+      <h2 class="page-title">Meses Sin Intereses</h2>
+      <p class="subtitle">Proyección de pagos para los próximos meses</p>
     </div>
-    <div class="msi-empty">(Próximamente)</div>
-  </ng-container>
+    <div class="header-actions">
+      <select class="select-months" (change)="onMonthsChange($event)">
+        <option value="3">Próximos 3 meses</option>
+        <option value="6">Próximos 6 meses</option>
+        <option value="12">1 año</option>
+      </select>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-state"><div class="spinner"></div></div>
+  } @else {
+    <div class="msi-summary-grid">
+      <div class="summary-box">
+        <span class="label">Total a pagar este mes</span>
+        <span class="value">{{ formatCurrency(totalMsiThisMonth()) }}</span>
+      </div>
+      <div class="summary-box">
+        <span class="label">Cuotas pendientes</span>
+        <span class="value">{{ msiInstallments().length }}</span>
+      </div>
+    </div>
+
+    <div class="msi-timeline">
+      @for (monthGroup of groupedMsi(); track monthGroup.monthName) {
+        <div class="msi-month-group">
+          <div class="month-divider">
+            <span class="month-name">{{ monthGroup.monthName }}</span>
+            <span class="month-total">{{ formatCurrency(monthGroup.total) }}</span>
+          </div>
+
+          <div class="msi-list">
+            @for (item of monthGroup.installments; track item.installmentId) {
+              <div class="msi-card">
+                <div class="msi-main-info">
+                  <div class="msi-desc">
+                    <span class="description">{{ item.transactionDescription }}</span>
+                    <span class="bank-tag">{{ item.paymentMethodName }}</span>
+                  </div>
+                  <div class="msi-badge">
+                    {{ item.installmentNumber }}/{{ item.totalInstallments }}
+                  </div>
+                </div>
+                <div class="msi-amount-info">
+                  <span class="amount">{{ formatCurrency(item.installmentAmount) }}</span>
+                  <span class="date">{{ formatDate(item.projectedDate) }}</span>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      } @empty {
+        <div class="msi-empty">No tienes cuotas MSI programadas para este periodo.</div>
+      }
+    </div>
+  }
+</ng-container>
 </div>

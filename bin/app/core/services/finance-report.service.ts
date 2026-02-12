@@ -142,11 +142,13 @@ export class FinanceReportService {
    * Obtener próximas cuotas MSI (Meses Sin Intereses)
    * GET /api/v1/finance-reports/tenant/{tenantId}/upcoming-installments
    */
-  getUpcomingInstallments(tenantId: number): Observable<InstallmentMSI[]> {
+  getUpcomingInstallments(tenantId: number, monthsAhead?: number): Observable<InstallmentMSI[]> {
+    let url = `${this.apiUrl}/tenant/${tenantId}/upcoming-installments`;
+    if (monthsAhead !== undefined) {
+      url += `?monthsAhead=${monthsAhead}`;
+    }
     return this.http
-      .get<ResponseModel<InstallmentMSI[]>>(
-        `${this.apiUrl}/tenant/${tenantId}/upcoming-installments`
-      )
+      .get<ResponseModel<InstallmentMSI[]>>(url)
       .pipe(map(response => response.data));
   }
 
