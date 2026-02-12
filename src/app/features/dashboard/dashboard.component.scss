@@ -1,531 +1,181 @@
-@use '../../../styles/variables' as *;
+// Variable agregada para evitar error de variable no definida
+$slate-500: #64748b;
+// Variables de contraste alto
+$slate-900: #0f172a; // Casi negro para textos principales
+$slate-700: #334155; // Gris oscuro para etiquetas
+$indigo-bold: #4338ca;
+$emerald-bold: #065f46;
+$rose-bold: #9f1239;
+$blue-bold: #0369a1;
 
-// Dashboard compacto y moderno
-.dashboard-compact {
-  padding: 16px;
-  max-width: 1400px;
+.dashboard-container {
+  padding: 32px;
+  max-width: 1200px;
   margin: 0 auto;
-  animation: fadeIn 0.3s ease;
+  background: #f8fafc;
 }
 
-// Header
 .dashboard-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 32px;
 
-  .dashboard-title {
-    font-size: 24px;
-    font-weight: 600;
-    color: $text-primary;
-    margin: 0 0 4px 0;
-  }
+  h1 { font-size: 32px; font-weight: 850; color: $slate-900; margin: 0; letter-spacing: -1px; }
+  .subtitle { color: $slate-700; font-size: 16px; font-weight: 500; margin-top: 4px; }
+}
 
-  .dashboard-date {
-    font-size: 14px;
-    color: $text-secondary;
-    margin: 0;
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+
+.bento-item {
+  background: white;
+  border-radius: 24px;
+  padding: 24px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+// Balance (Fondo Negro, Texto Blanco)
+.main-balance {
+  grid-column: span 2;
+  background: $slate-900 !important;
+  color: white;
+  .card-label { color: #94a3b8; font-weight: 700; text-transform: uppercase; font-size: 13px; }
+  .main-value { font-size: 52px; font-weight: 900; margin: 12px 0; color: #ffffff; }
+  .comparison {
+    display: inline-flex; align-items: center; gap: 8px; padding: 6px 16px; border-radius: 100px; font-size: 14px; font-weight: 800;
+    &.up { background: #064e3b; color: #6ee7b7; }
+    &.down { background: #4c0519; color: #fda4af; }
   }
 }
 
-// Loading/Empty states
-.loading-state,
-.empty-state {
-  text-align: center;
-  padding: 60px 20px;
+// Stat Cards: MÁXIMA LEGIBILIDAD
+.stat-card {
+  display: flex;
+  flex-direction: column; // Cambiado a columna para que el texto sea más grande
+  gap: 16px;
+  justify-content: center;
 
-  .spinner {
-    width: 40px;
-    height: 40px;
-    margin: 0 auto 20px;
-    border: 3px solid $border-primary;
-    border-top-color: $accent-purple;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
+  .icon-box {
+    width: 50px; height: 50px; border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
   }
 
-  lucide-icon {
-    color: $text-secondary;
-    margin-bottom: 16px;
+  .details {
+    display: flex; flex-direction: column;
+    .card-label { font-size: 14px; color: $slate-700; font-weight: 800; text-transform: uppercase; margin-bottom: 4px; }
+    .value { font-size: 24px; font-weight: 900; line-height: 1; }
   }
 
-  h3 {
-    font-size: 18px;
-    color: $text-primary;
-    margin: 0 0 8px 0;
+  &.income { 
+    background: #f0fdf4; border-color: #bbf7d0; 
+    .icon-box { background: $emerald-bold; color: white; }
+    .value { color: $emerald-bold; } 
   }
-
-  p {
-    font-size: 14px;
-    color: $text-secondary;
-    margin: 0 0 20px 0;
+  &.expense { 
+    background: #fff1f2; border-color: #fecaca; 
+    .icon-box { background: $rose-bold; color: white; }
+    .value { color: $rose-bold; } 
   }
-
-  .btn-primary {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 20px;
-    background: linear-gradient(135deg, $accent-purple 0%, #7c3aed 100%);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-
-    &:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(147, 51, 234, 0.3);
-    }
+  &.msi { 
+    background: #f0f9ff; border-color: #bae6fd; 
+    .icon-box { background: $blue-bold; color: white; }
+    .value { color: $blue-bold; } 
   }
 }
 
-// Mis Cuentas Section
-.accounts-section {
-  margin-bottom: 20px;
-  background: $surface-secondary;
-  border-radius: 12px;
-  padding: 16px;
-  border: 1px solid $border-primary;
+// Gráfica de Categorías
+// Versión Compacta de la Gráfica
+.categories-chart.compact {
+  grid-column: span 4;
+  padding: 20px 24px; // Reducido
 
-  .section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-
-    .section-title {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-
-      lucide-icon {
-        color: $accent-purple;
-      }
-
-      h2 {
-        font-size: 16px;
-        font-weight: 600;
-        color: $text-primary;
-        margin: 0;
-      }
-    }
-
-    .total-available {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 12px;
-      background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(22, 163, 74, 0.1) 100%);
-      border-radius: 8px;
-
-      .label {
-        font-size: 12px;
-        color: $text-secondary;
-        font-weight: 500;
-      }
-
-      .amount {
-        font-size: 16px;
-        font-weight: 700;
-        color: $accent-green;
-      }
-    }
+  h3 { 
+    font-size: 18px; // Un poco más pequeño
+    font-weight: 900; 
+    color: $slate-900; 
+    margin-bottom: 16px; 
   }
 
-  .accounts-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 12px;
-  }
-
-  .account-card {
-    background: white;
-    border-radius: 10px;
-    padding: 14px;
-    border: 2px solid $border-primary;
-    transition: all 0.2s ease;
+  .category-row-compact {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    margin-bottom: 8px; // Espacio mínimo entre filas
+    padding: 6px 10px;
+    background: #f8fafc;
+    border-radius: 10px;
+    border: 1px solid #f1f5f9;
 
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    }
-
-    &.cash {
-      border-left: 4px solid $accent-green;
-    }
-
-    &.debit {
-      border-left: 4px solid $accent-blue;
-    }
-
-    &.credit {
-      border-left: 4px solid $accent-purple;
-    }
-
-    .account-icon {
-      font-size: 28px;
-      margin-bottom: 4px;
-    }
-
-    .account-info {
+    .cat-data {
       display: flex;
-      flex-direction: column;
-      gap: 2px;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
 
-      .account-name {
-        font-size: 13px;
-        font-weight: 600;
-        color: $text-secondary;
-        text-transform: uppercase;
-        letter-spacing: 0.3px;
+      .cat-name { 
+        font-weight: 800; 
+        color: $slate-900; 
+        font-size: 13px; // Texto más denso
+        text-transform: uppercase; 
       }
-
-      .account-balance {
-        font-size: 22px;
-        font-weight: 700;
-        color: $text-primary;
-
-        &.negative {
-          color: $accent-red;
-        }
+      .cat-amount { 
+        font-weight: 900; 
+        color: $indigo-bold; 
+        font-size: 13px; 
       }
     }
 
-    .account-stats {
+    .progress-container {
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding-top: 8px;
-      border-top: 1px solid $border-primary;
+      gap: 10px;
 
-      .stat-item {
+      .progress-bg-mini {
+        flex: 1;
+        height: 6px; // Barra delgada para ahorrar espacio
+        background: #e2e8f0;
+        border-radius: 10px;
+        overflow: hidden;
+
+        .progress-fill {
+          height: 100%;
+          border-radius: 10px;
+          &.bar-color-0 { background: linear-gradient(90deg, #818cf8, #4f46e5); }
+          &.bar-color-1 { background: linear-gradient(90deg, #34d399, #10b981); }
+          &.bar-color-2 { background: linear-gradient(90deg, #fb7185, #f43f5e); }
+          &.bar-color-3 { background: linear-gradient(90deg, #fbbf24, #d97706); }
+        }
+      }
+
+      .cat-percent {
         font-size: 11px;
-        color: $text-secondary;
-        font-weight: 500;
+        font-weight: 800;
+        color: $slate-500;
+        width: 30px;
+        text-align: right;
       }
     }
   }
 }
 
-// Métricas principales
-.metrics-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 12px;
-  margin-bottom: 20px;
+// Ajuste para que el Bento Grid no se estire demasiado
+.bento-grid {
+  gap: 16px; // Reducido de 24px a 16px para compactar todo el dashboard
 }
 
-.metric-card {
-  background: $surface-secondary;
-  border-radius: 12px;
-  padding: 16px;
-  border: 1px solid $border-primary;
+.btn-primary {
+  background: $slate-900; color: white; border: none; padding: 14px 28px;
+  border-radius: 16px; font-weight: 800; font-size: 15px; cursor: pointer;
+  display: flex; align-items: center; gap: 10px;
   transition: all 0.2s ease;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  }
-
-  &.primary {
-    border-left: 3px solid $accent-purple;
-  }
-
-  &.success {
-    border-left: 3px solid $accent-green;
-  }
-
-  &.danger {
-    border-left: 3px solid $accent-red;
-  }
-
-  &.warning {
-    border-left: 3px solid $accent-orange;
-  }
+  &:hover { background: #000000; transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2); }
 }
 
-.metric-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
-
-  lucide-icon {
-    color: $text-secondary;
-  }
-
-  span {
-    font-size: 13px;
-    font-weight: 600;
-    color: $text-secondary;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-}
-
-.metric-value {
-  font-size: 28px;
-  font-weight: 700;
-  color: $text-primary;
-  margin-bottom: 8px;
-  line-height: 1;
-}
-
-.metric-footer {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-
-  .metric-change {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-weight: 600;
-    padding: 2px 8px;
-    border-radius: 6px;
-
-    &.positive {
-      color: $accent-green;
-      background: rgba($accent-green, 0.1);
-
-      lucide-icon {
-        color: $accent-green;
-      }
-    }
-
-    &.negative {
-      color: $accent-red;
-      background: rgba($accent-red, 0.1);
-
-      lucide-icon {
-        color: $accent-red;
-      }
-    }
-  }
-
-  .metric-label {
-    color: $text-secondary;
-  }
-}
-
-// Sección de categorías
-.categories-section {
-  background: $surface-secondary;
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 20px;
-  border: 1px solid $border-primary;
-}
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-
-  .section-title {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-
-    lucide-icon {
-      color: $accent-purple;
-    }
-
-    h2 {
-      font-size: 16px;
-      font-weight: 600;
-      color: $text-primary;
-      margin: 0;
-    }
-  }
-
-  .btn-link {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 12px;
-    background: transparent;
-    border: 1px solid $border-primary;
-    border-radius: 6px;
-    color: $text-primary;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-
-    lucide-icon {
-      color: $text-secondary;
-    }
-
-    &:hover {
-      background: $surface-tertiary;
-      border-color: $accent-purple;
-
-      lucide-icon {
-        color: $accent-purple;
-      }
-    }
-  }
-}
-
-// Gráfico de categorías
-.categories-chart {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.category-bar {
-  display: grid;
-  grid-template-columns: minmax(150px, 200px) 1fr 60px;
-  align-items: center;
-  gap: 16px;
-}
-
-.category-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-
-  .category-name {
-    font-size: 14px;
-    font-weight: 600;
-    color: $text-primary;
-  }
-
-  .category-amount {
-    font-size: 13px;
-    font-weight: 600;
-    color: $text-secondary;
-  }
-}
-
-.category-bar-container {
-  width: 100%;
-  height: 10px;
-  background: rgba(0, 0, 0, 0.06);
-  border-radius: 5px;
-  overflow: hidden;
-}
-
-.category-bar-fill {
-  height: 100%;
-  border-radius: 4px;
-  transition: width 0.3s ease;
-
-  &.bar-1 {
-    background: linear-gradient(90deg, $accent-purple 0%, #9f67ea 100%);
-  }
-
-  &.bar-2 {
-    background: linear-gradient(90deg, $accent-blue 0%, #3b82f6 100%);
-  }
-
-  &.bar-3 {
-    background: linear-gradient(90deg, $accent-teal 0%, #14b8a6 100%);
-  }
-}
-
-.category-percentage {
-  font-size: 13px;
-  font-weight: 600;
-  color: $text-secondary;
-  text-align: right;
-}
-
-// Acciones rápidas
-.quick-actions {
-  background: $surface-secondary;
-  border-radius: 12px;
-  padding: 20px;
-  border: 1px solid $border-primary;
-}
-
-.actions-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 10px;
-}
-
-.action-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  background: white;
-  border: 1px solid $border-primary;
-  border-radius: 8px;
-  color: $text-primary;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  lucide-icon {
-    color: $text-secondary;
-  }
-
-  &:hover {
-    background: $surface-tertiary;
-    border-color: $accent-purple;
-    transform: translateY(-1px);
-
-    lucide-icon {
-      color: $accent-purple;
-    }
-  }
-}
-
-// Animations
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-// Responsive
-@media (max-width: 768px) {
-  .dashboard-compact {
-    padding: 12px;
-  }
-
-  .metrics-row {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .metric-value {
-    font-size: 22px;
-  }
-
-  .category-bar {
-    grid-template-columns: 1fr auto;
-
-    .category-percentage {
-      display: none;
-    }
-  }
-
-  .actions-grid {
-    grid-template-columns: 1fr;
-  }
+@media (max-width: 1024px) {
+  .bento-grid { grid-template-columns: repeat(2, 1fr); }
+  .main-balance, .categories-chart { grid-column: span 2; }
 }
