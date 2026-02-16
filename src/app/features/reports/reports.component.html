@@ -5,8 +5,92 @@
 
   <nav class="reports-submenu">
     <button [class.active]="activeTab === 'cards'" (click)="activeTabWithLoad = 'cards'">Saldos de Tarjetas</button>
+    <button [class.active]="activeTab === 'debit'" (click)="activeTabWithLoad = 'debit'">Débito y Efectivo</button>
     <button [class.active]="activeTab === 'msi'" (click)="activeTabWithLoad = 'msi'">MSI</button>
   </nav>
+
+  <ng-container *ngIf="activeTab === 'debit'">
+    <div class="tab-header">
+      <div class="title-group">
+        <h2 class="tab-title">Débito y Efectivo</h2>
+        <p class="subtitle">Saldos disponibles y reparto proporcional por usuario</p>
+      </div>
+      <!-- Refresh removed: date range auto-applies -->
+    </div>
+
+    <div class="filters-container transactions-style">
+      <div class="filter-group">
+        <label for="debitStart">Desde</label>
+        <input id="debitStart" type="date" [(ngModel)]="filterStartDate" (change)="loadDebitBalances()" class="filter-input" />
+      </div>
+      <div class="filter-group">
+        <label for="debitEnd">Hasta</label>
+        <input id="debitEnd" type="date" [(ngModel)]="filterEndDate" (change)="loadDebitBalances()" class="filter-input" />
+      </div>
+    </div>
+
+    @if (loading()) {
+      <div class="loading-state"><div class="spinner"></div></div>
+    } @else {
+      <div class="debit-grid">
+        @for (balance of getDebitDebts(); track balance.paymentMethodId) {
+          <div class="debit-card" [class.is-cash]="balance.accountType === 'CASH'">
+            <div class="debit-card-header">
+              <div class="icon-circle">
+                <lucide-icon [img]="balance.accountType === 'CASH' ? icons.DollarSign : icons.Wallet" [size]="20"></lucide-icon>
+              </div>
+              <span class="account-type-tag">{{ balance.accountType }}</span>
+            </div>
+            
+            <div class="debit-card-body">
+              <h3 class="account-name">{{ balance.alias || balance.paymentMethodName || 'Efectivo' }}</h3>
+              <p class="account-alias">{{ balance.paymentMethodName || '' }}</p>
+              <div class="balance-display">
+                <div class="balance-amount">
+                  <span class="currency-symbol">$</span>
+                  <span class="amount-value">{{ (balance.balance ?? balance.currentBalance ?? 0) | number:'1.0-0' }}</span>
+                </div>
+              </div>
+
+              <div class="user-shares-compact">
+                <div class="shares-title">Reparto por usuario · {{ balance.transactionCount }} trans.</div>
+                @for (share of getDebtors(balance); track share.userId) {
+                  <div class="share-row">
+                    <div class="share-left">
+                      <div class="user-avatar-small">{{ share.userName.charAt(0) }}</div>
+                      <div class="share-user">{{ share.userName }}</div>
+                    </div>
+                    <div class="share-right">
+                      <div class="share-label">A pagar</div>
+                      <div class="share-amount">{{ formatCurrency(share.amountToPay) }}</div>
+                    </div>
+                  </div>
+                } @if (getDebtors(balance).length === 0) {
+                  <div class="no-debtors">Nadie debe en este periodo</div>
+                }
+              </div>
+            </div>
+
+            <div class="debit-card-footer">
+              <div class="user-info">
+                <div class="user-avatar">{{ (balance.alias || balance.paymentMethodName || 'E').charAt(0) }}</div>
+                <div>
+                  <div class="user-name">Titular: <strong>{{ getOwnerName(balance) }}</strong> · {{ balance.transactionCount }} trans.</div>
+                  @if (getDebtors(balance).length > 0) {
+                    <div class="owner-summary">De estas transacciones, <strong>{{ getDebtors(balance).length }}</strong> debe(n) <strong>{{ formatCurrency(getTotalOwed(balance)) }}</strong></div>
+                  } @else {
+                    <div class="owner-summary">No hay deudores en este periodo</div>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+        } @empty {
+          <div class="msi-empty">No se encontraron cuentas de débito o efectivo.</div>
+        }
+      </div>
+    }
+  </ng-container>
 
   <ng-container *ngIf="activeTab === 'cards'">
     <div class="page-header">

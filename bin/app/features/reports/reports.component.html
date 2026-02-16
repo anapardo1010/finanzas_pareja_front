@@ -5,8 +5,79 @@
 
   <nav class="reports-submenu">
     <button [class.active]="activeTab === 'cards'" (click)="activeTabWithLoad = 'cards'">Saldos de Tarjetas</button>
+    <button [class.active]="activeTab === 'debit'" (click)="activeTabWithLoad = 'debit'">Débito y Efectivo</button>
     <button [class.active]="activeTab === 'msi'" (click)="activeTabWithLoad = 'msi'">MSI</button>
   </nav>
+
+  <ng-container *ngIf="activeTab === 'debit'">
+    <div class="tab-header">
+      <div class="title-group">
+        <h2 class="tab-title">Débito y Efectivo</h2>
+        <p class="subtitle">Saldos disponibles en cuentas y efectivo</p>
+      </div>
+      <button class="btn-refresh" (click)="loadDebitBalances()" [disabled]="loading()">
+        <lucide-icon [img]="icons.Wallet" [size]="18"></lucide-icon>
+        Actualizar
+      </button>
+    </div>
+
+    <div class="filters-container">
+      <div class="filter-box">
+        <lucide-icon [img]="icons.BarChart3" [size]="16"></lucide-icon>
+        <select [(ngModel)]="filterDebitUser">
+          <option value="">Todos los miembros</option>
+          @for (user of users(); track user.id) {
+            <option [value]="user.id">{{ user.name }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="filter-box">
+        <lucide-icon [img]="icons.Wallet" [size]="16"></lucide-icon>
+        <select [(ngModel)]="filterDebitAccount">
+          <option value="">Todas las cuentas</option>
+          @for (acc of debitAccounts(); track acc.id) {
+            <option [value]="acc.id">{{ acc.name }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <div class="loading-state"><div class="spinner"></div></div>
+    } @else {
+      <div class="debit-grid">
+        @for (balance of getDebitDebts(); track balance.paymentMethodId) {
+          <div class="debit-card" [class.is-cash]="balance.accountType === 'CASH'">
+            <div class="debit-card-header">
+              <div class="icon-circle">
+                <lucide-icon [img]="balance.accountType === 'CASH' ? icons.DollarSign : icons.Wallet" [size]="20"></lucide-icon>
+              </div>
+              <span class="account-type-tag">{{ balance.accountType }}</span>
+            </div>
+            
+            <div class="debit-card-body">
+              <h3 class="account-name">{{ balance.bankName || 'Efectivo' }}</h3>
+              <p class="account-alias">{{ balance.alias }}</p>
+              <div class="balance-display">
+                <span class="currency-symbol">$</span>
+                <span class="amount-value">{{ balance.currentBalance.toLocaleString('es-MX') }}</span>
+              </div>
+            </div>
+
+            <div class="debit-card-footer">
+              <div class="user-info">
+                <div class="user-avatar">{{ balance.userName.charAt(0) }}</div>
+                <span class="user-name">{{ balance.userName }}</span>
+              </div>
+            </div>
+          </div>
+        } @empty {
+          <div class="msi-empty">No se encontraron cuentas de débito o efectivo.</div>
+        }
+      </div>
+    }
+  </ng-container>
 
   <ng-container *ngIf="activeTab === 'cards'">
     <div class="page-header">

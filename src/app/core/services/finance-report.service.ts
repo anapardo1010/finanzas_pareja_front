@@ -216,6 +216,23 @@ export class FinanceReportService {
       )
       .pipe(map(response => response.data));
   }
+
+  /**
+   * Obtener pagos proporcionales para métodos NO-crediticios (débito, efectivo, cuentas)
+   * GET /api/v1/finance-reports/tenant/{tenantId}/non-credit-proportional-payments
+   */
+  getNonCreditProportionalPayments(tenantId: number, startDate?: string, endDate?: string): Observable<import("../models").NonCreditProportionalPayment[]> {
+    let httpParams = new HttpParams();
+    if (startDate) httpParams = httpParams.set('startDate', startDate);
+    if (endDate) httpParams = httpParams.set('endDate', endDate);
+
+    return this.http
+      .get<ResponseModel<import("../models").NonCreditProportionalPayment[]>>(
+        `${this.apiUrl}/tenant/${tenantId}/non-credit-proportional-payments`,
+        { params: httpParams }
+      )
+      .pipe(map(response => response.data));
+  }
 }
 export type { FinancialSummary };
 

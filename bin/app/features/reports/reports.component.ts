@@ -11,6 +11,7 @@ export interface UpcomingInstallment {
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { LucideAngularModule, BarChart3, DollarSign, Calendar, CreditCard } from 'lucide-angular';
+import { FormsModule } from '@angular/forms';
 import { CreditCardProportionalPayment } from '../../core/models';
 import { FinanceReportService } from '../../core/services/finance-report.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -18,11 +19,60 @@ import { AuthService } from '../../core/services/auth.service';
 @Component({
   selector: 'app-reports',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule],
+  imports: [CommonModule, LucideAngularModule, FormsModule],
   templateUrl: './reports.component.html',
   styleUrl: './reports.component.scss'
 })
 export class ReportsComponent implements OnInit {
+        // Filtros para Débito y Efectivo
+        filterDebitUser = '';
+        filterDebitAccount = '';
+        users = signal<any[]>([]); // Usuarios para los filtros
+        debitBalances = signal<any[]>([]); // Aquí se guardan los saldos/deudas
+        loading = signal(false);
+        readonly icons = { CreditCard, BarChart3, DollarSign, Calendar, Wallet: DollarSign };
+
+        // Cargar saldos de débito y efectivo
+        loadDebitBalances() {
+          const tenantId = this.authService.getTenantId();
+          if (!tenantId) return;
+          this.loading.set(true);
+          this.financeService.getBalanceByPaymentMethod(tenantId).subscribe({
+            next: (balances) => {
+              // Filtrar solo cuentas de débito y efectivo
+              const filtered = (balances ?? []).filter(b => b.accountType === 'DEBIT' || b.accountType === 'CASH');
+              this.debitBalances.set(filtered);
+              // Poblar usuarios y cuentas para los selects
+              this.loadUsers();
+              this.debitAccounts.set(filtered.map(b => ({ id: b.paymentMethodId, name: b.alias || b.paymentMethodName || (b.accountType === 'CASH' ? 'Efectivo' : 'Cuenta') })));
+              this.loading.set(false);
+            },
+            error: () => this.loading.set(false)
+          });
+        }
+
+        // Cálculo de deudas entre personas (estructura inicial)
+        getDebitDebts() {
+          // Filtrado dinámico por usuario y cuenta
+          return this.debitBalances().filter(b => {
+            const matchUser = !this.filterDebitUser || b.userId === +this.filterDebitUser;
+            const matchAccount = !this.filterDebitAccount || b.paymentMethodId === +this.filterDebitAccount;
+            return matchUser && matchAccount;
+          });
+        }
+
+        loadUsers() {
+          // Extrae usuarios desde los balances de débito/efectivo (fallback local)
+          const all = this.debitBalances() || [];
+          const map: Record<number, any> = {};
+          all.forEach(x => {
+            if (x.userId && x.userName && !map[x.userId]) map[x.userId] = { id: x.userId, name: x.userName };
+          });
+          this.users.set(Object.values(map));
+        }
+
+        // Lista de cuentas para el select (paymentMethodId + alias)
+        debitAccounts = signal<{ id: number; name: string }[]>([]);
       // MSI signals y computed
       msiInstallments = signal<UpcomingInstallment[]>([]);
       monthsToProject = signal(3);
@@ -84,14 +134,14 @@ export class ReportsComponent implements OnInit {
         this.monthsToProject.set(Number(event.target.value));
         this.loadMsi();
       }
-    activeTab: 'cards' | 'msi' = 'cards';
+    activeTab: 'cards' | 'msi' | 'debit' = 'cards';
   private readonly financeService = inject(FinanceReportService);
   private readonly authService = inject(AuthService);
 
-  readonly icons = { BarChart3, DollarSign, Calendar, CreditCard };
+  // Eliminado duplicado, icons ya está declarado arriba con Wallet incluido
 
   cards = signal<CreditCardProportionalPayment[]>([]);
-  loading = signal(false);
+  // loading ya está declarado más abajo, no duplicar
 
   selectedCards = computed(() => this.cards().filter(c => c.selected));
 
@@ -126,16 +176,20 @@ export class ReportsComponent implements OnInit {
 
   ngOnInit() {
     this.loadCards();
+    this.loadUsers();
     if (this.activeTab === 'msi') {
       this.loadMsi();
     }
   }
 
-  // Detectar cambio de submenú y cargar MSI si es necesario
-  set activeTabWithLoad(tab: 'cards' | 'msi') {
+  // Detectar cambio de submenú y cargar datos según pestaña
+  set activeTabWithLoad(tab: 'cards' | 'msi' | 'debit') {
     this.activeTab = tab;
-    if (tab === 'msi') {
-      this.loadMsi();
+    if (tab === 'msi') this.loadMsi();
+    if (tab === 'debit') {
+      this.loadDebitBalances();
+      // cargar usuarios después de obtener balances (pequeño retardo para asegurar datos)
+      setTimeout(() => this.loadUsers(), 250);
     }
   }
 
@@ -145,7 +199,8 @@ export class ReportsComponent implements OnInit {
     this.loading.set(true);
     this.financeService.getCreditCardProportionalPayments(tenantId).subscribe({
       next: (val) => {
-        this.cards.set(val.map(c => ({ ...c, selected: false })));
+        const items = val ?? [];
+        this.cards.set(items.map(c => ({ ...c, selected: false })));
         this.loading.set(false);
       },
       error: () => this.loading.set(false)

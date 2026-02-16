@@ -172,3 +172,20 @@ export interface CreditCardProportionalPayment {
   selected?: boolean; // Para el checkbox en el UI
   alias?: string;
 }
+
+/**
+ * Pagos proporcionales para métodos NO-crediticios (débito, efectivo, cuentas)
+ * Respuesta de: GET /api/v1/finance-reports/tenant/{tenantId}/non-credit-proportional-payments
+ */
+export interface NonCreditProportionalPayment {
+  paymentMethodId: number;
+  userId?: number;
+  alias?: string;
+  bankName?: string;
+  accountType: 'DEBIT' | 'CASH' | 'OTHER';
+  rangeStart?: string;
+  rangeEnd?: string;
+  currentBalance: number;
+  transactionCount: number;
+  userShares: UserShare[];
+}
