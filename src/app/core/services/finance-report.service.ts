@@ -233,6 +233,22 @@ export class FinanceReportService {
       )
       .pipe(map(response => response.data));
   }
+
+    /**
+   * Obtener balances mensuales de varios meses
+   * GET /api/v1/finance-reports/tenant/{tenantId}/monthly-balances
+   */
+  getMonthlyBalances(tenantId: number, months: number = 6, mode: 'accrual' | 'cash' = 'accrual'): Observable<MonthlyBalance[]> {
+    let httpParams = new HttpParams();
+    httpParams = httpParams.set('months', months.toString());
+    httpParams = httpParams.set('mode', mode);
+    return this.http
+      .get<ResponseModel<MonthlyBalance[]>>(
+        `${this.apiUrl}/tenant/${tenantId}/monthly-balances`,
+        { params: httpParams }
+      )
+      .pipe(map(response => response.data));
+  }
 }
 export type { FinancialSummary };
 

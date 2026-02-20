@@ -5,12 +5,23 @@ import { AuthService } from '../../core/services/auth.service';
 import { FinanceReportService } from '../../core/services/finance-report.service';
 import { TransactionService } from '../../core/services/transaction.service';
 import { CategoryService } from '../../core/services/category.service';
-import { 
-  LucideAngularModule, TrendingUp, TrendingDown, Wallet, 
-  CreditCard, PieChart, AlertCircle, Plus, ArrowRight, 
-  Tag, CheckCircle2, Calendar
+import {
+  LucideAngularModule, TrendingUp, TrendingDown,
+  CreditCard, PieChart, Plus, Tag, Calendar
 } from 'lucide-angular';
-import { Transaction, MonthlyBalance, InstallmentMSI, Category, PaymentMethodBalance } from '../../core/models';
+import { Transaction, InstallmentMSI, Category, PaymentMethodBalance } from '../../core/models';
+import Chart from 'chart.js/auto';
+
+// Interfaz local que refleja exactamente el JSON del backend
+interface MonthlyBalanceItem {
+  tenantId:                number;
+  yearMonth:               string;
+  totalIncome:             number;
+  totalExpenses:           number;
+  netBalance:              number;
+  incomeTransactionCount:  number;
+  expenseTransactionCount: number;
+}
 
 @Component({
   selector: 'app-dashboard',
@@ -20,55 +31,44 @@ import { Transaction, MonthlyBalance, InstallmentMSI, Category, PaymentMethodBal
   styleUrl: './dashboard.component.scss'
 })
 export class DashboardComponent implements OnInit {
-    getUpcomingInstallmentsSum(): number {
-      return this.upcomingInstallments().reduce((sum, i) => sum + i.amount, 0);
-    }
-  private readonly authService = inject(AuthService);
+
+  private readonly authService          = inject(AuthService);
   private readonly financeReportService = inject(FinanceReportService);
-  private readonly transactionService = inject(TransactionService);
-  private readonly categoryService = inject(CategoryService);
-  private readonly router = inject(Router);
+  private readonly transactionService   = inject(TransactionService);
+  private readonly categoryService      = inject(CategoryService);
+  private readonly router               = inject(Router);
 
-  // Iconos
-  readonly icons = { TrendingUp, TrendingDown, Wallet, CreditCard, PieChart, AlertCircle, Plus, ArrowRight, Tag, CheckCircle2, Calendar };
+  readonly icons = { TrendingUp, TrendingDown, CreditCard, PieChart, Plus, Tag, Calendar };
 
-  // Signals de Datos
-  loading = signal(false);
-  userName = signal('Usuario');
-  transactions = signal<Transaction[]>([]);
-  monthlyBalances = signal<MonthlyBalance[]>([]);
-  upcomingInstallments = signal<InstallmentMSI[]>([]);
-  categories = signal<Category[]>([]);
+  readonly today = new Date().toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' });
+
+  // ── Signals ────────────────────────────────────────────────────────────────
+  loading               = signal(false);
+  userName              = signal('Usuario');
+  transactions          = signal<Transaction[]>([]);
+  monthlyBalances       = signal<MonthlyBalanceItem[]>([]);
+  upcomingInstallments  = signal<InstallmentMSI[]>([]);
+  categories            = signal<Category[]>([]);
   paymentMethodBalances = signal<PaymentMethodBalance[]>([]);
 
-  // Computed: Onboarding Status
-  onboardingSteps = computed(() => [
-    { label: 'Tarjetas', icon: this.icons.CreditCard, done: this.paymentMethodBalances().length > 0, route: '/main/settings' },
-    { label: 'Categorías', icon: this.icons.Tag, done: this.categories().length > 0, route: '/main/settings/categories' },
-    { label: 'Primer Gasto', icon: this.icons.Plus, done: this.transactions().length > 0, route: '/main/transactions' },
-    { label: 'Reportes', icon: this.icons.PieChart, done: this.transactions().length > 5, route: '/main/reports' }
-  ]);
+  private chartRef: Chart | null = null;
 
-  showOnboarding = computed(() => !this.onboardingSteps().every(step => step.done));
-
-  // Computed: Resumen Financiero
+  // ── Computed ───────────────────────────────────────────────────────────────
   summary = computed(() => {
-    const txs = this.transactions();
-    const income = txs.filter(t => t.transactionType === 'INCOME').reduce((s, t) => s + t.amount, 0);
+    const txs     = this.transactions();
+    const income  = txs.filter(t => t.transactionType === 'INCOME').reduce((s, t) => s + t.amount, 0);
     const expense = txs.filter(t => t.transactionType === 'EXPENSE').reduce((s, t) => s + t.amount, 0);
     return { income, expense, net: income - expense };
   });
 
-  // Computed: Top Categorías con lógica de colores
   topCategories = computed(() => {
-    const txs = this.transactions().filter(t => t.transactionType === 'EXPENSE');
+    const txs   = this.transactions().filter(t => t.transactionType === 'EXPENSE');
     const total = this.summary().expense;
     if (total === 0) return [];
 
     const groups = txs.reduce((acc, t) => {
-      const cat = this.categories().find(c => c.id === t.categoryId);
-      const name = cat?.name || 'Otros';
-      acc[name] = (acc[name] || 0) + t.amount;
+      const name = this.categories().find(c => c.id === t.categoryId)?.name ?? 'Otros';
+      acc[name] = (acc[name] ?? 0) + t.amount;
       return acc;
     }, {} as Record<string, number>);
 
@@ -78,51 +78,103 @@ export class DashboardComponent implements OnInit {
       .slice(0, 10);
   });
 
-  // Computed: Comparativa Mes Anterior
+  // Fix: usa netBalance (campo real del backend) en lugar de balance
   comparison = computed(() => {
     const balances = this.monthlyBalances();
-    const current = balances[balances.length - 1]?.balance || 0;
-    const previous = balances[balances.length - 2]?.balance || 0;
-    const diff = current - previous;
-    const percent = previous !== 0 ? (diff / Math.abs(previous)) * 100 : 0;
+    const current  = balances[balances.length - 1]?.netBalance ?? 0;
+    const previous = balances[balances.length - 2]?.netBalance ?? 0;
+    const diff     = current - previous;
+    const percent  = previous !== 0 ? (diff / Math.abs(previous)) * 100 : 0;
     return { current, percent, isPositive: diff >= 0 };
   });
 
+  // ── Lifecycle ──────────────────────────────────────────────────────────────
   ngOnInit(): void {
-    this.userName.set(this.authService.currentUser()?.name || 'Usuario');
+    this.userName.set(this.authService.currentUser()?.name ?? 'Usuario');
     this.loadData();
   }
 
-  async loadData() {
+  async loadData(): Promise<void> {
     const tenantId = this.authService.getTenantId();
     if (!tenantId) return;
 
     this.loading.set(true);
-    const now = new Date();
+    const now        = new Date();
     const startMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-    const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().split('T')[0];
-    const today = now.toISOString().split('T')[0];
+    const today      = now.toISOString().split('T')[0];
 
     try {
       const [txs, balances, installments, cats, methodBalances] = await Promise.all([
         this.transactionService.getTransactionsByDateRange(tenantId, startMonth, today).toPromise(),
-        this.financeReportService.getMonthlyBalance(tenantId, prevMonth, today, 'accrual').toPromise(),
+        this.financeReportService.getMonthlyBalances(tenantId, 6, 'accrual').toPromise(),
         this.financeReportService.getUpcomingInstallments(tenantId).toPromise(),
         this.categoryService.getByTenant(tenantId, 0, 100).toPromise(),
-        this.financeReportService.getBalanceByPaymentMethod(tenantId, now.getFullYear(), now.getMonth() + 1).toPromise()
+        this.financeReportService.getBalanceByPaymentMethod(tenantId, now.getFullYear(), now.getMonth() + 1).toPromise(),
       ]);
 
-      this.transactions.set(txs || []);
-      this.monthlyBalances.set(balances || []);
-      this.upcomingInstallments.set(installments || []);
-      this.categories.set(cats?.content || []);
-      this.paymentMethodBalances.set(methodBalances || []);
+      this.transactions.set(txs ?? []);
+      this.monthlyBalances.set((balances as unknown as MonthlyBalanceItem[]) ?? []);
+
+      this.upcomingInstallments.set(installments ?? []);
+      this.categories.set(cats?.content ?? []);
+      this.paymentMethodBalances.set(methodBalances ?? []);
+
+      setTimeout(() => this.renderBalanceChart(), 0);
     } catch (e) {
-      console.error(e);
+      console.error('Error cargando dashboard:', e);
     } finally {
       this.loading.set(false);
     }
   }
 
-  navigateTo(path: string) { this.router.navigate([path]); }
+  renderBalanceChart(): void {
+    const balances = this.monthlyBalances();
+    if (!balances.length) return;
+
+    const ctx = document.getElementById('balanceChart') as HTMLCanvasElement;
+    if (!ctx) return;
+
+    // Fix: campos directos del backend, sin (b as any)
+    const labels = balances.map(b => b.yearMonth);
+    const data   = balances.map(b => b.netBalance);
+
+    if (this.chartRef) this.chartRef.destroy();
+
+    this.chartRef = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          data,
+          backgroundColor: data.map(v => v >= 0 ? 'rgba(255,255,255,0.15)' : 'rgba(253,164,175,0.3)'),
+          borderColor:     data.map(v => v >= 0 ? 'rgba(255,255,255,0.5)' : '#fda4af'),
+          borderWidth: 1.5,
+          borderRadius: 4,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#1c2030',
+            borderColor: 'rgba(255,255,255,0.07)',
+            borderWidth: 1,
+            titleColor: '#64748b',
+            bodyColor: '#f1f5f9',
+            callbacks: {
+              label: ctx => `$${(ctx.parsed.y ?? 0).toLocaleString('es-MX')}`
+            }
+          }
+        },
+        scales: {
+          x: { display: false },
+          y: { display: false, grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  navigateTo(path: string): void { this.router.navigate([path]); }
 }
