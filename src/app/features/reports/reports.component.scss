@@ -266,6 +266,150 @@ $accent-blue: #2563eb;
       &:hover { background: #1d4ed8; }
     }
   }
+
+  // ── Expand detail toggle & section ──────────────────────────────────
+  .card-detail-toggle {
+    margin-top: 12px;
+    .btn-detail-toggle {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 12px;
+      background: transparent;
+      border: 1px dashed $border-color;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      color: $text-secondary;
+      cursor: pointer;
+      transition: all 0.2s;
+      &:hover {
+        background: #f8fafc;
+        border-color: $accent-blue;
+        color: $accent-blue;
+      }
+    }
+  }
+
+  .card-detail-expanded {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid $border-color;
+
+    .detail-loading {
+      display: flex;
+      justify-content: center;
+      padding: 16px 0;
+    }
+
+    .detail-empty {
+      text-align: center;
+      color: $text-secondary;
+      font-size: 13px;
+      padding: 12px 0;
+    }
+
+    .detail-header {
+      margin-bottom: 10px;
+      .detail-count {
+        font-size: 12px;
+        font-weight: 700;
+        color: $text-secondary;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+    }
+
+    .detail-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 320px;
+      overflow-y: auto;
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 8px 10px;
+      background: #f8fafc;
+      border-radius: 8px;
+      border: 1px solid #f1f5f9;
+      transition: border-color 0.15s;
+      &:hover { border-color: $border-color; }
+    }
+
+    .detail-left {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .detail-desc {
+      font-size: 13px;
+      font-weight: 600;
+      color: $text-primary;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .detail-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .detail-date {
+      font-size: 11px;
+      color: $text-secondary;
+      font-weight: 500;
+    }
+
+    .tag {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .tag-msi {
+      background: #ede9fe;
+      color: #6d28d9;
+    }
+    .tag-shared {
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+    .tag-payment {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .detail-amount {
+      font-size: 13px;
+      font-weight: 700;
+      color: #991b1b;
+      white-space: nowrap;
+      margin-left: 8px;
+      &.is-payment { color: #166534; }
+    }
+  }
+}
+
+.spinner-sm {
+  width: 24px; height: 24px;
+  border: 3px solid #f3f4f6;
+  border-top-color: $accent-blue;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
 }
 
 .status-badge {

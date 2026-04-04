@@ -180,6 +180,55 @@
                 </button>
               </div>
             }
+
+            <!-- Botón ver detalle de cargos -->
+            <div class="card-detail-toggle">
+              <button class="btn-detail-toggle" (click)="toggleCardDetail(card, $event)">
+                <lucide-icon [img]="isCardExpanded(card.paymentMethodId) ? icons.ChevronUp : icons.ChevronDown" [size]="16"></lucide-icon>
+                {{ isCardExpanded(card.paymentMethodId) ? 'Ocultar cargos' : 'Ver cargos del corte' }}
+              </button>
+            </div>
+
+            <!-- Detalle expandido -->
+            @if (isCardExpanded(card.paymentMethodId)) {
+              <div class="card-detail-expanded">
+                @if (isCardDetailLoading(card.paymentMethodId)) {
+                  <div class="detail-loading"><div class="spinner-sm"></div></div>
+                } @else {
+                  @if (getCardTransactions(card.paymentMethodId).length === 0) {
+                    <p class="detail-empty">No se encontraron cargos en este corte.</p>
+                  } @else {
+                    <div class="detail-header">
+                      <span class="detail-count">{{ getCardTransactions(card.paymentMethodId).length }} cargos</span>
+                    </div>
+                    <div class="detail-list">
+                      @for (tx of getCardTransactions(card.paymentMethodId); track tx.id) {
+                        <div class="detail-row">
+                          <div class="detail-left">
+                            <span class="detail-desc">{{ tx.description }}</span>
+                            <div class="detail-tags">
+                              <span class="detail-date">{{ formatDate(tx.date) }}</span>
+                              @if (tx.hasInstallments) {
+                                <span class="tag tag-msi">MSI · {{ tx.totalInstallments }} meses</span>
+                              }
+                              @if (tx.isShared) {
+                                <span class="tag tag-shared">Compartido</span>
+                              }
+                              @if (tx.transactionType === 'CREDIT_PAYMENT') {
+                                <span class="tag tag-payment">Pago a TDC</span>
+                              }
+                            </div>
+                          </div>
+                          <span class="detail-amount" [class.is-payment]="tx.transactionType === 'CREDIT_PAYMENT' || tx.transactionType === 'INCOME'">
+                            {{ tx.transactionType === 'CREDIT_PAYMENT' || tx.transactionType === 'INCOME' ? '+' : '-' }}{{ formatCurrency(tx.amount) }}
+                          </span>
+                        </div>
+                      }
+                    </div>
+                  }
+                }
+              </div>
+            }
           </div>
         }
       </div>

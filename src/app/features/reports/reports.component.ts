@@ -10,12 +10,13 @@ export interface UpcomingInstallment {
 }
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { LucideAngularModule, BarChart3, DollarSign, Calendar, CreditCard } from 'lucide-angular';
+import { LucideAngularModule, BarChart3, DollarSign, Calendar, CreditCard, ChevronDown, ChevronUp } from 'lucide-angular';
 import { FormsModule } from '@angular/forms';
-import { CreditCardProportionalPayment } from '../../core/models';
+import { CreditCardProportionalPayment, Transaction } from '../../core/models';
 import { FinanceReportService } from '../../core/services/finance-report.service';
 import { AuthService } from '../../core/services/auth.service';
 import { UserService } from '../../core/services/user.service';
+import { TransactionService } from '../../core/services/transaction.service';
 
 @Component({
   selector: 'app-reports',
@@ -35,7 +36,7 @@ export class ReportsComponent implements OnInit {
         debitBalances = signal<any[]>([]); // Aquí se guardan los saldos/deudas
         debitAccounts = signal<{ id: number; name: string }[]>([]);
         loading = signal(false);
-        readonly icons = { CreditCard, BarChart3, DollarSign, Calendar, Wallet: DollarSign };
+        readonly icons = { CreditCard, BarChart3, DollarSign, Calendar, Wallet: DollarSign, ChevronDown, ChevronUp };
 
         // Cargar saldos de débito y efectivo
         loadDebitBalances() {
@@ -171,6 +172,12 @@ export class ReportsComponent implements OnInit {
   private readonly financeService = inject(FinanceReportService);
   private readonly authService = inject(AuthService);
   private readonly userService = inject(UserService);
+  private readonly transactionService = inject(TransactionService);
+
+  // Estado de detalle expandido por tarjeta
+  expandedCards = signal<Set<number>>(new Set());
+  cardTransactions = signal<Map<number, Transaction[]>>(new Map());
+  loadingCardDetail = signal<Set<number>>(new Set());
 
   // Eliminado duplicado, icons ya está declarado arriba con Wallet incluido
 
@@ -270,4 +277,64 @@ export class ReportsComponent implements OnInit {
   formatCurrency = (n: number) => new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(n);
   formatDate = (d: string) => new Date(d).toLocaleDateString('es-MX', { day: '2-digit', month: 'short' });
   getStatusClass = (s: string) => s === 'PAID' ? 'paid' : s === 'OVERDUE' ? 'overdue' : 'pending';
+
+  isCardExpanded(paymentMethodId: number): boolean {
+    return this.expandedCards().has(paymentMethodId);
+  }
+
+  isCardDetailLoading(paymentMethodId: number): boolean {
+    return this.loadingCardDetail().has(paymentMethodId);
+  }
+
+  getCardTransactions(paymentMethodId: number): Transaction[] {
+    return this.cardTransactions().get(paymentMethodId) ?? [];
+  }
+
+  toggleCardDetail(card: CreditCardProportionalPayment, event: Event): void {
+    event.stopPropagation();
+    const expanded = new Set(this.expandedCards());
+    if (expanded.has(card.paymentMethodId)) {
+      expanded.delete(card.paymentMethodId);
+      this.expandedCards.set(expanded);
+      return;
+    }
+    expanded.add(card.paymentMethodId);
+    this.expandedCards.set(expanded);
+
+    // Si ya cargamos las transacciones, no volver a cargar
+    if (this.cardTransactions().has(card.paymentMethodId)) return;
+
+    const tenantId = this.authService.getTenantId();
+    if (!tenantId) return;
+
+    // Calcular rango: un mes antes del corte hasta el corte
+    const cutDate = new Date(card.cutDate);
+    const startDate = new Date(cutDate);
+    startDate.setMonth(startDate.getMonth() - 1);
+    startDate.setDate(startDate.getDate() + 1);
+
+    const loadingSet = new Set(this.loadingCardDetail());
+    loadingSet.add(card.paymentMethodId);
+    this.loadingCardDetail.set(loadingSet);
+
+    this.transactionService.getTransactionsByTenant(tenantId, {
+      startDate: startDate.toISOString().split('T')[0],
+      endDate: card.cutDate,
+      paymentMethodId: card.paymentMethodId
+    }).subscribe({
+      next: (txs) => {
+        const map = new Map(this.cardTransactions());
+        map.set(card.paymentMethodId, txs ?? []);
+        this.cardTransactions.set(map);
+        const ls = new Set(this.loadingCardDetail());
+        ls.delete(card.paymentMethodId);
+        this.loadingCardDetail.set(ls);
+      },
+      error: () => {
+        const ls = new Set(this.loadingCardDetail());
+        ls.delete(card.paymentMethodId);
+        this.loadingCardDetail.set(ls);
+      }
+    });
+  }
 }
