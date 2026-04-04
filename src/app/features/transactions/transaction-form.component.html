@@ -20,8 +20,6 @@
       <select formControlName="transactionType">
         <option value="EXPENSE">Gasto</option>
         <option value="INCOME">Ingreso</option>
-        <option value="CREDIT_PAYMENT">Pago TC</option>
-        <option value="TRANSFER">Transferencia</option>
       </select>
 
       <label *ngIf="form.get('categoryId')?.enabled">Categoría</label>

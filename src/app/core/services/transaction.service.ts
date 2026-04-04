@@ -110,4 +110,15 @@ export class TransactionService {
       .delete<ResponseModel<void>>(`${this.apiUrl}/${id}`)
       .pipe(map(response => response.data));
   }
+
+  filterTransactions(tenantId: number, filters?: { startDate?: string; endDate?: string; transactionType?: string; paymentMethodId?: number }): Observable<Transaction[]> {
+    let params = new HttpParams();
+    if (filters?.startDate) params = params.set('startDate', filters.startDate);
+    if (filters?.endDate) params = params.set('endDate', filters.endDate);
+    if (filters?.transactionType) params = params.set('transactionType', filters.transactionType);
+    if (filters?.paymentMethodId) params = params.set('paymentMethodId', filters.paymentMethodId.toString());
+    return this.http
+      .get<ResponseModel<Transaction[]>>(`${this.apiUrl}/tenant/${tenantId}/filter`, { params })
+      .pipe(map(response => response.data));
+  }
 } 

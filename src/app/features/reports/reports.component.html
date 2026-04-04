@@ -7,6 +7,7 @@
     <button [class.active]="activeTab === 'cards'" (click)="activeTabWithLoad = 'cards'">Saldos de Tarjetas</button>
     <button [class.active]="activeTab === 'debit'" (click)="activeTabWithLoad = 'debit'">Débito y Efectivo</button>
     <button [class.active]="activeTab === 'msi'" (click)="activeTabWithLoad = 'msi'">MSI</button>
+    <button [class.active]="activeTab === 'visualization'" (click)="activeTabWithLoad = 'visualization'">Visualización de gastos</button>
   </nav>
 
   <ng-container *ngIf="activeTab === 'debit'">
@@ -174,10 +175,95 @@
             </div>
             @if (card.paymentStatus !== 'PAID') {
               <div class="card-actions">
-                <button class="btn-mark-paid" (click)="markAsPaid(card, $event)">
-                  <lucide-icon [img]="icons.CreditCard" [size]="16"></lucide-icon>
-                  Marcar como Pagado
+                <button class="btn-pay" (click)="togglePaymentPanel(card, $event)">
+                  <lucide-icon [img]="icons.DollarSign" [size]="16"></lucide-icon>
+                  {{ payingCardId() === card.paymentMethodId ? 'Cerrar Pago' : 'Registrar Pago' }}
                 </button>
+              </div>
+            }
+
+            <!-- Panel de pago expandible -->
+            @if (payingCardId() === card.paymentMethodId) {
+              <div class="payment-panel">
+                <div class="payment-panel-header">
+                  <h4 class="payment-panel-title">Registrar Pago — {{ card.alias || card.bankName }}</h4>
+                </div>
+
+                <!-- Barra de progreso -->
+                <div class="payment-progress">
+                  <div class="progress-bar-bg">
+                    <div class="progress-bar-fill"
+                         [style.width.%]="card.totalDue > 0 ? ((paidAmount() + paymentTotal()) / card.totalDue * 100) : 0">
+                    </div>
+                  </div>
+                  <div class="progress-labels">
+                    <span>Pagado: <strong>{{ formatCurrency(paidAmount()) }}</strong></span>
+                    <span>Este pago: <strong>{{ formatCurrency(paymentTotal()) }}</strong></span>
+                    <span>Pendiente: <strong>{{ formatCurrency(paymentPending()) }}</strong></span>
+                    <span>Total: <strong>{{ formatCurrency(card.totalDue) }}</strong></span>
+                  </div>
+                </div>
+
+                <!-- Desglose de quién debe cuánto -->
+                <div class="payment-shares-info">
+                  <span class="shares-title-sm">Desglose por persona:</span>
+                  @for (share of card.userShares; track share.userId) {
+                    <span class="share-chip">{{ share.userName }}: <strong>{{ formatCurrency(share.amountToPay) }}</strong></span>
+                  }
+                </div>
+
+                <!-- Filas de pago -->
+                <div class="payment-rows">
+                  @for (row of paymentRows(); track $index; let i = $index) {
+                    <div class="payment-row">
+                      <div class="payment-field">
+                        <label>Quién paga</label>
+                        <select [value]="row.paidByUserId ?? ''" (change)="updatePaymentRow(i, 'paidByUserId', +$any($event.target).value || null)">
+                          <option value="">Seleccionar...</option>
+                          @for (user of users(); track user.id) {
+                            <option [value]="user.id">{{ user.name }}</option>
+                          }
+                        </select>
+                      </div>
+                      <div class="payment-field">
+                        <label>Con qué cuenta</label>
+                        <select [value]="row.sourcePaymentMethodId ?? ''" (change)="updatePaymentRow(i, 'sourcePaymentMethodId', +$any($event.target).value || null)">
+                          <option value="">Seleccionar...</option>
+                          @for (pm of nonCreditMethods(); track pm.id) {
+                            <option [value]="pm.id">{{ pm.alias || pm.bankName }} ({{ pm.accountType }})</option>
+                          }
+                        </select>
+                      </div>
+                      <div class="payment-field amount-field">
+                        <label>Monto</label>
+                        <input type="number" min="0.01" step="0.01"
+                               [value]="row.amount"
+                               (input)="updatePaymentRow(i, 'amount', +$any($event.target).value)" />
+                      </div>
+                      <div class="payment-field notes-field">
+                        <label>Notas</label>
+                        <input type="text" placeholder="Opcional"
+                               [value]="row.notes"
+                               (input)="updatePaymentRow(i, 'notes', $any($event.target).value)" />
+                      </div>
+                      <button class="btn-remove-row" (click)="removePaymentRow(i)" type="button">
+                        <lucide-icon [img]="icons.Trash2" [size]="16"></lucide-icon>
+                      </button>
+                    </div>
+                  }
+                </div>
+
+                <div class="payment-actions">
+                  <button class="btn-add-row" (click)="addPaymentRow()" type="button">
+                    <lucide-icon [img]="icons.Plus" [size]="16"></lucide-icon>
+                    Agregar método de pago
+                  </button>
+                  <button class="btn-confirm-payment"
+                          [disabled]="!isPaymentValid() || submittingPayment()"
+                          (click)="submitPayment()">
+                    {{ submittingPayment() ? 'Procesando...' : 'Confirmar Pago' }}
+                  </button>
+                </div>
               </div>
             }
 
@@ -346,6 +432,58 @@
       } @empty {
         <div class="msi-empty">No tienes cuotas MSI programadas para este periodo.</div>
       }
+    </div>
+  }
+</ng-container>
+
+<ng-container *ngIf="activeTab === 'visualization'">
+  <div class="viz-header">
+    <div class="title-group">
+      <h2 class="page-title">Visualización de gastos</h2>
+      <p class="subtitle">Análisis mensual de gastos y flujo de caja real</p>
+    </div>
+    <div class="viz-period-selector">
+      @for (opt of vizPeriodOptions; track opt.value) {
+        <button class="viz-period-btn" [class.active]="vizPeriod() === opt.value" (click)="selectVizPeriod(opt.value)">
+          {{ opt.label }}
+        </button>
+      }
+    </div>
+  </div>
+
+  @if (loadingViz()) {
+    <div class="loading-state"><div class="spinner"></div></div>
+  } @else {
+    <!-- Gráfica 1: Tarjetazos -->
+    <div class="viz-chart-card">
+      <div class="viz-chart-header">
+        <div class="viz-chart-icon tarjetazos">
+          <lucide-icon [img]="icons.CreditCard" [size]="20"></lucide-icon>
+        </div>
+        <div>
+          <h3 class="viz-chart-title">Tarjetazos por método de pago</h3>
+          <p class="viz-chart-desc">Todos los gastos (EXPENSE) agrupados por tarjeta/cuenta. Cada color representa un mes.</p>
+        </div>
+      </div>
+      <div class="viz-chart-container tarjetazos-container">
+        <canvas id="tarjetazosChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Gráfica 2: Gastos reales vs Ingresos -->
+    <div class="viz-chart-card">
+      <div class="viz-chart-header">
+        <div class="viz-chart-icon real">
+          <lucide-icon [img]="icons.TrendingDown" [size]="20"></lucide-icon>
+        </div>
+        <div>
+          <h3 class="viz-chart-title">Gastos reales vs Ingresos</h3>
+          <p class="viz-chart-desc">Gastos de efectivo y débito + pagos de tarjeta de crédito vs ingresos. Refleja el flujo de caja real.</p>
+        </div>
+      </div>
+      <div class="viz-chart-container">
+        <canvas id="gastosRealesChart"></canvas>
+      </div>
     </div>
   }
 </ng-container>

@@ -5,29 +5,7 @@
       <p class="page-subtitle">Gestiona y supervisa tus movimientos financieros</p>
     </div>
 
-    <div class="summary-cards">
-      <div class="summary-card income">
-        <div class="card-icon">↑</div>
-        <div class="card-info">
-          <span class="label">INGRESOS</span>
-          <span class="amount">{{ totalIncomes() | currency:'MXN':'symbol':'1.2-2' }}</span>
-        </div>
-      </div>
-      <div class="summary-card expense">
-        <div class="card-icon">↓</div>
-        <div class="card-info">
-          <span class="label">GASTOS</span>
-          <span class="amount">{{ totalExpenses() | currency:'MXN':'symbol':'1.2-2' }}</span>
-        </div>
-      </div>
-      <div class="summary-card balance" [class.negative]="balance() < 0">
-        <div class="card-icon">⇄</div>
-        <div class="card-info">
-          <span class="label">NETO</span>
-          <span class="amount">{{ balance() | currency:'MXN':'symbol':'1.2-2' }}</span>
-        </div>
-      </div>
-    </div>
+
   </header>
 
   <div class="toolbar">
@@ -62,8 +40,6 @@
     <div class="action-buttons">
       <button class="btn-action expense" (click)="openCreateForm('EXPENSE')" title="Registra un gasto que sí descuenta de tu saldo total.">+ Registrar Gasto</button>
       <button class="btn-action income" (click)="openCreateForm('INCOME')" title="Registra un ingreso que suma a tu saldo total.">+ Ingreso</button>
-      <button class="btn-action credit" (click)="openCreateForm('CREDIT_PAYMENT')" title="Registra pagos a tu tarjeta, no afecta el saldo total.">Pago de Tarjeta (no descuenta saldo)</button>
-      <button class="btn-action transfer" (click)="openCreateForm('TRANSFER')" title="Transfiere entre tus cuentas, el dinero sigue disponible.">Transferencia Interna (no descuenta saldo)</button>
     </div>
   </div>
 

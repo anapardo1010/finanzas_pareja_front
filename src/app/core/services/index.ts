@@ -7,3 +7,4 @@ export * from './category.service';
 export * from './payment-method.service';
 export * from './user.service';
 export * from './tenant.service';
+export * from './credit-card-payment.service';

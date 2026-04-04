@@ -238,3 +238,43 @@ export interface CreditCardPeriodDetail {
   directCharges: CreditCardDirectCharge[];
   installmentCharges: CreditCardInstallmentCharge[];
 }
+
+/**
+ * Ítem de pago dentro de una solicitud de pago de tarjeta
+ */
+export interface CreditCardPaymentItem {
+  sourcePaymentMethodId: number;
+  paidByUserId: number;
+  amount: number;
+  notes?: string | null;
+}
+
+/**
+ * Request para registrar pago de tarjeta de crédito
+ */
+export interface CreditCardPayRequest {
+  creditCardId: number;
+  periodId: string;
+  totalDue: number;
+  payments: CreditCardPaymentItem[];
+}
+
+/**
+ * Registro de pago de tarjeta de crédito (respuesta)
+ */
+export interface CreditCardPaymentRecord {
+  id: number;
+  creditCardId: number;
+  creditCardAlias: string;
+  creditCardBankName: string;
+  billingPeriodId: string;
+  sourcePaymentMethodId: number;
+  sourcePaymentMethodAlias: string;
+  sourcePaymentMethodBankName: string;
+  transactionId: number;
+  paidByUserId: number;
+  paidByUserName: string;
+  amount: number;
+  notes: string | null;
+  paidAt: string;
+}

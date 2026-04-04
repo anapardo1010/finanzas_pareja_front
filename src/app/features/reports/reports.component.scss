@@ -222,10 +222,10 @@ $accent-blue: #2563eb;
   }
 }
 
-.cards-balances-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; }
+.cards-balances-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(480px, 1fr)); gap: 24px; }
 
 .card-balance-item {
-  background: white; border-radius: 16px; padding: 20px; border: 1px solid $border-color;
+  background: white; border-radius: 16px; padding: 24px; border: 1px solid $border-color;
   transition: all 0.2s ease; cursor: pointer; position: relative;
   &:hover { transform: translateY(-4px); box-shadow: 0 12px 20px rgba(0,0,0,0.08); }
   &.selected { border: 2px solid $accent-blue; background: #eff6ff; }
@@ -542,4 +542,336 @@ $msi-shadow: 0 2px 10px rgba(0,0,0,0.05);
   color: $text-secondary;
   font-size: 13px;
   padding: 20px 0;
+}
+
+// ── Payment panel ─────────────────────────────────────────────────────────
+.btn-pay {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  background: #059669;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover { background: #047857; }
+}
+
+.payment-panel {
+  margin-top: 16px;
+  padding: 20px;
+  background: #f8fafc;
+  border: 1px solid $border-color;
+  border-radius: 14px;
+  animation: slideDown 0.25s ease;
+}
+
+.payment-panel-header {
+  margin-bottom: 16px;
+}
+
+.payment-panel-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: $text-primary;
+  margin: 0;
+}
+
+.payment-progress {
+  margin-bottom: 16px;
+}
+
+.progress-bar-bg {
+  width: 100%;
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 100px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #059669, #10b981);
+  border-radius: 100px;
+  transition: width 0.3s ease;
+  max-width: 100%;
+}
+
+.progress-labels {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 12px;
+  color: $text-secondary;
+
+  strong { color: $text-primary; }
+}
+
+.payment-shares-info {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  background: white;
+  border: 1px solid #f1f5f9;
+  border-radius: 10px;
+}
+
+.shares-title-sm {
+  font-size: 12px;
+  font-weight: 700;
+  color: $text-secondary;
+}
+
+.share-chip {
+  font-size: 12px;
+  padding: 3px 10px;
+  background: #eff6ff;
+  border-radius: 100px;
+  color: $accent-blue;
+  font-weight: 600;
+
+  strong { font-weight: 800; }
+}
+
+.payment-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.payment-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+  padding: 12px;
+  background: white;
+  border: 1px solid #f1f5f9;
+  border-radius: 10px;
+}
+
+.payment-field {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+
+  label {
+    font-size: 11px;
+    font-weight: 700;
+    color: $text-secondary;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  select, input {
+    padding: 8px 10px;
+    border: 1px solid $border-color;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: $text-primary;
+    background: white;
+    outline: none;
+
+    &:focus { border-color: $accent-blue; }
+  }
+
+  &.amount-field { max-width: 120px; }
+  &.notes-field { min-width: 120px; }
+}
+
+.btn-remove-row {
+  background: transparent;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+  align-self: flex-end;
+  margin-bottom: 2px;
+
+  &:hover { background: #fee2e2; }
+}
+
+.payment-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-add-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px dashed $border-color;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: $accent-blue;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    border-color: $accent-blue;
+    background: #eff6ff;
+  }
+}
+
+.btn-confirm-payment {
+  padding: 10px 24px;
+  background: #059669;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover:not(:disabled) { background: #047857; }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+// ── Visualización de gastos ──────────────────────────────────────────────
+.viz-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+
+  .page-title { font-size: 28px; font-weight: 800; color: #0f172a; margin: 0; }
+  .subtitle { color: $text-secondary; margin: 4px 0 0; }
+}
+
+.viz-period-selector {
+  display: flex;
+  gap: 6px;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: 12px;
+}
+
+.viz-period-btn {
+  padding: 8px 18px;
+  border: none;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  background: transparent;
+  color: $text-secondary;
+  transition: all 0.2s;
+
+  &:hover { background: #e2e8f0; }
+
+  &.active {
+    background: $accent-blue;
+    color: white;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+  }
+}
+
+.viz-chart-card {
+  background: white;
+  border-radius: 20px;
+  border: 1px solid $border-color;
+  padding: 28px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+}
+
+.viz-chart-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.viz-chart-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  &.tarjetazos {
+    background: #fef2f2;
+    color: #dc2626;
+  }
+
+  &.real {
+    background: #f0fdf4;
+    color: #16a34a;
+  }
+}
+
+.viz-chart-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: $text-primary;
+  margin: 0 0 4px;
+}
+
+.viz-chart-desc {
+  font-size: 13px;
+  color: $text-secondary;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.viz-chart-container {
+  height: 320px;
+  position: relative;
+
+  &.tarjetazos-container {
+    height: 400px;
+  }
+}
+
+@media (max-width: 640px) {
+  .viz-header {
+    flex-direction: column;
+  }
+
+  .viz-period-selector {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .viz-chart-container {
+    height: 240px;
+  }
+
+  .viz-chart-card {
+    padding: 18px;
+  }
 }
