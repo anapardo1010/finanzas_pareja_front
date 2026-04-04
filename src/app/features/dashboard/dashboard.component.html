@@ -5,18 +5,30 @@
       <h1>Hola, {{ userName() }} 👋</h1>
       <p class="subtitle">Este es el estado de tus finanzas hoy.</p>
     </div>
-    <button class="btn-primary" (click)="navigateTo('/main/transactions')">
-      <lucide-icon [img]="icons.Plus" [size]="18"></lucide-icon>
-      Nueva Transacción
-    </button>
+    <div class="header-actions">
+      <div class="period-selector">
+        @for (opt of periodOptions; track opt.value) {
+          <button
+            class="period-btn"
+            [class.active]="selectedPeriod() === opt.value"
+            (click)="selectPeriod(opt.value)">
+            {{ opt.label }}
+          </button>
+        }
+      </div>
+      <button class="btn-primary" (click)="navigateTo('/main/transactions')">
+        <lucide-icon [img]="icons.Plus" [size]="18"></lucide-icon>
+        Nueva Transacción
+      </button>
+    </div>
   </header>
 
   <div class="bento-grid">
 
     <!-- BALANCE PRINCIPAL -->
     <div class="bento-item main-balance">
-      <span class="card-label">Balance Total</span>
-      <div class="main-value">{{ comparison().current | currency:'MXN':'symbol':'1.0-0' }}</div>
+      <span class="card-label">Balance Total ({{ selectedPeriod() }} meses)</span>
+      <div class="main-value">{{ periodTotals().net | currency:'MXN':'symbol':'1.0-0' }}</div>
       <div class="comparison" [class.up]="comparison().isPositive" [class.down]="!comparison().isPositive">
         <lucide-icon [img]="comparison().isPositive ? icons.TrendingUp : icons.TrendingDown" [size]="14"></lucide-icon>
         <span>{{ comparison().percent | number:'1.1-1' }}% vs mes anterior</span>
@@ -30,8 +42,8 @@
     <div class="bento-item stat-card income">
       <div class="icon-box"><lucide-icon [img]="icons.TrendingUp" [size]="22"></lucide-icon></div>
       <div class="details">
-        <span class="card-label">Ingresos</span>
-        <span class="value">{{ summary().income | currency:'MXN':'symbol':'1.0-0' }}</span>
+        <span class="card-label">Ingresos ({{ selectedPeriod() }}m)</span>
+        <span class="value">{{ periodTotals().totalIncome | currency:'MXN':'symbol':'1.0-0' }}</span>
       </div>
     </div>
 
@@ -39,8 +51,8 @@
     <div class="bento-item stat-card expense">
       <div class="icon-box"><lucide-icon [img]="icons.TrendingDown" [size]="22"></lucide-icon></div>
       <div class="details">
-        <span class="card-label">Gastos</span>
-        <span class="value">{{ summary().expense | currency:'MXN':'symbol':'1.0-0' }}</span>
+        <span class="card-label">Gastos ({{ selectedPeriod() }}m)</span>
+        <span class="value">{{ periodTotals().totalExpenses | currency:'MXN':'symbol':'1.0-0' }}</span>
       </div>
     </div>
 
@@ -53,11 +65,66 @@
       </div>
     </div>
 
+    <!-- COMPARACIÓN MENSUAL -->
+    <div class="bento-item monthly-table-card">
+      <div class="card-header">
+        <h3>Comparación Mensual</h3>
+        <span class="month-badge">Últimos {{ selectedPeriod() }} meses</span>
+      </div>
+
+      <div class="monthly-table-wrapper">
+        <table class="monthly-table">
+          <thead>
+            <tr>
+              <th>Mes</th>
+              <th class="num">Ingresos</th>
+              <th class="num">Gastos</th>
+              <th class="num">Balance</th>
+              <th class="num">Variación</th>
+              <th class="num">Txs</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of monthlyBreakdown(); track row.yearMonth) {
+              <tr>
+                <td class="month-cell">{{ row.yearMonth }}</td>
+                <td class="num income-text">{{ row.income | currency:'MXN':'symbol':'1.0-0' }}</td>
+                <td class="num expense-text">{{ row.expense | currency:'MXN':'symbol':'1.0-0' }}</td>
+                <td class="num" [class.income-text]="row.net >= 0" [class.expense-text]="row.net < 0">
+                  {{ row.net | currency:'MXN':'symbol':'1.0-0' }}
+                </td>
+                <td class="num">
+                  <span class="variation-badge" [class.up]="row.pctNet >= 0" [class.down]="row.pctNet < 0">
+                    {{ row.pctNet | number:'1.1-1' }}%
+                  </span>
+                </td>
+                <td class="num tx-count">{{ row.txCount }}</td>
+              </tr>
+            } @empty {
+              <tr><td colspan="6" class="empty-txt">Sin datos para el periodo.</td></tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr class="totals-row">
+              <td><strong>Total</strong></td>
+              <td class="num income-text"><strong>{{ periodTotals().totalIncome | currency:'MXN':'symbol':'1.0-0' }}</strong></td>
+              <td class="num expense-text"><strong>{{ periodTotals().totalExpenses | currency:'MXN':'symbol':'1.0-0' }}</strong></td>
+              <td class="num" [class.income-text]="periodTotals().net >= 0" [class.expense-text]="periodTotals().net < 0">
+                <strong>{{ periodTotals().net | currency:'MXN':'symbol':'1.0-0' }}</strong>
+              </td>
+              <td class="num"></td>
+              <td class="num"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
     <!-- CATEGORÍAS -->
     <div class="bento-item categories-chart">
       <div class="card-header">
-        <h3>Top 10 Gastos por Categoría</h3>
-        <span class="month-badge">Este mes</span>
+        <h3>Top Gastos por Categoría</h3>
+        <span class="month-badge">Últimos {{ selectedPeriod() }} meses</span>
       </div>
 
       <div class="categories-grid">
@@ -78,7 +145,7 @@
             </div>
           </div>
         } @empty {
-          <p class="empty-txt">No hay gastos este mes.</p>
+          <p class="empty-txt">No hay gastos en este periodo.</p>
         }
       </div>
     </div>

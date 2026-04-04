@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed, inject } from '@angular/core';
+import { Component, OnInit, signal, computed, inject, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
@@ -23,6 +23,8 @@ interface MonthlyBalanceItem {
   expenseTransactionCount: number;
 }
 
+export type PeriodMonths = 3 | 6 | 12;
+
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -42,9 +44,16 @@ export class DashboardComponent implements OnInit {
 
   readonly today = new Date().toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' });
 
+  readonly periodOptions: { label: string; value: PeriodMonths }[] = [
+    { label: '3 meses', value: 3 },
+    { label: '6 meses', value: 6 },
+    { label: '1 año',   value: 12 },
+  ];
+
   // ── Signals ────────────────────────────────────────────────────────────────
   loading               = signal(false);
   userName              = signal('Usuario');
+  selectedPeriod        = signal<PeriodMonths>(6);
   transactions          = signal<Transaction[]>([]);
   monthlyBalances       = signal<MonthlyBalanceItem[]>([]);
   upcomingInstallments  = signal<InstallmentMSI[]>([]);
@@ -78,7 +87,6 @@ export class DashboardComponent implements OnInit {
       .slice(0, 10);
   });
 
-  // Fix: usa netBalance (campo real del backend) en lugar de balance
   comparison = computed(() => {
     const balances = this.monthlyBalances();
     const current  = balances[balances.length - 1]?.netBalance ?? 0;
@@ -88,9 +96,43 @@ export class DashboardComponent implements OnInit {
     return { current, percent, isPositive: diff >= 0 };
   });
 
+  /** Desglose mensual para la tabla de comparación */
+  monthlyBreakdown = computed(() => {
+    const balances = this.monthlyBalances();
+    return balances.map((b, i) => {
+      const prev = balances[i - 1];
+      const diffNet = prev ? b.netBalance - prev.netBalance : 0;
+      const pctNet  = prev && prev.netBalance !== 0
+        ? (diffNet / Math.abs(prev.netBalance)) * 100
+        : 0;
+      return {
+        yearMonth:   b.yearMonth,
+        income:      b.totalIncome,
+        expense:     b.totalExpenses,
+        net:         b.netBalance,
+        diffNet,
+        pctNet,
+        txCount:     b.incomeTransactionCount + b.expenseTransactionCount,
+      };
+    });
+  });
+
+  /** Totales acumulados del periodo */
+  periodTotals = computed(() => {
+    const balances = this.monthlyBalances();
+    const totalIncome   = balances.reduce((s, b) => s + b.totalIncome, 0);
+    const totalExpenses = balances.reduce((s, b) => s + b.totalExpenses, 0);
+    return { totalIncome, totalExpenses, net: totalIncome - totalExpenses };
+  });
+
   // ── Lifecycle ──────────────────────────────────────────────────────────────
   ngOnInit(): void {
     this.userName.set(this.authService.currentUser()?.name ?? 'Usuario');
+    this.loadData();
+  }
+
+  selectPeriod(months: PeriodMonths): void {
+    this.selectedPeriod.set(months);
     this.loadData();
   }
 
@@ -99,14 +141,16 @@ export class DashboardComponent implements OnInit {
     if (!tenantId) return;
 
     this.loading.set(true);
-    const now        = new Date();
-    const startMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-    const today      = now.toISOString().split('T')[0];
+    const now   = new Date();
+    const months = this.selectedPeriod();
+    const start = new Date(now.getFullYear(), now.getMonth() - months, 1);
+    const startDate = start.toISOString().split('T')[0];
+    const today     = now.toISOString().split('T')[0];
 
     try {
       const [txs, balances, installments, cats, methodBalances] = await Promise.all([
-        this.transactionService.getTransactionsByDateRange(tenantId, startMonth, today).toPromise(),
-        this.financeReportService.getMonthlyBalances(tenantId, 6, 'accrual').toPromise(),
+        this.transactionService.getTransactionsByDateRange(tenantId, startDate, today).toPromise(),
+        this.financeReportService.getMonthlyBalances(tenantId, months, 'accrual').toPromise(),
         this.financeReportService.getUpcomingInstallments(tenantId).toPromise(),
         this.categoryService.getByTenant(tenantId, 0, 100).toPromise(),
         this.financeReportService.getBalanceByPaymentMethod(tenantId, now.getFullYear(), now.getMonth() + 1).toPromise(),

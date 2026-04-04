@@ -69,6 +69,43 @@ $palette: (
   }
 }
 
+// ── Header actions & period selector ─────────────────────────────────────────
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.period-selector {
+  display: flex;
+  background: white;
+  border: 1px solid $slate-200;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.period-btn {
+  background: transparent;
+  border: none;
+  padding: 9px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: $slate-500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+
+  &:hover {
+    color: $slate-900;
+    background: $slate-50;
+  }
+
+  &.active {
+    background: $slate-900;
+    color: white;
+  }
+}
+
 // ── Grid ─────────────────────────────────────────────────────────────────────
 // Fila 1: balance (2 cols) + 3 stat cards (1 col cada una)
 // Fila 2: categorías full width
@@ -334,6 +371,104 @@ $palette: (
   padding: 32px 0;
 }
 
+// ── Monthly comparison table card ─────────────────────────────────────────────
+.monthly-table-card {
+  grid-column: span 4;
+  padding: 24px 28px;
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+
+    h3 {
+      font-size: 16px;
+      font-weight: 800;
+      color: $slate-900;
+      margin: 0;
+    }
+  }
+}
+
+.monthly-table-wrapper {
+  overflow-x: auto;
+}
+
+.monthly-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 13px;
+
+  th, td {
+    padding: 10px 14px;
+    text-align: left;
+  }
+
+  th {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: $slate-500;
+    border-bottom: 2px solid $slate-200;
+  }
+
+  td {
+    border-bottom: 1px solid #f1f5f9;
+    font-weight: 500;
+    color: $slate-900;
+  }
+
+  .num {
+    text-align: right;
+  }
+
+  .month-cell {
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .income-text { color: $emerald; }
+  .expense-text { color: $rose; }
+
+  .tx-count {
+    color: $slate-500;
+    font-weight: 600;
+  }
+
+  tbody tr {
+    transition: background 0.15s;
+    &:hover { background: $slate-50; }
+  }
+
+  tfoot .totals-row {
+    td {
+      border-top: 2px solid $slate-200;
+      border-bottom: none;
+      padding-top: 14px;
+    }
+  }
+}
+
+.variation-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 700;
+
+  &.up {
+    background: rgba(16, 185, 129, 0.1);
+    color: $emerald;
+  }
+  &.down {
+    background: rgba(244, 63, 94, 0.1);
+    color: $rose;
+  }
+}
+
 // ── Responsive ────────────────────────────────────────────────────────────────
 @media (max-width: 1100px) {
   .bento-grid {
@@ -342,14 +477,18 @@ $palette: (
   }
   .main-balance { grid-column: span 2; }
   .categories-chart { grid-column: span 2; }
+  .monthly-table-card { grid-column: span 2; }
   .categories-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 640px) {
   .dashboard-container { padding: 20px 16px; }
   .dashboard-header { flex-direction: column; align-items: flex-start; gap: 16px; }
+  .header-actions { flex-direction: column; align-items: stretch; gap: 8px; }
   .bento-grid { grid-template-columns: 1fr; gap: 12px; }
-  .main-balance, .categories-chart { grid-column: span 1; }
+  .main-balance, .categories-chart, .monthly-table-card { grid-column: span 1; }
   .main-value { font-size: 32px; }
   .category-row { grid-template-columns: 110px 1fr 100px; }
+  .monthly-table { font-size: 12px; }
+  .monthly-table th, .monthly-table td { padding: 8px 8px; }
 }
