@@ -181,51 +181,102 @@
               </div>
             }
 
-            <!-- Botón ver detalle de cargos -->
-            <div class="card-detail-toggle">
-              <button class="btn-detail-toggle" (click)="toggleCardDetail(card, $event)">
-                <lucide-icon [img]="isCardExpanded(card.paymentMethodId) ? icons.ChevronUp : icons.ChevronDown" [size]="16"></lucide-icon>
-                {{ isCardExpanded(card.paymentMethodId) ? 'Ocultar cargos' : 'Ver cargos del corte' }}
+            <!-- Botón Ver Desglose -->
+            <div class="card-actions detail-toggle">
+              <button class="btn-detail-toggle" (click)="togglePeriodDetail(card, $event)">
+                <lucide-icon [img]="expandedCardId() === card.paymentMethodId ? icons.ChevronUp : icons.ChevronDown" [size]="16"></lucide-icon>
+                {{ expandedCardId() === card.paymentMethodId ? 'Ocultar Desglose' : 'Ver Desglose del Corte' }}
               </button>
             </div>
 
-            <!-- Detalle expandido -->
-            @if (isCardExpanded(card.paymentMethodId)) {
-              <div class="card-detail-expanded">
-                @if (isCardDetailLoading(card.paymentMethodId)) {
+            <!-- Desglose expandido -->
+            @if (expandedCardId() === card.paymentMethodId) {
+              <div class="period-detail-panel">
+                @if (loadingDetail()) {
                   <div class="detail-loading"><div class="spinner-sm"></div></div>
-                } @else {
-                  @if (getCardTransactions(card.paymentMethodId).length === 0) {
-                    <p class="detail-empty">No se encontraron cargos en este corte.</p>
-                  } @else {
-                    <div class="detail-header">
-                      <span class="detail-count">{{ getCardTransactions(card.paymentMethodId).length }} cargos</span>
+                } @else if (periodDetail(); as detail) {
+                  <div class="detail-header-info">
+                    <div class="detail-dates">
+                      <span>Periodo: <strong>{{ formatDate(detail.periodStart) }} – {{ formatDate(detail.periodEnd) }}</strong></span>
+                      <span>Pago: <strong>{{ formatDate(detail.paymentDate) }}</strong></span>
                     </div>
-                    <div class="detail-list">
-                      @for (tx of getCardTransactions(card.paymentMethodId); track tx.id) {
-                        <div class="detail-row">
-                          <div class="detail-left">
-                            <span class="detail-desc">{{ tx.description }}</span>
-                            <div class="detail-tags">
-                              <span class="detail-date">{{ formatDate(tx.date) }}</span>
-                              @if (tx.hasInstallments) {
-                                <span class="tag tag-msi">MSI · {{ tx.totalInstallments }} meses</span>
+                    <div class="detail-totals">
+                      <div class="detail-total-item">
+                        <span class="dt-label">Cargos directos</span>
+                        <span class="dt-value">{{ formatCurrency(detail.directChargesTotal) }}</span>
+                      </div>
+                      <div class="detail-total-item">
+                        <span class="dt-label">Cuotas MSI</span>
+                        <span class="dt-value">{{ formatCurrency(detail.installmentsTotal) }}</span>
+                      </div>
+                      <div class="detail-total-item total">
+                        <span class="dt-label">Total del corte</span>
+                        <span class="dt-value">{{ formatCurrency(detail.totalDue) }}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  @if (detail.directCharges.length) {
+                    <div class="detail-section">
+                      <h5 class="detail-section-title">Cargos Directos</h5>
+                      @for (charge of detail.directCharges; track charge.transactionId) {
+                        <div class="detail-charge-row">
+                          <div class="charge-left">
+                            <span class="charge-desc">{{ charge.description }}</span>
+                            <div class="charge-tags">
+                              @if (charge.isShared) {
+                                <span class="tag shared">Compartido</span>
+                              } @else {
+                                <span class="tag personal">Personal</span>
                               }
-                              @if (tx.isShared) {
-                                <span class="tag tag-shared">Compartido</span>
+                              @if (charge.categoryName) {
+                                <span class="tag category">{{ charge.categoryName }}</span>
                               }
-                              @if (tx.transactionType === 'CREDIT_PAYMENT') {
-                                <span class="tag tag-payment">Pago a TDC</span>
+                              @if (charge.userName) {
+                                <span class="tag user">{{ charge.userName }}</span>
                               }
                             </div>
                           </div>
-                          <span class="detail-amount" [class.is-payment]="tx.transactionType === 'CREDIT_PAYMENT' || tx.transactionType === 'INCOME'">
-                            {{ tx.transactionType === 'CREDIT_PAYMENT' || tx.transactionType === 'INCOME' ? '+' : '-' }}{{ formatCurrency(tx.amount) }}
-                          </span>
+                          <span class="charge-amount">{{ formatCurrency(charge.amount) }}</span>
                         </div>
                       }
                     </div>
                   }
+
+                  @if (detail.installmentCharges.length) {
+                    <div class="detail-section">
+                      <h5 class="detail-section-title">Cuotas MSI</h5>
+                      @for (inst of detail.installmentCharges; track inst.installmentId) {
+                        <div class="detail-charge-row">
+                          <div class="charge-left">
+                            <span class="charge-desc">{{ inst.description }}</span>
+                            <div class="charge-tags">
+                              <span class="tag msi-badge">{{ inst.installmentNumber }}/{{ inst.totalInstallments }}</span>
+                              <span class="tag msi-original">Original: {{ formatCurrency(inst.originalAmount) }}</span>
+                              @if (inst.isShared) {
+                                <span class="tag shared">Compartido</span>
+                              } @else {
+                                <span class="tag personal">Personal</span>
+                              }
+                              @if (inst.categoryName) {
+                                <span class="tag category">{{ inst.categoryName }}</span>
+                              }
+                              @if (inst.userName) {
+                                <span class="tag user">{{ inst.userName }}</span>
+                              }
+                            </div>
+                          </div>
+                          <span class="charge-amount">{{ formatCurrency(inst.installmentAmount) }}</span>
+                        </div>
+                      }
+                    </div>
+                  }
+
+                  @if (!detail.directCharges.length && !detail.installmentCharges.length) {
+                    <p class="detail-empty">No hay cargos registrados en este periodo.</p>
+                  }
+                } @else {
+                  <p class="detail-empty">No se pudo cargar el detalle.</p>
                 }
               </div>
             }

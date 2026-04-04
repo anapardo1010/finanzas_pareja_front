@@ -249,6 +249,18 @@ export class FinanceReportService {
       )
       .pipe(map(response => response.data));
   }
+
+  /**
+   * Obtener detalle de cargos de un periodo de tarjeta de crédito
+   * GET /api/v1/finance-reports/credit-card/{paymentMethodId}/period-detail
+   */
+  getCreditCardPeriodDetail(paymentMethodId: number): Observable<import('../models').CreditCardPeriodDetail> {
+    return this.http
+      .get<ResponseModel<import('../models').CreditCardPeriodDetail>>(
+        `${this.apiUrl}/credit-card/${paymentMethodId}/period-detail`
+      )
+      .pipe(map(response => response.data));
+  }
 }
 export type { FinancialSummary };
 

@@ -189,3 +189,52 @@ export interface NonCreditProportionalPayment {
   transactionCount: number;
   userShares: UserShare[];
 }
+
+/**
+ * Cargo directo en un periodo de tarjeta de crédito
+ */
+export interface CreditCardDirectCharge {
+  transactionId: number;
+  description: string;
+  amount: number;
+  date?: string;
+  isShared: boolean;
+  categoryName?: string;
+  userName?: string;
+}
+
+/**
+ * Cargo de cuota MSI en un periodo de tarjeta de crédito
+ */
+export interface CreditCardInstallmentCharge {
+  installmentId: number;
+  description: string;
+  installmentNumber: number;
+  totalInstallments: number;
+  installmentAmount: number;
+  originalAmount: number;
+  projectedDate: string;
+  isShared: boolean;
+  categoryName?: string;
+  userName?: string;
+}
+
+/**
+ * Detalle de un periodo de tarjeta de crédito
+ */
+export interface CreditCardPeriodDetail {
+  paymentMethodId: number;
+  alias: string;
+  bankName: string;
+  periodStart: string;
+  periodEnd: string;
+  paymentDate: string;
+  periodId: string;
+  status: string;
+  paymentStatus: string;
+  directChargesTotal: number;
+  installmentsTotal: number;
+  totalDue: number;
+  directCharges: CreditCardDirectCharge[];
+  installmentCharges: CreditCardInstallmentCharge[];
+}
