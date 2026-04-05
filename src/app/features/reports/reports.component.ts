@@ -423,10 +423,12 @@ export class ReportsComponent implements OnInit, OnDestroy {
   getStatusClass = (s: string) => s === 'PAID' ? 'paid' : s === 'OVERDUE' ? 'overdue' : 'pending';
 
   // ── Visualización de gastos ─────────────────────────────────────────────
-  vizPeriod = signal<number>(3); // 1, 3, 6 o 12 meses
+  vizPeriod = signal<number>(3);
   loadingViz = signal(false);
   private tarjetazosChart: Chart | null = null;
   private gastosRealesChart: Chart | null = null;
+  showRealBreakdown = signal(false);
+  realBreakdown = signal<{ type: 'income' | 'expense'; methodName: string; total: number }[]>([]);
 
   vizPeriodOptions = [
     { label: 'Mes actual', value: 1 },
@@ -463,6 +465,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
         this.allPaymentMethods.set(methods.content ?? []);
         this.loadingViz.set(false);
         const monthLabels = this.buildMonthLabels(startDate, endDate);
+        this.buildRealBreakdown(transactions);
         setTimeout(() => {
           this.renderTarjetazosChart(transactions, monthLabels);
           this.renderGastosRealesChart(transactions, monthLabels);
@@ -573,60 +576,91 @@ export class ReportsComponent implements OnInit, OnDestroy {
   }
 
   private renderGastosRealesChart(transactions: Transaction[], monthLabels: { key: string; label: string }[]): void {
-    // Gastos reales: EXPENSE de no-crédito + CREDIT_PAYMENT
-    const realExpenseByMonth: Record<string, number> = {};
-    const incomeByMonth: Record<string, number> = {};
-    monthLabels.forEach(m => { realExpenseByMonth[m.key] = 0; incomeByMonth[m.key] = 0; });
+    const creditCardIds = new Set(this.cards().map(c => c.paymentMethodId));
+    const methodMap = new Map(this.allPaymentMethods().map(m => [m.id, m.alias || m.bankName || `#${m.id}`]));
 
-    transactions.forEach(t => {
+    // Clasificar transacciones reales
+    const realTxs = transactions.filter(t =>
+      t.transactionType === 'INCOME' ||
+      t.transactionType === 'CREDIT_PAYMENT' ||
+      (t.transactionType === 'EXPENSE' && !creditCardIds.has(t.paymentMethodId))
+    );
+
+    // Separar ingresos y gastos, agrupar por paymentMethodId
+    const incomePmIds = new Set<number>();
+    const expensePmIds = new Set<number>();
+
+    realTxs.forEach(t => {
+      if (t.transactionType === 'INCOME') incomePmIds.add(t.paymentMethodId);
+      else expensePmIds.add(t.paymentMethodId);
+    });
+
+    // data[pmId][monthKey] = amount
+    const incomeData: Record<number, Record<string, number>> = {};
+    const expenseData: Record<number, Record<string, number>> = {};
+
+    incomePmIds.forEach(id => {
+      incomeData[id] = {};
+      monthLabels.forEach(m => incomeData[id][m.key] = 0);
+    });
+    expensePmIds.forEach(id => {
+      expenseData[id] = {};
+      monthLabels.forEach(m => expenseData[id][m.key] = 0);
+    });
+
+    realTxs.forEach(t => {
       const key = this.getMonthKey(t.date);
-      if (realExpenseByMonth[key] === undefined) return;
-
-      if (t.transactionType === 'CREDIT_PAYMENT') {
-        realExpenseByMonth[key] += t.amount;
-      } else if (t.transactionType === 'EXPENSE') {
-        // Solo efectivo y débito (excluir crédito)
-        // accountType no está en Transaction, usamos paymentMethodId para verificar
-        // Pero más simple: si no es de una tarjeta de crédito, lo contamos
-        // Las tarjetas de crédito están en this.cards()
-        const creditCardIds = new Set(this.cards().map(c => c.paymentMethodId));
-        if (!creditCardIds.has(t.paymentMethodId)) {
-          realExpenseByMonth[key] += t.amount;
-        }
-      } else if (t.transactionType === 'INCOME') {
-        incomeByMonth[key] += t.amount;
+      if (t.transactionType === 'INCOME') {
+        if (incomeData[t.paymentMethodId]?.[key] !== undefined)
+          incomeData[t.paymentMethodId][key] += t.amount;
+      } else {
+        if (expenseData[t.paymentMethodId]?.[key] !== undefined)
+          expenseData[t.paymentMethodId][key] += t.amount;
       }
     });
 
-    const expenseData = monthLabels.map(m => realExpenseByMonth[m.key]);
-    const incomeData = monthLabels.map(m => incomeByMonth[m.key]);
+    // Paleta verde para ingresos, roja para gastos
+    const greenPalette = [
+      'rgba(34, 197, 94, 0.8)', 'rgba(22, 163, 74, 0.8)', 'rgba(21, 128, 61, 0.8)',
+      'rgba(74, 222, 128, 0.8)', 'rgba(134, 239, 172, 0.8)', 'rgba(5, 150, 105, 0.8)'
+    ];
+    const redPalette = [
+      'rgba(239, 68, 68, 0.8)', 'rgba(220, 38, 38, 0.8)', 'rgba(185, 28, 28, 0.8)',
+      'rgba(248, 113, 113, 0.8)', 'rgba(252, 165, 165, 0.8)', 'rgba(153, 27, 27, 0.8)'
+    ];
+
+    const datasets: any[] = [];
+
+    // Ingresos stacked
+    [...incomePmIds].forEach((pmId, i) => {
+      datasets.push({
+        label: `↑ ${methodMap.get(pmId) || `Método ${pmId}`}`,
+        data: monthLabels.map(m => incomeData[pmId][m.key]),
+        backgroundColor: greenPalette[i % greenPalette.length],
+        borderWidth: 0,
+        borderRadius: i === incomePmIds.size - 1 ? 6 : 0,
+        stack: 'income'
+      });
+    });
+
+    // Gastos stacked (negativo para mostrar abajo)
+    [...expensePmIds].forEach((pmId, i) => {
+      datasets.push({
+        label: `↓ ${methodMap.get(pmId) || `Método ${pmId}`}`,
+        data: monthLabels.map(m => -expenseData[pmId][m.key]),
+        backgroundColor: redPalette[i % redPalette.length],
+        borderWidth: 0,
+        borderRadius: i === expensePmIds.size - 1 ? 6 : 0,
+        stack: 'expense'
+      });
+    });
 
     if (this.gastosRealesChart) this.gastosRealesChart.destroy();
     const ctx = document.getElementById('gastosRealesChart') as HTMLCanvasElement;
     if (!ctx) return;
     this.gastosRealesChart = new Chart(ctx, {
       type: 'bar',
-      data: {
-        labels: monthLabels.map(m => m.label),
-        datasets: [
-          {
-            label: 'Ingresos',
-            data: incomeData,
-            backgroundColor: 'rgba(34, 197, 94, 0.7)',
-            borderColor: 'rgb(34, 197, 94)',
-            borderWidth: 2,
-            borderRadius: 8
-          },
-          {
-            label: 'Gastos reales',
-            data: expenseData,
-            backgroundColor: 'rgba(239, 68, 68, 0.7)',
-            borderColor: 'rgb(239, 68, 68)',
-            borderWidth: 2,
-            borderRadius: 8
-          }
-        ]
-      },
+      data: { labels: monthLabels.map(m => m.label), datasets },
       options: {
         responsive: true,
         maintainAspectRatio: false,
@@ -634,23 +668,65 @@ export class ReportsComponent implements OnInit, OnDestroy {
           legend: {
             display: true,
             position: 'top',
-            labels: { usePointStyle: true, padding: 16, font: { weight: 'bold' as const } }
+            labels: { usePointStyle: true, padding: 12, font: { size: 11, weight: 'bold' as const } }
           },
           tooltip: {
             callbacks: {
-              label: (ctx) => `${ctx.dataset.label}: ${this.formatCurrency(ctx.parsed.y ?? 0)}`
+              label: (ctx) => `${ctx.dataset.label}: ${this.formatCurrency(Math.abs(ctx.parsed.y ?? 0))}`
             }
           }
         },
         scales: {
+          x: { stacked: true, grid: { display: false } },
           y: {
-            beginAtZero: true,
-            ticks: { callback: (v) => this.formatCurrency(v as number) }
-          },
-          x: { grid: { display: false } }
+            stacked: true,
+            ticks: { callback: (v) => this.formatCurrency(Math.abs(v as number)) }
+          }
         }
       }
     });
+  }
+
+  private buildRealBreakdown(transactions: Transaction[]): void {
+    const creditCardIds = new Set(this.cards().map(c => c.paymentMethodId));
+    const methodMap = new Map(this.allPaymentMethods().map(m => [m.id, m.alias || m.bankName || `#${m.id}`]));
+
+    const incomeByMethod: Record<number, number> = {};
+    const expenseByMethod: Record<number, number> = {};
+
+    transactions.forEach(t => {
+      if (t.transactionType === 'INCOME') {
+        incomeByMethod[t.paymentMethodId] = (incomeByMethod[t.paymentMethodId] || 0) + t.amount;
+      } else if (t.transactionType === 'CREDIT_PAYMENT') {
+        expenseByMethod[t.paymentMethodId] = (expenseByMethod[t.paymentMethodId] || 0) + t.amount;
+      } else if (t.transactionType === 'EXPENSE' && !creditCardIds.has(t.paymentMethodId)) {
+        expenseByMethod[t.paymentMethodId] = (expenseByMethod[t.paymentMethodId] || 0) + t.amount;
+      }
+    });
+
+    const rows: { type: 'income' | 'expense'; methodName: string; total: number }[] = [];
+
+    Object.entries(incomeByMethod)
+      .sort(([, a], [, b]) => b - a)
+      .forEach(([id, total]) => rows.push({ type: 'income', methodName: methodMap.get(+id) || `Método ${id}`, total }));
+
+    Object.entries(expenseByMethod)
+      .sort(([, a], [, b]) => b - a)
+      .forEach(([id, total]) => rows.push({ type: 'expense', methodName: methodMap.get(+id) || `Método ${id}`, total }));
+
+    this.realBreakdown.set(rows);
+  }
+
+  toggleRealBreakdown(): void {
+    this.showRealBreakdown.set(!this.showRealBreakdown());
+  }
+
+  getBreakdownByType(type: 'income' | 'expense') {
+    return this.realBreakdown().filter(r => r.type === type);
+  }
+
+  getBreakdownTotal(type: 'income' | 'expense'): number {
+    return this.getBreakdownByType(type).reduce((s, r) => s + r.total, 0);
   }
 
   ngOnDestroy(): void {

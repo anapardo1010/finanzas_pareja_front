@@ -484,6 +484,60 @@
       <div class="viz-chart-container">
         <canvas id="gastosRealesChart"></canvas>
       </div>
+
+      <!-- Botón desglose -->
+      <div class="breakdown-toggle">
+        <button class="btn-breakdown" (click)="toggleRealBreakdown()">
+          <lucide-icon [img]="showRealBreakdown() ? icons.ChevronUp : icons.ChevronDown" [size]="16"></lucide-icon>
+          {{ showRealBreakdown() ? 'Ocultar desglose' : 'Ver desglose por cuenta' }}
+        </button>
+      </div>
+
+      @if (showRealBreakdown()) {
+        <div class="breakdown-panel">
+          <!-- Ingresos -->
+          <div class="breakdown-section">
+            <div class="breakdown-section-header income">
+              <lucide-icon [img]="icons.TrendingUp" [size]="16"></lucide-icon>
+              <span>Ingresos</span>
+              <span class="breakdown-section-total">{{ formatCurrency(getBreakdownTotal('income')) }}</span>
+            </div>
+            @for (row of getBreakdownByType('income'); track row.methodName) {
+              <div class="breakdown-row">
+                <span class="breakdown-method">{{ row.methodName }}</span>
+                <span class="breakdown-amount income">{{ formatCurrency(row.total) }}</span>
+              </div>
+            } @empty {
+              <div class="breakdown-empty">Sin ingresos en este periodo</div>
+            }
+          </div>
+
+          <!-- Gastos reales -->
+          <div class="breakdown-section">
+            <div class="breakdown-section-header expense">
+              <lucide-icon [img]="icons.TrendingDown" [size]="16"></lucide-icon>
+              <span>Gastos reales</span>
+              <span class="breakdown-section-total">{{ formatCurrency(getBreakdownTotal('expense')) }}</span>
+            </div>
+            @for (row of getBreakdownByType('expense'); track row.methodName) {
+              <div class="breakdown-row">
+                <span class="breakdown-method">{{ row.methodName }}</span>
+                <span class="breakdown-amount expense">{{ formatCurrency(row.total) }}</span>
+              </div>
+            } @empty {
+              <div class="breakdown-empty">Sin gastos en este periodo</div>
+            }
+          </div>
+
+          <!-- Neto -->
+          <div class="breakdown-net">
+            <span>Balance neto</span>
+            <span class="breakdown-net-value" [class.positive]="getBreakdownTotal('income') >= getBreakdownTotal('expense')" [class.negative]="getBreakdownTotal('income') < getBreakdownTotal('expense')">
+              {{ formatCurrency(getBreakdownTotal('income') - getBreakdownTotal('expense')) }}
+            </span>
+          </div>
+        </div>
+      }
     </div>
   }
 </ng-container>
