@@ -111,7 +111,7 @@ $palette: (
 // Fila 2: categorías full width
 .bento-grid {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
   grid-template-rows: 220px auto;
   gap: 16px;
 }
@@ -237,11 +237,26 @@ $palette: (
     .icon-box { background: $blue; color: white; }
     .value { color: $blue; }
   }
+
+  &.tarjetazos {
+    background: #fffbeb;
+    border-color: #fde68a;
+    .icon-box { background: #f59e0b; color: white; }
+    .card-label { color: #92400e; }
+    .value { color: #d97706; }
+  }
+
+  .card-hint {
+    font-size: 11px;
+    color: $slate-700;
+    margin-top: 2px;
+    font-weight: 500;
+  }
 }
 
 // ── Categories card ───────────────────────────────────────────────────────────
 .categories-chart {
-  grid-column: span 4;
+  grid-column: span 5;
   padding: 24px 28px;
 
   .card-header {
@@ -263,7 +278,7 @@ $palette: (
     font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: $slate-500;
+    color: $slate-900;
     background: $slate-50;
     border: 1px solid $slate-200;
     padding: 4px 10px;
@@ -373,7 +388,7 @@ $palette: (
 
 // ── Monthly comparison table card ─────────────────────────────────────────────
 .monthly-table-card {
-  grid-column: span 4;
+  grid-column: span 5;
   padding: 24px 28px;
 
   .card-header {
@@ -432,6 +447,7 @@ $palette: (
 
   .income-text { color: $emerald; }
   .expense-text { color: $rose; }
+  .tarjetazos-text { color: #d97706; }
 
   .tx-count {
     color: $slate-500;
@@ -476,8 +492,8 @@ $palette: (
     grid-template-rows: auto;
   }
   .main-balance { grid-column: span 2; }
-  .categories-chart { grid-column: span 2; }
-  .monthly-table-card { grid-column: span 2; }
+  .categories-chart { grid-column: span 5; }
+  .monthly-table-card { grid-column: span 5; }
   .categories-grid { grid-template-columns: 1fr; }
 }
 

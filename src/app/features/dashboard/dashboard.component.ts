@@ -1,15 +1,17 @@
-import { Component, OnInit, signal, computed, inject, effect } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, inject, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { FinanceReportService } from '../../core/services/finance-report.service';
 import { TransactionService } from '../../core/services/transaction.service';
 import { CategoryService } from '../../core/services/category.service';
+import { PaymentMethodService } from '../../core/services/payment-method.service';
+import { UserService } from '../../core/services/user.service';
 import {
   LucideAngularModule, TrendingUp, TrendingDown,
-  CreditCard, PieChart, Plus, Tag, Calendar
+  CreditCard, PieChart, Plus, Tag, Calendar, Wallet
 } from 'lucide-angular';
-import { Transaction, InstallmentMSI, Category, PaymentMethodBalance } from '../../core/models';
+import { Transaction, InstallmentMSI, Category, PaymentMethodBalance, PaymentMethod } from '../../core/models';
 import Chart from 'chart.js/auto';
 
 // Interfaz local que refleja exactamente el JSON del backend
@@ -32,15 +34,17 @@ export type PeriodMonths = 3 | 6 | 12;
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, OnDestroy {
 
   private readonly authService          = inject(AuthService);
   private readonly financeReportService = inject(FinanceReportService);
   private readonly transactionService   = inject(TransactionService);
   private readonly categoryService      = inject(CategoryService);
+  private readonly paymentMethodService = inject(PaymentMethodService);
+  private readonly userService           = inject(UserService);
   private readonly router               = inject(Router);
 
-  readonly icons = { TrendingUp, TrendingDown, CreditCard, PieChart, Plus, Tag, Calendar };
+  readonly icons = { TrendingUp, TrendingDown, CreditCard, PieChart, Plus, Tag, Calendar, Wallet };
 
   readonly today = new Date().toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' });
 
@@ -59,15 +63,23 @@ export class DashboardComponent implements OnInit {
   upcomingInstallments  = signal<InstallmentMSI[]>([]);
   categories            = signal<Category[]>([]);
   paymentMethodBalances = signal<PaymentMethodBalance[]>([]);
+  allPaymentMethods     = signal<PaymentMethod[]>([]);
+  creditCardIds         = signal<Set<number>>(new Set());
 
   private chartRef: Chart | null = null;
 
   // ── Computed ───────────────────────────────────────────────────────────────
   summary = computed(() => {
-    const txs     = this.transactions();
+    const txs = this.transactions();
+    const ccIds = this.creditCardIds();
     const income  = txs.filter(t => t.transactionType === 'INCOME').reduce((s, t) => s + t.amount, 0);
-    const expense = txs.filter(t => t.transactionType === 'EXPENSE').reduce((s, t) => s + t.amount, 0);
-    return { income, expense, net: income - expense };
+    // Gastos reales: EXPENSE de no-crédito + CREDIT_PAYMENT
+    const realExpense = txs
+      .filter(t => t.transactionType === 'CREDIT_PAYMENT' || (t.transactionType === 'EXPENSE' && !ccIds.has(t.paymentMethodId)))
+      .reduce((s, t) => s + t.amount, 0);
+    // Tarjetazos: todo EXPENSE sin importar método de pago
+    const tarjetazos = txs.filter(t => t.transactionType === 'EXPENSE').reduce((s, t) => s + t.amount, 0);
+    return { income, expense: realExpense, tarjetazos, net: income - realExpense };
   });
 
   topCategories = computed(() => {
@@ -88,9 +100,9 @@ export class DashboardComponent implements OnInit {
   });
 
   comparison = computed(() => {
-    const balances = this.monthlyBalances();
-    const current  = balances[balances.length - 1]?.netBalance ?? 0;
-    const previous = balances[balances.length - 2]?.netBalance ?? 0;
+    const breakdown = this.monthlyBreakdown();
+    const current  = breakdown[breakdown.length - 1]?.net ?? 0;
+    const previous = breakdown[breakdown.length - 2]?.net ?? 0;
     const diff     = current - previous;
     const percent  = previous !== 0 ? (diff / Math.abs(previous)) * 100 : 0;
     return { current, percent, isPositive: diff >= 0 };
@@ -99,35 +111,73 @@ export class DashboardComponent implements OnInit {
   /** Desglose mensual para la tabla de comparación */
   monthlyBreakdown = computed(() => {
     const balances = this.monthlyBalances();
+    const txs = this.transactions();
+    const ccIds = this.creditCardIds();
+
     return balances.map((b, i) => {
+      // Calcular gastos reales y tarjetazos por mes
+      const [year, month] = b.yearMonth.split('-').map(Number);
+      const monthTxs = txs.filter(t => {
+        const d = new Date(t.date);
+        return d.getFullYear() === year && (d.getMonth() + 1) === month;
+      });
+
+      const income = monthTxs.filter(t => t.transactionType === 'INCOME').reduce((s, t) => s + t.amount, 0);
+      const realExpense = monthTxs
+        .filter(t => t.transactionType === 'CREDIT_PAYMENT' || (t.transactionType === 'EXPENSE' && !ccIds.has(t.paymentMethodId)))
+        .reduce((s, t) => s + t.amount, 0);
+      const tarjetazos = monthTxs.filter(t => t.transactionType === 'EXPENSE').reduce((s, t) => s + t.amount, 0);
+      const net = income - realExpense;
+
       const prev = balances[i - 1];
-      const diffNet = prev ? b.netBalance - prev.netBalance : 0;
-      const pctNet  = prev && prev.netBalance !== 0
-        ? (diffNet / Math.abs(prev.netBalance)) * 100
-        : 0;
+      let prevNet = 0;
+      if (prev) {
+        const [py, pm] = prev.yearMonth.split('-').map(Number);
+        const prevTxs = txs.filter(t => {
+          const d = new Date(t.date);
+          return d.getFullYear() === py && (d.getMonth() + 1) === pm;
+        });
+        const prevIncome = prevTxs.filter(t => t.transactionType === 'INCOME').reduce((s, t) => s + t.amount, 0);
+        const prevRealExp = prevTxs
+          .filter(t => t.transactionType === 'CREDIT_PAYMENT' || (t.transactionType === 'EXPENSE' && !ccIds.has(t.paymentMethodId)))
+          .reduce((s, t) => s + t.amount, 0);
+        prevNet = prevIncome - prevRealExp;
+      }
+
+      const diffNet = prev ? net - prevNet : 0;
+      const pctNet = prev && prevNet !== 0 ? (diffNet / Math.abs(prevNet)) * 100 : 0;
+
       return {
-        yearMonth:   b.yearMonth,
-        income:      b.totalIncome,
-        expense:     b.totalExpenses,
-        net:         b.netBalance,
+        yearMonth: b.yearMonth,
+        income,
+        expense: realExpense,
+        tarjetazos,
+        net,
         diffNet,
         pctNet,
-        txCount:     b.incomeTransactionCount + b.expenseTransactionCount,
+        txCount: b.incomeTransactionCount + b.expenseTransactionCount,
       };
     });
   });
 
   /** Totales acumulados del periodo */
   periodTotals = computed(() => {
-    const balances = this.monthlyBalances();
-    const totalIncome   = balances.reduce((s, b) => s + b.totalIncome, 0);
-    const totalExpenses = balances.reduce((s, b) => s + b.totalExpenses, 0);
-    return { totalIncome, totalExpenses, net: totalIncome - totalExpenses };
+    const s = this.summary();
+    return { totalIncome: s.income, totalExpenses: s.expense, tarjetazos: s.tarjetazos, net: s.net };
   });
 
   // ── Lifecycle ──────────────────────────────────────────────────────────────
   ngOnInit(): void {
-    this.userName.set(this.authService.currentUser()?.name ?? 'Usuario');
+    // Cargar nombre real del usuario
+    const user = this.authService.currentUser();
+    if (user?.id) {
+      this.userService.getUserById(user.id).subscribe({
+        next: u => this.userName.set(u.name ?? 'Usuario'),
+        error: () => this.userName.set(user.name ?? 'Usuario'),
+      });
+    } else {
+      this.userName.set(user?.name ?? 'Usuario');
+    }
     this.loadData();
   }
 
@@ -148,12 +198,13 @@ export class DashboardComponent implements OnInit {
     const today     = now.toISOString().split('T')[0];
 
     try {
-      const [txs, balances, installments, cats, methodBalances] = await Promise.all([
+      const [txs, balances, installments, cats, methodBalances, allMethods] = await Promise.all([
         this.transactionService.getTransactionsByDateRange(tenantId, startDate, today).toPromise(),
         this.financeReportService.getMonthlyBalances(tenantId, months, 'accrual').toPromise(),
         this.financeReportService.getUpcomingInstallments(tenantId).toPromise(),
         this.categoryService.getByTenant(tenantId, 0, 100).toPromise(),
         this.financeReportService.getBalanceByPaymentMethod(tenantId, now.getFullYear(), now.getMonth() + 1).toPromise(),
+        this.paymentMethodService.getByTenant(tenantId, 0, 100).toPromise(),
       ]);
 
       this.transactions.set(txs ?? []);
@@ -162,6 +213,10 @@ export class DashboardComponent implements OnInit {
       this.upcomingInstallments.set(installments ?? []);
       this.categories.set(cats?.content ?? []);
       this.paymentMethodBalances.set(methodBalances ?? []);
+      this.allPaymentMethods.set(allMethods?.content ?? []);
+      // Identificar IDs de tarjetas de crédito
+      const ccIds = new Set((allMethods?.content ?? []).filter(m => m.accountType === 'CREDIT').map(m => m.id));
+      this.creditCardIds.set(ccIds);
 
       setTimeout(() => this.renderBalanceChart(), 0);
     } catch (e) {
@@ -172,15 +227,14 @@ export class DashboardComponent implements OnInit {
   }
 
   renderBalanceChart(): void {
-    const balances = this.monthlyBalances();
-    if (!balances.length) return;
+    const breakdown = this.monthlyBreakdown();
+    if (!breakdown.length) return;
 
     const ctx = document.getElementById('balanceChart') as HTMLCanvasElement;
     if (!ctx) return;
 
-    // Fix: campos directos del backend, sin (b as any)
-    const labels = balances.map(b => b.yearMonth);
-    const data   = balances.map(b => b.netBalance);
+    const labels = breakdown.map(b => b.yearMonth);
+    const data   = breakdown.map(b => b.net);
 
     if (this.chartRef) this.chartRef.destroy();
 
@@ -221,4 +275,8 @@ export class DashboardComponent implements OnInit {
   }
 
   navigateTo(path: string): void { this.router.navigate([path]); }
+
+  ngOnDestroy(): void {
+    if (this.chartRef) this.chartRef.destroy();
+  }
 }

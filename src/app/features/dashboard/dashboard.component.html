@@ -27,7 +27,7 @@
 
     <!-- BALANCE PRINCIPAL -->
     <div class="bento-item main-balance">
-      <span class="card-label">Balance Total ({{ selectedPeriod() }} meses)</span>
+      <span class="card-label">Balance Real ({{ selectedPeriod() }} meses)</span>
       <div class="main-value">{{ periodTotals().net | currency:'MXN':'symbol':'1.0-0' }}</div>
       <div class="comparison" [class.up]="comparison().isPositive" [class.down]="!comparison().isPositive">
         <lucide-icon [img]="comparison().isPositive ? icons.TrendingUp : icons.TrendingDown" [size]="14"></lucide-icon>
@@ -47,12 +47,23 @@
       </div>
     </div>
 
-    <!-- GASTOS -->
+    <!-- GASTOS REALES -->
     <div class="bento-item stat-card expense">
-      <div class="icon-box"><lucide-icon [img]="icons.TrendingDown" [size]="22"></lucide-icon></div>
+      <div class="icon-box"><lucide-icon [img]="icons.Wallet" [size]="22"></lucide-icon></div>
       <div class="details">
-        <span class="card-label">Gastos ({{ selectedPeriod() }}m)</span>
+        <span class="card-label">Gastos Reales ({{ selectedPeriod() }}m)</span>
         <span class="value">{{ periodTotals().totalExpenses | currency:'MXN':'symbol':'1.0-0' }}</span>
+        <span class="card-hint">Efectivo + Débito + Pagos TC</span>
+      </div>
+    </div>
+
+    <!-- TARJETAZOS -->
+    <div class="bento-item stat-card tarjetazos">
+      <div class="icon-box"><lucide-icon [img]="icons.CreditCard" [size]="22"></lucide-icon></div>
+      <div class="details">
+        <span class="card-label">Tarjetazos ({{ selectedPeriod() }}m)</span>
+        <span class="value">{{ periodTotals().tarjetazos | currency:'MXN':'symbol':'1.0-0' }}</span>
+        <span class="card-hint">Todo EXPENSE (no refleja flujo real)</span>
       </div>
     </div>
 
@@ -78,8 +89,9 @@
             <tr>
               <th>Mes</th>
               <th class="num">Ingresos</th>
-              <th class="num">Gastos</th>
-              <th class="num">Balance</th>
+              <th class="num">Gastos Reales</th>
+              <th class="num">Tarjetazos</th>
+              <th class="num">Balance Real</th>
               <th class="num">Variación</th>
               <th class="num">Txs</th>
             </tr>
@@ -90,6 +102,7 @@
                 <td class="month-cell">{{ row.yearMonth }}</td>
                 <td class="num income-text">{{ row.income | currency:'MXN':'symbol':'1.0-0' }}</td>
                 <td class="num expense-text">{{ row.expense | currency:'MXN':'symbol':'1.0-0' }}</td>
+                <td class="num tarjetazos-text">{{ row.tarjetazos | currency:'MXN':'symbol':'1.0-0' }}</td>
                 <td class="num" [class.income-text]="row.net >= 0" [class.expense-text]="row.net < 0">
                   {{ row.net | currency:'MXN':'symbol':'1.0-0' }}
                 </td>
@@ -101,7 +114,7 @@
                 <td class="num tx-count">{{ row.txCount }}</td>
               </tr>
             } @empty {
-              <tr><td colspan="6" class="empty-txt">Sin datos para el periodo.</td></tr>
+              <tr><td colspan="7" class="empty-txt">Sin datos para el periodo.</td></tr>
             }
           </tbody>
           <tfoot>
@@ -109,6 +122,7 @@
               <td><strong>Total</strong></td>
               <td class="num income-text"><strong>{{ periodTotals().totalIncome | currency:'MXN':'symbol':'1.0-0' }}</strong></td>
               <td class="num expense-text"><strong>{{ periodTotals().totalExpenses | currency:'MXN':'symbol':'1.0-0' }}</strong></td>
+              <td class="num tarjetazos-text"><strong>{{ periodTotals().tarjetazos | currency:'MXN':'symbol':'1.0-0' }}</strong></td>
               <td class="num" [class.income-text]="periodTotals().net >= 0" [class.expense-text]="periodTotals().net < 0">
                 <strong>{{ periodTotals().net | currency:'MXN':'symbol':'1.0-0' }}</strong>
               </td>
