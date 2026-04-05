@@ -40,7 +40,7 @@
 
     <!-- INGRESOS -->
     <div class="bento-item stat-card income">
-      <div class="icon-box"><lucide-icon [img]="icons.TrendingUp" [size]="22"></lucide-icon></div>
+      <div class="icon-box"><lucide-icon [img]="icons.TrendingUp" [size]="18"></lucide-icon></div>
       <div class="details">
         <span class="card-label">Ingresos ({{ selectedPeriod() }}m)</span>
         <span class="value">{{ periodTotals().totalIncome | currency:'MXN':'symbol':'1.0-0' }}</span>
@@ -49,7 +49,7 @@
 
     <!-- GASTOS REALES -->
     <div class="bento-item stat-card expense">
-      <div class="icon-box"><lucide-icon [img]="icons.Wallet" [size]="22"></lucide-icon></div>
+      <div class="icon-box"><lucide-icon [img]="icons.Wallet" [size]="18"></lucide-icon></div>
       <div class="details">
         <span class="card-label">Gastos Reales ({{ selectedPeriod() }}m)</span>
         <span class="value">{{ periodTotals().totalExpenses | currency:'MXN':'symbol':'1.0-0' }}</span>
@@ -59,7 +59,7 @@
 
     <!-- TARJETAZOS -->
     <div class="bento-item stat-card tarjetazos">
-      <div class="icon-box"><lucide-icon [img]="icons.CreditCard" [size]="22"></lucide-icon></div>
+      <div class="icon-box"><lucide-icon [img]="icons.CreditCard" [size]="18"></lucide-icon></div>
       <div class="details">
         <span class="card-label">Tarjetazos ({{ selectedPeriod() }}m)</span>
         <span class="value">{{ periodTotals().tarjetazos | currency:'MXN':'symbol':'1.0-0' }}</span>
@@ -69,7 +69,7 @@
 
     <!-- MSI -->
     <div class="bento-item stat-card msi">
-      <div class="icon-box"><lucide-icon [img]="icons.Calendar" [size]="22"></lucide-icon></div>
+      <div class="icon-box"><lucide-icon [img]="icons.Calendar" [size]="18"></lucide-icon></div>
       <div class="details">
         <span class="card-label">Cuotas MSI</span>
         <span class="value">{{ upcomingInstallments().length }} <small>pendientes</small></span>

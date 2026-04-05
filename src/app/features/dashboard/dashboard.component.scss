@@ -112,14 +112,14 @@ $palette: (
 .bento-grid {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
-  grid-template-rows: 220px auto;
+  grid-template-rows: 240px auto;
   gap: 16px;
 }
 
 .bento-item {
   background: white;
   border-radius: 20px;
-  padding: 24px;
+  padding: 18px;
   border: 1px solid $slate-200;
   box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03);
 }
@@ -191,29 +191,29 @@ $palette: (
   justify-content: space-between;
 
   .card-label {
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 600;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
     color: $slate-500;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
   }
 
   .icon-box {
-    width: 44px; height: 44px;
-    border-radius: 12px;
+    width: 36px; height: 36px;
+    border-radius: 10px;
     display: flex; align-items: center; justify-content: center;
-    margin-bottom: 16px;
+    margin-bottom: 10px;
   }
 
   .value {
-    font-size: 26px;
+    font-size: 20px;
     font-weight: 900;
     letter-spacing: -0.5px;
     line-height: 1;
 
     small {
-      font-size: 14px;
+      font-size: 12px;
       font-weight: 500;
       letter-spacing: 0;
     }
