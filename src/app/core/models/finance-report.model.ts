@@ -171,6 +171,10 @@ export interface CreditCardProportionalPayment {
   userShares: UserShare[];
   selected?: boolean; // Para el checkbox en el UI
   alias?: string;
+  // UI helper fields for period navigation
+  availablePeriods?: any[]; // List of periods (id, startDate, endDate, paid)
+  loadingPeriods?: boolean; // Loading state for periods
+  overduePeriodsCount?: number; // Count of overdue periods without payment
 }
 
 /**
