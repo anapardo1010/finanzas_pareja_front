@@ -145,6 +145,34 @@
                 {{ card.paymentStatus }}
               </span>
             </div>
+
+            <!-- Selector de periodo -->
+            <div class="card-period-navigation" (click)="$event.stopPropagation()">
+              @if (card.loadingPeriods) {
+                <span class="loading-periods-text">Cargando periodos...</span>
+              } @else {
+                <div class="period-navigator">
+                  <span class="nav-label">Periodo:</span>
+                  <select class="period-select" 
+                          [value]="card.periodId" 
+                          (change)="onPeriodChange(card, $any($event.target).value)">
+                    @for (period of card.availablePeriods; track period.periodId) {
+                      <option [value]="period.periodId">
+                        {{ formatDate(period.startDate) }} – {{ formatDate(period.endDate) }} 
+                        ({{ period.paid ? 'Pagado' : 'Pendiente' }})
+                      </option>
+                    }
+                  </select>
+                </div>
+                
+                @if (card.overduePeriodsCount > 0) {
+                  <div class="overdue-periods-alert" title="Tienes periodos anteriores sin pagar">
+                    ⚠️ {{ card.overduePeriodsCount }} corte(s) pendiente(s) anterior(es)
+                  </div>
+                }
+              }
+            </div>
+
             <div class="card-balance-details">
               <div class="balance-row total-due">
                 <span class="label">Total a pagar:</span>

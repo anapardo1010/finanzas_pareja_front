@@ -254,10 +254,44 @@ export class FinanceReportService {
    * Obtener detalle de cargos de un periodo de tarjeta de crédito
    * GET /api/v1/finance-reports/credit-card/{paymentMethodId}/period-detail
    */
-  getCreditCardPeriodDetail(paymentMethodId: number): Observable<import('../models').CreditCardPeriodDetail> {
+  getCreditCardPeriodDetail(paymentMethodId: number, periodId?: string): Observable<import('../models').CreditCardPeriodDetail> {
+    let httpParams = new HttpParams();
+    if (periodId) {
+      httpParams = httpParams.set('periodId', periodId);
+    }
     return this.http
       .get<ResponseModel<import('../models').CreditCardPeriodDetail>>(
-        `${this.apiUrl}/credit-card/${paymentMethodId}/period-detail`
+        `${this.apiUrl}/credit-card/${paymentMethodId}/period-detail`,
+        { params: httpParams }
+      )
+      .pipe(map(response => response.data));
+  }
+
+  /**
+   * Obtener periodos disponibles de una tarjeta de crédito
+   * GET /api/v1/finance-reports/credit-card/{paymentMethodId}/available-periods
+   */
+  getAvailablePeriods(paymentMethodId: number): Observable<any[]> {
+    return this.http
+      .get<ResponseModel<any[]>>(
+        `${this.apiUrl}/credit-card/${paymentMethodId}/available-periods`
+      )
+      .pipe(map(response => response.data));
+  }
+
+  /**
+   * Obtener pago proporcional de una tarjeta de crédito específica y periodo
+   * GET /api/v1/finance-reports/credit-card/{paymentMethodId}/proportional-payment
+   */
+  getCreditCardProportionalPayment(paymentMethodId: number, periodId?: string): Observable<CreditCardProportionalPayment> {
+    let httpParams = new HttpParams();
+    if (periodId) {
+      httpParams = httpParams.set('periodId', periodId);
+    }
+    return this.http
+      .get<ResponseModel<CreditCardProportionalPayment>>(
+        `${this.apiUrl}/credit-card/${paymentMethodId}/proportional-payment`,
+        { params: httpParams }
       )
       .pipe(map(response => response.data));
   }

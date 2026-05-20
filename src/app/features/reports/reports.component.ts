@@ -251,7 +251,33 @@ export class ReportsComponent implements OnInit, OnDestroy {
     this.financeService.getCreditCardProportionalPayments(tenantId).subscribe({
       next: (val) => {
         const items = val ?? [];
-        this.cards.set(items.map(c => ({ ...c, selected: false })));
+        const mappedItems = items.map(c => {
+          const card = { 
+            ...c, 
+            selected: false,
+            availablePeriods: [] as any[],
+            loadingPeriods: true,
+            overduePeriodsCount: 0
+          };
+          
+          this.financeService.getAvailablePeriods(c.paymentMethodId).subscribe({
+            next: (periods) => {
+              card.availablePeriods = periods || [];
+              card.loadingPeriods = false;
+              
+              const todayStr = new Date().toISOString().split('T')[0];
+              const overdueCount = card.availablePeriods.filter(p => !p.paid && p.endDate <= todayStr && p.periodId !== c.periodId).length;
+              card.overduePeriodsCount = overdueCount;
+            },
+            error: () => {
+              card.loadingPeriods = false;
+            }
+          });
+          
+          return card;
+        });
+        
+        this.cards.set(mappedItems);
         this.loading.set(false);
       },
       error: () => this.loading.set(false)
@@ -396,6 +422,47 @@ export class ReportsComponent implements OnInit, OnDestroy {
     this.loadCards();
   }
 
+  onPeriodChange(card: any, periodId: string) {
+    if (!periodId || card.periodId === periodId) return;
+    
+    card.loadingPeriods = true;
+    
+    this.financeService.getCreditCardProportionalPayment(card.paymentMethodId, periodId).subscribe({
+      next: (newCardData) => {
+        const updatedCards = this.cards().map(c => {
+          if (c.paymentMethodId === card.paymentMethodId) {
+            return {
+              ...c,
+              ...newCardData,
+              availablePeriods: card.availablePeriods,
+              loadingPeriods: false,
+              overduePeriodsCount: card.overduePeriodsCount
+            };
+          }
+          return c;
+        });
+        
+        this.cards.set(updatedCards);
+        
+        if (this.expandedCardId() === card.paymentMethodId) {
+          this.loadPeriodDetail(card.paymentMethodId, periodId);
+        }
+        
+        if (this.payingCardId() === card.paymentMethodId) {
+          const updatedPayingCard = updatedCards.find(c => c.paymentMethodId === card.paymentMethodId);
+          if (updatedPayingCard) {
+            this.payingCard.set(updatedPayingCard);
+            this.loadPaidAmount(updatedPayingCard);
+          }
+        }
+      },
+      error: (err) => {
+        console.error('Error cargando el periodo de la tarjeta:', err);
+        card.loadingPeriods = false;
+      }
+    });
+  }
+
   togglePeriodDetail(card: CreditCardProportionalPayment, event: Event): void {
     event.stopPropagation();
     const cardId = card.paymentMethodId;
@@ -405,8 +472,12 @@ export class ReportsComponent implements OnInit, OnDestroy {
       return;
     }
     this.expandedCardId.set(cardId);
+    this.loadPeriodDetail(cardId, card.periodId);
+  }
+
+  loadPeriodDetail(cardId: number, periodId: string) {
     this.loadingDetail.set(true);
-    this.financeService.getCreditCardPeriodDetail(cardId).subscribe({
+    this.financeService.getCreditCardPeriodDetail(cardId, periodId).subscribe({
       next: (detail) => {
         this.periodDetail.set(detail);
         this.loadingDetail.set(false);
