@@ -424,9 +424,11 @@ export class ReportsComponent implements OnInit, OnDestroy {
 
   onPeriodChange(card: any, periodId: string) {
     if (!periodId || card.periodId === periodId) return;
-    
+
+    // Forzar re-render del signal al mutar loadingPeriods
     card.loadingPeriods = true;
-    
+    this.cards.set([...this.cards()]);
+
     this.financeService.getCreditCardProportionalPayment(card.paymentMethodId, periodId).subscribe({
       next: (newCardData) => {
         const updatedCards = this.cards().map(c => {
@@ -434,6 +436,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
             return {
               ...c,
               ...newCardData,
+              periodId: periodId,          // asegurar que el periodId queda actualizado
               availablePeriods: card.availablePeriods,
               loadingPeriods: false,
               overduePeriodsCount: card.overduePeriodsCount
@@ -441,13 +444,14 @@ export class ReportsComponent implements OnInit, OnDestroy {
           }
           return c;
         });
-        
+
         this.cards.set(updatedCards);
-        
+
+        // Si el desglose está abierto, recargar con el nuevo periodo
         if (this.expandedCardId() === card.paymentMethodId) {
           this.loadPeriodDetail(card.paymentMethodId, periodId);
         }
-        
+
         if (this.payingCardId() === card.paymentMethodId) {
           const updatedPayingCard = updatedCards.find(c => c.paymentMethodId === card.paymentMethodId);
           if (updatedPayingCard) {
@@ -459,6 +463,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
       error: (err) => {
         console.error('Error cargando el periodo de la tarjeta:', err);
         card.loadingPeriods = false;
+        this.cards.set([...this.cards()]); // restaurar estado en error
       }
     });
   }
