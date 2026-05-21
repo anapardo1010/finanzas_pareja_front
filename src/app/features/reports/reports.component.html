@@ -165,7 +165,7 @@
                   </select>
                 </div>
                 
-                @if (card.overduePeriodsCount > 0) {
+                @if (card.overduePeriodsCount && card.overduePeriodsCount > 0) {
                   <div class="overdue-periods-alert" title="Tienes periodos anteriores sin pagar">
                     ⚠️ {{ card.overduePeriodsCount }} corte(s) pendiente(s) anterior(es)
                   </div>
