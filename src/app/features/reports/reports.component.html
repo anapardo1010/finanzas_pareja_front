@@ -7,7 +7,8 @@
     <button [class.active]="activeTab === 'cards'" (click)="activeTabWithLoad = 'cards'">Saldos de Tarjetas</button>
     <button [class.active]="activeTab === 'debit'" (click)="activeTabWithLoad = 'debit'">Débito y Efectivo</button>
     <button [class.active]="activeTab === 'msi'" (click)="activeTabWithLoad = 'msi'">MSI</button>
-    <button [class.active]="activeTab === 'visualization'" (click)="activeTabWithLoad = 'visualization'">Visualización de gastos</button>
+    <button [class.active]="activeTab === 'visualization'" (click)="activeTabWithLoad = 'visualization'">Visualización
+      de gastos</button>
   </nav>
 
   <ng-container *ngIf="activeTab === 'debit'">
@@ -22,74 +23,81 @@
     <div class="filters-container transactions-style">
       <div class="filter-group">
         <label for="debitStart">Desde</label>
-        <input id="debitStart" type="date" [(ngModel)]="filterStartDate" (change)="loadDebitBalances()" class="filter-input" />
+        <input id="debitStart" type="date" [(ngModel)]="filterStartDate" (change)="loadDebitBalances()"
+          class="filter-input" />
       </div>
       <div class="filter-group">
         <label for="debitEnd">Hasta</label>
-        <input id="debitEnd" type="date" [(ngModel)]="filterEndDate" (change)="loadDebitBalances()" class="filter-input" />
+        <input id="debitEnd" type="date" [(ngModel)]="filterEndDate" (change)="loadDebitBalances()"
+          class="filter-input" />
       </div>
     </div>
 
     @if (loading()) {
-      <div class="loading-state"><div class="spinner"></div></div>
+    <div class="loading-state">
+      <div class="spinner"></div>
+    </div>
     } @else {
-      <div class="debit-grid">
-        @for (balance of getDebitDebts(); track balance.paymentMethodId) {
-          <div class="debit-card" [class.is-cash]="balance.accountType === 'CASH'">
-            <div class="debit-card-header">
-              <div class="icon-circle">
-                <lucide-icon [img]="balance.accountType === 'CASH' ? icons.DollarSign : icons.Wallet" [size]="20"></lucide-icon>
-              </div>
-              <span class="account-type-tag">{{ balance.accountType }}</span>
-            </div>
-            
-            <div class="debit-card-body">
-              <h3 class="account-name">{{ balance.alias || balance.paymentMethodName || 'Efectivo' }}</h3>
-              <p class="account-alias">{{ balance.paymentMethodName || '' }}</p>
-              <div class="balance-display">
-                <div class="balance-amount">
-                  <span class="currency-symbol">$</span>
-                  <span class="amount-value">{{ (balance.balance ?? balance.currentBalance ?? 0) | number:'1.0-0' }}</span>
-                </div>
-              </div>
+    <div class="debit-grid">
+      @for (balance of getDebitDebts(); track balance.paymentMethodId) {
+      <div class="debit-card" [class.is-cash]="balance.accountType === 'CASH'">
+        <div class="debit-card-header">
+          <div class="icon-circle">
+            <lucide-icon [img]="balance.accountType === 'CASH' ? icons.DollarSign : icons.Wallet"
+              [size]="20"></lucide-icon>
+          </div>
+          <span class="account-type-tag">{{ balance.accountType }}</span>
+        </div>
 
-              <div class="user-shares-compact">
-                <div class="shares-title">Reparto por usuario · {{ balance.transactionCount }} trans.</div>
-                @for (share of getDebtors(balance); track share.userId) {
-                  <div class="share-row">
-                    <div class="share-left">
-                      <div class="user-avatar-small">{{ share.userName.charAt(0) }}</div>
-                      <div class="share-user">{{ share.userName }}</div>
-                    </div>
-                    <div class="share-right">
-                      <div class="share-label">A pagar</div>
-                      <div class="share-amount">{{ formatCurrency(share.amountToPay) }}</div>
-                    </div>
-                  </div>
-                } @if (getDebtors(balance).length === 0) {
-                  <div class="no-debtors">Nadie debe en este periodo</div>
-                }
-              </div>
-            </div>
-
-            <div class="debit-card-footer">
-              <div class="user-info">
-                <div class="user-avatar">{{ (balance.alias || balance.paymentMethodName || 'E').charAt(0) }}</div>
-                <div>
-                  <div class="user-name">Titular: <strong>{{ getOwnerName(balance) }}</strong> · {{ balance.transactionCount }} trans.</div>
-                  @if (getDebtors(balance).length > 0) {
-                    <div class="owner-summary">De estas transacciones, <strong>{{ getDebtors(balance).length }}</strong> debe(n) <strong>{{ formatCurrency(getTotalOwed(balance)) }}</strong></div>
-                  } @else {
-                    <div class="owner-summary">No hay deudores en este periodo</div>
-                  }
-                </div>
-              </div>
+        <div class="debit-card-body">
+          <h3 class="account-name">{{ balance.alias || balance.paymentMethodName || 'Efectivo' }}</h3>
+          <p class="account-alias">{{ balance.paymentMethodName || '' }}</p>
+          <div class="balance-display">
+            <div class="balance-amount">
+              <span class="currency-symbol">$</span>
+              <span class="amount-value">{{ (balance.balance ?? balance.currentBalance ?? 0) | number:'1.0-0' }}</span>
             </div>
           </div>
-        } @empty {
-          <div class="msi-empty">No se encontraron cuentas de débito o efectivo.</div>
-        }
+
+          <div class="user-shares-compact">
+            <div class="shares-title">Reparto por usuario · {{ balance.transactionCount }} trans.</div>
+            @for (share of getDebtors(balance); track share.userId) {
+            <div class="share-row">
+              <div class="share-left">
+                <div class="user-avatar-small">{{ share.userName.charAt(0) }}</div>
+                <div class="share-user">{{ share.userName }}</div>
+              </div>
+              <div class="share-right">
+                <div class="share-label">A pagar</div>
+                <div class="share-amount">{{ formatCurrency(share.amountToPay) }}</div>
+              </div>
+            </div>
+            } @if (getDebtors(balance).length === 0) {
+            <div class="no-debtors">Nadie debe en este periodo</div>
+            }
+          </div>
+        </div>
+
+        <div class="debit-card-footer">
+          <div class="user-info">
+            <div class="user-avatar">{{ (balance.alias || balance.paymentMethodName || 'E').charAt(0) }}</div>
+            <div>
+              <div class="user-name">Titular: <strong>{{ getOwnerName(balance) }}</strong> · {{ balance.transactionCount
+                }} trans.</div>
+              @if (getDebtors(balance).length > 0) {
+              <div class="owner-summary">De estas transacciones, <strong>{{ getDebtors(balance).length }}</strong>
+                debe(n) <strong>{{ formatCurrency(getTotalOwed(balance)) }}</strong></div>
+              } @else {
+              <div class="owner-summary">No hay deudores en este periodo</div>
+              }
+            </div>
+          </div>
+        </div>
       </div>
+      } @empty {
+      <div class="msi-empty">No se encontraron cuentas de débito o efectivo.</div>
+      }
+    </div>
     }
   </ng-container>
 
@@ -103,334 +111,334 @@
     </div>
 
     @if (loading()) {
-      <div class="loading-state"><div class="spinner"></div></div>
+    <div class="loading-state">
+      <div class="spinner"></div>
+    </div>
     } @else {
-      @if (finalSettlement(); as s) {
-        <div class="settlement-summary-card">
-          <h4 class="summary-title">
-            <lucide-icon [img]="icons.BarChart3" [size]="20"></lucide-icon>
-            Resumen de Liquidación
-          </h4>
-          <div class="settlement-breakdown">
-            <div class="breakdown-row">
-              <span class="label">Me deben (mis tarjetas):</span>
-              <span class="amount positive">{{ formatCurrency(s.owedToMe) }}</span>
-            </div>
-            <div class="breakdown-row">
-              <span class="label">Debo (tarjetas de {{ s.partnerName }}):</span>
-              <span class="amount negative">{{ formatCurrency(s.iOwe) }}</span>
-            </div>
-          </div>
-          <div class="final-settlement">
-            <div class="settlement-result">
-              <span class="settlement-text">{{ s.message }}</span>
-              <span class="settlement-amount">{{ formatCurrency(s.netDifference) }}</span>
-            </div>
-          </div>
+    @if (finalSettlement(); as s) {
+    <div class="settlement-summary-card">
+      <h4 class="summary-title">
+        <lucide-icon [img]="icons.BarChart3" [size]="20"></lucide-icon>
+        Resumen de Liquidación
+      </h4>
+      <div class="settlement-breakdown">
+        <div class="breakdown-row">
+          <span class="label">Me deben (mis tarjetas):</span>
+          <span class="amount positive">{{ formatCurrency(s.owedToMe) }}</span>
         </div>
-      }
+        <div class="breakdown-row">
+          <span class="label">Debo (tarjetas de {{ s.partnerName }}):</span>
+          <span class="amount negative">{{ formatCurrency(s.iOwe) }}</span>
+        </div>
+      </div>
+      <div class="final-settlement">
+        <div class="settlement-result">
+          <span class="settlement-text">{{ s.message }}</span>
+          <span class="settlement-amount">{{ formatCurrency(s.netDifference) }}</span>
+        </div>
+      </div>
+    </div>
+    }
 
-      <div class="cards-balances-grid">
-        @for (card of cards(); track card.paymentMethodId) {
-          <div class="card-balance-item" 
-               [class.selected]="card.selected" 
-               [class]="'status-' + getStatusClass(card.paymentStatus)"
-               (click)="toggleSelection(card)">
-            <div class="card-header">
-              <div class="title-group">
-                <h3 class="bank-name">{{ card.bankName }}</h3>
-                <span class="alias">{{ card.alias }}</span>
-              </div>
-              <span class="status-badge" [class]="getStatusClass(card.paymentStatus)">
-                {{ card.paymentStatus }}
+    <div class="cards-balances-grid">
+      @for (card of cards(); track card.paymentMethodId) {
+      <div class="card-balance-item" [class.selected]="card.selected"
+        [class]="'status-' + getStatusClass(card.paymentStatus)" (click)="toggleSelection(card)">
+        <div class="card-header">
+          <div class="title-group">
+            <h3 class="bank-name">{{ card.bankName }}</h3>
+            <span class="alias">{{ card.alias }}</span>
+          </div>
+          <span class="status-badge" [class]="getStatusClass(card.paymentStatus)">
+            {{ card.paymentStatus }}
+          </span>
+        </div>
+
+        <!-- Navegación de periodo con flechas -->
+        <div class="card-period-navigation" (click)="$event.stopPropagation()">
+          @if (card.loadingPeriods) {
+          <span class="loading-periods-text">Cargando periodos...</span>
+          } @else {
+          <div class="period-navigator">
+            <button class="period-nav-btn" [disabled]="getPeriodIndex(card) <= 0" (click)="navigatePeriod(card, -1)"
+              title="Periodo anterior">
+              ‹
+            </button>
+
+            <div class="period-display">
+              <span class="period-range">
+                {{ getPeriodLabel(card) }}
+              </span>
+              <span class="period-status-tag" [class.paid]="isPeriodPaid(card)" [class.pending]="!isPeriodPaid(card)">
+                {{ isPeriodPaid(card) ? 'Pagado' : 'Pendiente' }}
               </span>
             </div>
 
-            <!-- Navegación de periodo con flechas -->
-            <div class="card-period-navigation" (click)="$event.stopPropagation()">
-              @if (card.loadingPeriods) {
-                <span class="loading-periods-text">Cargando periodos...</span>
-              } @else {
-                <div class="period-navigator">
-                  <button class="period-nav-btn"
-                          [disabled]="getPeriodIndex(card) <= 0"
-                          (click)="navigatePeriod(card, -1)"
-                          title="Periodo anterior">
-                    ‹
-                  </button>
+            <button class="period-nav-btn" [disabled]="getPeriodIndex(card) >= card.availablePeriods.length - 1"
+              (click)="navigatePeriod(card, 1)" title="Periodo siguiente">
+              ›
+            </button>
+          </div>
 
-                  <div class="period-display">
-                    <span class="period-range">
-                      {{ getPeriodLabel(card) }}
-                    </span>
-                    <span class="period-status-tag"
-                          [class.paid]="isPeriodPaid(card)"
-                          [class.pending]="!isPeriodPaid(card)">
-                      {{ isPeriodPaid(card) ? 'Pagado' : 'Pendiente' }}
-                    </span>
-                  </div>
+          @if ((card.overduePeriodsCount ?? 0) > 0) {
+          <div class="overdue-periods-alert" title="Tienes periodos anteriores sin pagar">
+            ⚠️ {{ card.overduePeriodsCount }} corte(s) pendiente(s) anterior(es)
+          </div>
+          }
+          }
+        </div>
 
-                  <button class="period-nav-btn"
-                          [disabled]="getPeriodIndex(card) >= card.availablePeriods.length - 1"
-                          (click)="navigatePeriod(card, 1)"
-                          title="Periodo siguiente">
-                    ›
-                  </button>
-                </div>
+        <div class="card-balance-details">
+          <div class="balance-row total-due">
+            <span class="label">Total a pagar:</span>
+            <span class="value">{{ formatCurrency(card.totalDue) }}</span>
+          </div>
+          <div class="balance-row">
+            <span class="label">Gastos mes:</span>
+            <span class="value">{{ formatCurrency(card.currentBalance) }}</span>
+          </div>
+        </div>
+        <div class="user-shares-compact">
+          @for (share of card.userShares; track share.userId) {
+          <div class="share-row">
+            <span class="share-user">{{ share.userName }}</span>
+            <span class="share-amount">{{ formatCurrency(share.amountToPay) }}</span>
+          </div>
+          }
+        </div>
+        <div class="card-dates">
+          <div class="date-item">
+            <lucide-icon [img]="icons.Calendar" [size]="14"></lucide-icon>
+            <span>Corte: <strong>{{ formatDate(card.cutDate) }}</strong></span>
+          </div>
+          <div class="date-item">
+            <lucide-icon [img]="icons.DollarSign" [size]="14"></lucide-icon>
+            <span>Pago: <strong>{{ formatDate(card.paymentDate) }}</strong></span>
+          </div>
+        </div>
+        @if (card.paymentStatus !== 'PAID') {
+        <div class="card-actions">
+          <button class="btn-pay" (click)="togglePaymentPanel(card, $event)">
+            <lucide-icon [img]="icons.DollarSign" [size]="16"></lucide-icon>
+            {{ payingCardId() === card.paymentMethodId ? 'Cerrar Pago' : 'Registrar Pago' }}
+          </button>
+        </div>
+        }
 
-                @if ((card.overduePeriodsCount ?? 0) > 0) {
-                  <div class="overdue-periods-alert" title="Tienes periodos anteriores sin pagar">
-                    ⚠️ {{ card.overduePeriodsCount }} corte(s) pendiente(s) anterior(es)
-                  </div>
-                }
-              }
-            </div>
+        <!-- Panel de pago expandible -->
+        @if (payingCardId() === card.paymentMethodId) {
+        <div class="payment-panel">
+          <div class="payment-panel-header">
+            <h4 class="payment-panel-title">Registrar Pago — {{ card.alias || card.bankName }}</h4>
+          </div>
 
-            <div class="card-balance-details">
-              <div class="balance-row total-due">
-                <span class="label">Total a pagar:</span>
-                <span class="value">{{ formatCurrency(card.totalDue) }}</span>
-              </div>
-              <div class="balance-row">
-                <span class="label">Gastos mes:</span>
-                <span class="value">{{ formatCurrency(card.currentBalance) }}</span>
-              </div>
-            </div>
-            <div class="user-shares-compact">
-              @for (share of card.userShares; track share.userId) {
-                <div class="share-row">
-                  <span class="share-user">{{ share.userName }}</span>
-                  <span class="share-amount">{{ formatCurrency(share.amountToPay) }}</span>
-                </div>
-              }
-            </div>
-            <div class="card-dates">
-              <div class="date-item">
-                <lucide-icon [img]="icons.Calendar" [size]="14"></lucide-icon>
-                <span>Corte: <strong>{{ formatDate(card.cutDate) }}</strong></span>
-              </div>
-              <div class="date-item">
-                <lucide-icon [img]="icons.DollarSign" [size]="14"></lucide-icon>
-                <span>Pago: <strong>{{ formatDate(card.paymentDate) }}</strong></span>
+          <!-- Barra de progreso -->
+          <div class="payment-progress">
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill"
+                [style.width.%]="card.totalDue > 0 ? ((paidAmount() + paymentTotal()) / card.totalDue * 100) : 0">
               </div>
             </div>
-            @if (card.paymentStatus !== 'PAID') {
-              <div class="card-actions">
-                <button class="btn-pay" (click)="togglePaymentPanel(card, $event)">
-                  <lucide-icon [img]="icons.DollarSign" [size]="16"></lucide-icon>
-                  {{ payingCardId() === card.paymentMethodId ? 'Cerrar Pago' : 'Registrar Pago' }}
-                </button>
-              </div>
-            }
-
-            <!-- Panel de pago expandible -->
-            @if (payingCardId() === card.paymentMethodId) {
-              <div class="payment-panel">
-                <div class="payment-panel-header">
-                  <h4 class="payment-panel-title">Registrar Pago — {{ card.alias || card.bankName }}</h4>
-                </div>
-
-                <!-- Barra de progreso -->
-                <div class="payment-progress">
-                  <div class="progress-bar-bg">
-                    <div class="progress-bar-fill"
-                         [style.width.%]="card.totalDue > 0 ? ((paidAmount() + paymentTotal()) / card.totalDue * 100) : 0">
-                    </div>
-                  </div>
-                  <div class="progress-labels">
-                    <span>Pagado: <strong>{{ formatCurrency(paidAmount()) }}</strong></span>
-                    <span>Este pago: <strong>{{ formatCurrency(paymentTotal()) }}</strong></span>
-                    <span>Pendiente: <strong>{{ formatCurrency(paymentPending()) }}</strong></span>
-                    <span>Total: <strong>{{ formatCurrency(card.totalDue) }}</strong></span>
-                  </div>
-                </div>
-
-                <!-- Desglose de quién debe cuánto -->
-                <div class="payment-shares-info">
-                  <span class="shares-title-sm">Desglose por persona:</span>
-                  @for (share of card.userShares; track share.userId) {
-                    <span class="share-chip">{{ share.userName }}: <strong>{{ formatCurrency(share.amountToPay) }}</strong></span>
-                  }
-                </div>
-
-                <!-- Filas de pago -->
-                <div class="payment-rows">
-                  @for (row of paymentRows(); track $index; let i = $index) {
-                    <div class="payment-row">
-                      <div class="payment-field">
-                        <label>Quién paga</label>
-                        <select [value]="row.paidByUserId ?? ''" (change)="updatePaymentRow(i, 'paidByUserId', +$any($event.target).value || null)">
-                          <option value="">Seleccionar...</option>
-                          @for (user of users(); track user.id) {
-                            <option [value]="user.id">{{ user.name }}</option>
-                          }
-                        </select>
-                      </div>
-                      <div class="payment-field">
-                        <label>Con qué cuenta</label>
-                        <select [value]="row.sourcePaymentMethodId ?? ''" (change)="updatePaymentRow(i, 'sourcePaymentMethodId', +$any($event.target).value || null)">
-                          <option value="">Seleccionar...</option>
-                          @for (pm of nonCreditMethods(); track pm.id) {
-                            <option [value]="pm.id">{{ pm.alias || pm.bankName }} ({{ pm.accountType }})</option>
-                          }
-                        </select>
-                      </div>
-                      <div class="payment-field amount-field">
-                        <label>Monto</label>
-                        <input type="number" min="0.01" step="0.01"
-                               [value]="row.amount"
-                               (input)="updatePaymentRow(i, 'amount', +$any($event.target).value)" />
-                      </div>
-                      <div class="payment-field notes-field">
-                        <label>Notas</label>
-                        <input type="text" placeholder="Opcional"
-                               [value]="row.notes"
-                               (input)="updatePaymentRow(i, 'notes', $any($event.target).value)" />
-                      </div>
-                      <button class="btn-remove-row" (click)="removePaymentRow(i)" type="button">
-                        <lucide-icon [img]="icons.Trash2" [size]="16"></lucide-icon>
-                      </button>
-                    </div>
-                  }
-                </div>
-
-                <div class="payment-actions">
-                  <button class="btn-add-row" (click)="addPaymentRow()" type="button">
-                    <lucide-icon [img]="icons.Plus" [size]="16"></lucide-icon>
-                    Agregar método de pago
-                  </button>
-                  <button class="btn-confirm-payment"
-                          [disabled]="!isPaymentValid() || submittingPayment()"
-                          (click)="submitPayment()">
-                    {{ submittingPayment() ? 'Procesando...' : 'Confirmar Pago' }}
-                  </button>
-                </div>
-              </div>
-            }
-
-            <!-- Botón Ver Desglose -->
-            <div class="card-actions detail-toggle">
-              <button class="btn-detail-toggle" (click)="togglePeriodDetail(card, $event)">
-                <lucide-icon [img]="expandedCardId() === card.paymentMethodId ? icons.ChevronUp : icons.ChevronDown" [size]="16"></lucide-icon>
-                {{ expandedCardId() === card.paymentMethodId ? 'Ocultar Desglose' : 'Ver Desglose del Corte' }}
-              </button>
+            <div class="progress-labels">
+              <span>Pagado: <strong>{{ formatCurrency(paidAmount()) }}</strong></span>
+              <span>Este pago: <strong>{{ formatCurrency(paymentTotal()) }}</strong></span>
+              <span>Pendiente: <strong>{{ formatCurrency(paymentPending()) }}</strong></span>
+              <span>Total: <strong>{{ formatCurrency(card.totalDue) }}</strong></span>
             </div>
+          </div>
 
-            <!-- Desglose expandido -->
-            @if (expandedCardId() === card.paymentMethodId) {
-              <div class="period-detail-panel">
-                @if (loadingDetail()) {
-                  <div class="detail-loading"><div class="spinner-sm"></div></div>
-                } @else if (periodDetail(); as detail) {
-                  <div class="detail-header-info">
-                    <div class="detail-dates">
-                      <span>Periodo: <strong>{{ formatDate(detail.periodStart) }} – {{ formatDate(detail.periodEnd) }}</strong></span>
-                      <span>Pago: <strong>{{ formatDate(detail.paymentDate) }}</strong></span>
-                    </div>
-                    <div class="detail-totals">
-                      <div class="detail-total-item">
-                        <span class="dt-label">Cargos directos</span>
-                        <span class="dt-value">{{ formatCurrency(detail.directChargesTotal) }}</span>
-                      </div>
-                      <div class="detail-total-item">
-                        <span class="dt-label">Cuotas MSI</span>
-                        <span class="dt-value">{{ formatCurrency(detail.installmentsTotal) }}</span>
-                      </div>
-                      <div class="detail-total-item total">
-                        <span class="dt-label">Total del corte</span>
-                        <span class="dt-value">{{ formatCurrency(detail.totalDue) }}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  @if (detail.directCharges.length) {
-                    <div class="detail-section">
-                      <h5 class="detail-section-title">Cargos Directos</h5>
-                      @for (charge of detail.directCharges; track charge.transactionId) {
-                        <div class="detail-charge-row">
-                          <div class="charge-left">
-                            <span class="charge-desc">{{ charge.description }}</span>
-                            <div class="charge-tags">
-                              @if (charge.isShared) {
-                                <span class="tag shared">Compartido</span>
-                              } @else {
-                                <span class="tag personal">Personal</span>
-                              }
-                              @if (charge.categoryName) {
-                                <span class="tag category">{{ charge.categoryName }}</span>
-                              }
-                              @if (charge.userName) {
-                                <span class="tag user">{{ charge.userName }}</span>
-                              }
-                            </div>
-                          </div>
-                          <span class="charge-amount">{{ formatCurrency(charge.amount) }}</span>
-                        </div>
-                      }
-                    </div>
-                  }
-
-                  @if (detail.installmentCharges.length) {
-                    <div class="detail-section">
-                      <h5 class="detail-section-title">Cuotas MSI</h5>
-                      @for (inst of detail.installmentCharges; track inst.installmentId) {
-                        <div class="detail-charge-row">
-                          <div class="charge-left">
-                            <span class="charge-desc">{{ inst.description }}</span>
-                            <div class="charge-tags">
-                              <span class="tag msi-badge">{{ inst.installmentNumber }}/{{ inst.totalInstallments }}</span>
-                              <span class="tag msi-original">Original: {{ formatCurrency(inst.originalAmount) }}</span>
-                              @if (inst.isShared) {
-                                <span class="tag shared">Compartido</span>
-                              } @else {
-                                <span class="tag personal">Personal</span>
-                              }
-                              @if (inst.categoryName) {
-                                <span class="tag category">{{ inst.categoryName }}</span>
-                              }
-                              @if (inst.userName) {
-                                <span class="tag user">{{ inst.userName }}</span>
-                              }
-                            </div>
-                          </div>
-                          <span class="charge-amount">{{ formatCurrency(inst.installmentAmount) }}</span>
-                        </div>
-                      }
-                    </div>
-                  }
-
-                  @if (!detail.directCharges.length && !detail.installmentCharges.length) {
-                    <p class="detail-empty">No hay cargos registrados en este periodo.</p>
-                  }
-                } @else {
-                  <p class="detail-empty">No se pudo cargar el detalle.</p>
-                }
-              </div>
+          <!-- Desglose de quién debe cuánto -->
+          <div class="payment-shares-info">
+            <span class="shares-title-sm">Desglose por persona:</span>
+            @for (share of card.userShares; track share.userId) {
+            <span class="share-chip">{{ share.userName }}: <strong>{{ formatCurrency(share.amountToPay)
+                }}</strong></span>
             }
           </div>
+
+          <!-- Filas de pago -->
+          <div class="payment-rows">
+            @for (row of paymentRows(); track $index; let i = $index) {
+            <div class="payment-row">
+              <div class="payment-field">
+                <label>Quién paga</label>
+                <select [value]="row.paidByUserId ?? ''"
+                  (change)="updatePaymentRow(i, 'paidByUserId', +$any($event.target).value || null)">
+                  <option value="">Seleccionar...</option>
+                  @for (user of users(); track user.id) {
+                  <option [value]="user.id">{{ user.name }}</option>
+                  }
+                </select>
+              </div>
+              <div class="payment-field">
+                <label>Con qué cuenta</label>
+                <select [value]="row.sourcePaymentMethodId ?? ''"
+                  (change)="updatePaymentRow(i, 'sourcePaymentMethodId', +$any($event.target).value || null)">
+                  <option value="">Seleccionar...</option>
+                  @for (pm of nonCreditMethods(); track pm.id) {
+                  <option [value]="pm.id">{{ pm.alias || pm.bankName }} ({{ pm.accountType }})</option>
+                  }
+                </select>
+              </div>
+              <div class="payment-field amount-field">
+                <label>Monto</label>
+                <input type="number" min="0.01" step="0.01" [value]="row.amount"
+                  (input)="updatePaymentRow(i, 'amount', +$any($event.target).value)" />
+              </div>
+              <div class="payment-field notes-field">
+                <label>Notas</label>
+                <input type="text" placeholder="Opcional" [value]="row.notes"
+                  (input)="updatePaymentRow(i, 'notes', $any($event.target).value)" />
+              </div>
+              <button class="btn-remove-row" (click)="removePaymentRow(i)" type="button">
+                <lucide-icon [img]="icons.Trash2" [size]="16"></lucide-icon>
+              </button>
+            </div>
+            }
+          </div>
+
+          <div class="payment-actions">
+            <button class="btn-add-row" (click)="addPaymentRow()" type="button">
+              <lucide-icon [img]="icons.Plus" [size]="16"></lucide-icon>
+              Agregar método de pago
+            </button>
+            <button class="btn-confirm-payment" [disabled]="!isPaymentValid() || submittingPayment()"
+              (click)="submitPayment()">
+              {{ submittingPayment() ? 'Procesando...' : 'Confirmar Pago' }}
+            </button>
+          </div>
+        </div>
+        }
+
+        <!-- Botón Ver Desglose -->
+        <div class="card-actions detail-toggle">
+          <button class="btn-detail-toggle" (click)="togglePeriodDetail(card, $event)">
+            <lucide-icon [img]="expandedCardId() === card.paymentMethodId ? icons.ChevronUp : icons.ChevronDown"
+              [size]="16"></lucide-icon>
+            {{ expandedCardId() === card.paymentMethodId ? 'Ocultar Desglose' : 'Ver Desglose del Corte' }}
+          </button>
+        </div>
+
+        <!-- Desglose expandido -->
+        @if (expandedCardId() === card.paymentMethodId) {
+        <div class="period-detail-panel">
+          @if (loadingDetail()) {
+          <div class="detail-loading">
+            <div class="spinner-sm"></div>
+          </div>
+          } @else if (periodDetail(); as detail) {
+          <div class="detail-header-info">
+            <div class="detail-dates">
+              <span>Periodo: <strong>{{ formatDate(detail.periodStart) }} – {{ formatDate(detail.periodEnd)
+                  }}</strong></span>
+              <span>Pago: <strong>{{ formatDate(detail.paymentDate) }}</strong></span>
+            </div>
+            <div class="detail-totals">
+              <div class="detail-total-item">
+                <span class="dt-label">Cargos directos</span>
+                <span class="dt-value">{{ formatCurrency(detail.directChargesTotal) }}</span>
+              </div>
+              <div class="detail-total-item">
+                <span class="dt-label">Cuotas MSI</span>
+                <span class="dt-value">{{ formatCurrency(detail.installmentsTotal) }}</span>
+              </div>
+              <div class="detail-total-item total">
+                <span class="dt-label">Total del corte</span>
+                <span class="dt-value">{{ formatCurrency(detail.totalDue) }}</span>
+              </div>
+            </div>
+          </div>
+
+          @if (detail.directCharges.length) {
+          <div class="detail-section">
+            <h5 class="detail-section-title">Cargos Directos</h5>
+            @for (charge of detail.directCharges; track charge.transactionId) {
+            <div class="detail-charge-row">
+              <div class="charge-left">
+                <span class="charge-desc">{{ charge.description }}</span>
+                <div class="charge-tags">
+                  @if (charge.isShared) {
+                  <span class="tag shared">Compartido</span>
+                  } @else {
+                  <span class="tag personal">Personal</span>
+                  }
+                  @if (charge.categoryName) {
+                  <span class="tag category">{{ charge.categoryName }}</span>
+                  }
+                  @if (charge.userName) {
+                  <span class="tag user">{{ charge.userName }}</span>
+                  }
+                </div>
+              </div>
+              <span class="charge-amount">{{ formatCurrency(charge.amount) }}</span>
+            </div>
+            }
+          </div>
+          }
+
+          @if (detail.installmentCharges.length) {
+          <div class="detail-section">
+            <h5 class="detail-section-title">Cuotas MSI</h5>
+            @for (inst of detail.installmentCharges; track inst.installmentId) {
+            <div class="detail-charge-row">
+              <div class="charge-left">
+                <span class="charge-desc">{{ inst.description }}</span>
+                <div class="charge-tags">
+                  <span class="tag msi-badge">{{ inst.installmentNumber }}/{{ inst.totalInstallments }}</span>
+                  <span class="tag msi-original">Original: {{ formatCurrency(inst.originalAmount) }}</span>
+                  @if (inst.isShared) {
+                  <span class="tag shared">Compartido</span>
+                  } @else {
+                  <span class="tag personal">Personal</span>
+                  }
+                  @if (inst.categoryName) {
+                  <span class="tag category">{{ inst.categoryName }}</span>
+                  }
+                  @if (inst.userName) {
+                  <span class="tag user">{{ inst.userName }}</span>
+                  }
+                </div>
+              </div>
+              <span class="charge-amount">{{ formatCurrency(inst.installmentAmount) }}</span>
+            </div>
+            }
+          </div>
+          }
+
+          @if (!detail.directCharges.length && !detail.installmentCharges.length) {
+          <p class="detail-empty">No hay cargos registrados en este periodo.</p>
+          }
+          } @else {
+          <p class="detail-empty">No se pudo cargar el detalle.</p>
+          }
+        </div>
         }
       </div>
+      }
+    </div>
     }
   </ng-container>
 
   <ng-container *ngIf="activeTab === 'msi'">
-  <div class="page-header">
-    <div class="title-group">
-      <h2 class="page-title">Meses Sin Intereses</h2>
-      <p class="subtitle">Proyección de pagos para los próximos meses</p>
+    <div class="page-header">
+      <div class="title-group">
+        <h2 class="page-title">Meses Sin Intereses</h2>
+        <p class="subtitle">Proyección de pagos para los próximos meses</p>
+      </div>
+      <div class="header-actions">
+        <select class="select-months" (change)="onMonthsChange($event)">
+          <option value="3">Próximos 3 meses</option>
+          <option value="6">Próximos 6 meses</option>
+          <option value="12">1 año</option>
+        </select>
+      </div>
     </div>
-    <div class="header-actions">
-      <select class="select-months" (change)="onMonthsChange($event)">
-        <option value="3">Próximos 3 meses</option>
-        <option value="6">Próximos 6 meses</option>
-        <option value="12">1 año</option>
-      </select>
-    </div>
-  </div>
 
-  @if (loading()) {
-    <div class="loading-state"><div class="spinner"></div></div>
-  } @else {
+    @if (loading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+    </div>
+    } @else {
     <div class="msi-summary-grid">
       <div class="summary-box">
         <span class="label">Total a pagar este mes</span>
@@ -444,57 +452,59 @@
 
     <div class="msi-timeline">
       @for (monthGroup of groupedMsi(); track monthGroup.monthName) {
-        <div class="msi-month-group">
-          <div class="month-divider">
-            <span class="month-name">{{ monthGroup.monthName }}</span>
-            <span class="month-total">{{ formatCurrency(monthGroup.total) }}</span>
-          </div>
-
-          <div class="msi-list">
-            @for (item of monthGroup.installments; track item.installmentId) {
-              <div class="msi-card">
-                <div class="msi-main-info">
-                  <div class="msi-desc">
-                    <span class="description">{{ item.transactionDescription }}</span>
-                    <span class="bank-tag">{{ item.paymentMethodName }}</span>
-                  </div>
-                  <div class="msi-badge">
-                    {{ item.installmentNumber }}/{{ item.totalInstallments }}
-                  </div>
-                </div>
-                <div class="msi-amount-info">
-                  <span class="amount">{{ formatCurrency(item.installmentAmount) }}</span>
-                  <span class="date">{{ formatDate(item.projectedDate) }}</span>
-                </div>
-              </div>
-            }
-          </div>
+      <div class="msi-month-group">
+        <div class="month-divider">
+          <span class="month-name">{{ monthGroup.monthName }}</span>
+          <span class="month-total">{{ formatCurrency(monthGroup.total) }}</span>
         </div>
+
+        <div class="msi-list">
+          @for (item of monthGroup.installments; track item.installmentId) {
+          <div class="msi-card">
+            <div class="msi-main-info">
+              <div class="msi-desc">
+                <span class="description">{{ item.transactionDescription }}</span>
+                <span class="bank-tag">{{ item.paymentMethodName }}</span>
+              </div>
+              <div class="msi-badge">
+                {{ item.installmentNumber }}/{{ item.totalInstallments }}
+              </div>
+            </div>
+            <div class="msi-amount-info">
+              <span class="amount">{{ formatCurrency(item.installmentAmount) }}</span>
+              <span class="date">{{ formatDate(item.projectedDate) }}</span>
+            </div>
+          </div>
+          }
+        </div>
+      </div>
       } @empty {
-        <div class="msi-empty">No tienes cuotas MSI programadas para este periodo.</div>
+      <div class="msi-empty">No tienes cuotas MSI programadas para este periodo.</div>
       }
     </div>
-  }
-</ng-container>
+    }
+  </ng-container>
 
-<ng-container *ngIf="activeTab === 'visualization'">
-  <div class="viz-header">
-    <div class="title-group">
-      <h2 class="page-title">Visualización de gastos</h2>
-      <p class="subtitle">Análisis mensual de gastos y flujo de caja real</p>
-    </div>
-    <div class="viz-period-selector">
-      @for (opt of vizPeriodOptions; track opt.value) {
+  <ng-container *ngIf="activeTab === 'visualization'">
+    <div class="viz-header">
+      <div class="title-group">
+        <h2 class="page-title">Visualización de gastos</h2>
+        <p class="subtitle">Análisis mensual de gastos y flujo de caja real</p>
+      </div>
+      <div class="viz-period-selector">
+        @for (opt of vizPeriodOptions; track opt.value) {
         <button class="viz-period-btn" [class.active]="vizPeriod() === opt.value" (click)="selectVizPeriod(opt.value)">
           {{ opt.label }}
         </button>
-      }
+        }
+      </div>
     </div>
-  </div>
 
-  @if (loadingViz()) {
-    <div class="loading-state"><div class="spinner"></div></div>
-  } @else {
+    @if (loadingViz()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+    </div>
+    } @else {
     <!-- Gráfica 1: Tarjetazos -->
     <div class="viz-chart-card">
       <div class="viz-chart-header">
@@ -503,7 +513,8 @@
         </div>
         <div>
           <h3 class="viz-chart-title">Tarjetazos por método de pago</h3>
-          <p class="viz-chart-desc">Todos los gastos (EXPENSE) agrupados por tarjeta/cuenta. Cada color representa un mes.</p>
+          <p class="viz-chart-desc">Todos los gastos (EXPENSE) agrupados por tarjeta/cuenta. Cada color representa un
+            mes.</p>
         </div>
       </div>
       <div class="viz-chart-container tarjetazos-container">
@@ -519,7 +530,8 @@
         </div>
         <div>
           <h3 class="viz-chart-title">Gastos reales vs Ingresos</h3>
-          <p class="viz-chart-desc">Gastos de efectivo y débito + pagos de tarjeta de crédito vs ingresos. Refleja el flujo de caja real.</p>
+          <p class="viz-chart-desc">Gastos de efectivo y débito + pagos de tarjeta de crédito vs ingresos. Refleja el
+            flujo de caja real.</p>
         </div>
       </div>
       <div class="viz-chart-container">
@@ -535,51 +547,53 @@
       </div>
 
       @if (showRealBreakdown()) {
-        <div class="breakdown-panel">
-          <!-- Ingresos -->
-          <div class="breakdown-section">
-            <div class="breakdown-section-header income">
-              <lucide-icon [img]="icons.TrendingUp" [size]="16"></lucide-icon>
-              <span>Ingresos</span>
-              <span class="breakdown-section-total">{{ formatCurrency(getBreakdownTotal('income')) }}</span>
-            </div>
-            @for (row of getBreakdownByType('income'); track row.methodName) {
-              <div class="breakdown-row">
-                <span class="breakdown-method">{{ row.methodName }}</span>
-                <span class="breakdown-amount income">{{ formatCurrency(row.total) }}</span>
-              </div>
-            } @empty {
-              <div class="breakdown-empty">Sin ingresos en este periodo</div>
-            }
+      <div class="breakdown-panel">
+        <!-- Ingresos -->
+        <div class="breakdown-section">
+          <div class="breakdown-section-header income">
+            <lucide-icon [img]="icons.TrendingUp" [size]="16"></lucide-icon>
+            <span>Ingresos</span>
+            <span class="breakdown-section-total">{{ formatCurrency(getBreakdownTotal('income')) }}</span>
           </div>
-
-          <!-- Gastos reales -->
-          <div class="breakdown-section">
-            <div class="breakdown-section-header expense">
-              <lucide-icon [img]="icons.TrendingDown" [size]="16"></lucide-icon>
-              <span>Gastos reales</span>
-              <span class="breakdown-section-total">{{ formatCurrency(getBreakdownTotal('expense')) }}</span>
-            </div>
-            @for (row of getBreakdownByType('expense'); track row.methodName) {
-              <div class="breakdown-row">
-                <span class="breakdown-method">{{ row.methodName }}</span>
-                <span class="breakdown-amount expense">{{ formatCurrency(row.total) }}</span>
-              </div>
-            } @empty {
-              <div class="breakdown-empty">Sin gastos en este periodo</div>
-            }
+          @for (row of getBreakdownByType('income'); track row.methodName) {
+          <div class="breakdown-row">
+            <span class="breakdown-method">{{ row.methodName }}</span>
+            <span class="breakdown-amount income">{{ formatCurrency(row.total) }}</span>
           </div>
-
-          <!-- Neto -->
-          <div class="breakdown-net">
-            <span>Balance neto</span>
-            <span class="breakdown-net-value" [class.positive]="getBreakdownTotal('income') >= getBreakdownTotal('expense')" [class.negative]="getBreakdownTotal('income') < getBreakdownTotal('expense')">
-              {{ formatCurrency(getBreakdownTotal('income') - getBreakdownTotal('expense')) }}
-            </span>
-          </div>
+          } @empty {
+          <div class="breakdown-empty">Sin ingresos en este periodo</div>
+          }
         </div>
+
+        <!-- Gastos reales -->
+        <div class="breakdown-section">
+          <div class="breakdown-section-header expense">
+            <lucide-icon [img]="icons.TrendingDown" [size]="16"></lucide-icon>
+            <span>Gastos reales</span>
+            <span class="breakdown-section-total">{{ formatCurrency(getBreakdownTotal('expense')) }}</span>
+          </div>
+          @for (row of getBreakdownByType('expense'); track row.methodName) {
+          <div class="breakdown-row">
+            <span class="breakdown-method">{{ row.methodName }}</span>
+            <span class="breakdown-amount expense">{{ formatCurrency(row.total) }}</span>
+          </div>
+          } @empty {
+          <div class="breakdown-empty">Sin gastos en este periodo</div>
+          }
+        </div>
+
+        <!-- Neto -->
+        <div class="breakdown-net">
+          <span>Balance neto</span>
+          <span class="breakdown-net-value"
+            [class.positive]="getBreakdownTotal('income') >= getBreakdownTotal('expense')"
+            [class.negative]="getBreakdownTotal('income') < getBreakdownTotal('expense')">
+            {{ formatCurrency(getBreakdownTotal('income') - getBreakdownTotal('expense')) }}
+          </span>
+        </div>
+      </div>
       }
     </div>
-  }
-</ng-container>
+    }
+  </ng-container>
 </div>
