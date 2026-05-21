@@ -262,12 +262,21 @@ export class ReportsComponent implements OnInit, OnDestroy {
           
           this.financeService.getAvailablePeriods(c.paymentMethodId).subscribe({
             next: (periods) => {
-              card.availablePeriods = periods || [];
+              // Ordenar de más antiguo → más reciente para que el periodo actual
+              // quede en el último índice y ‹ navegue hacia períodos anteriores
+              card.availablePeriods = (periods || []).sort(
+                (a: any, b: any) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+              );
               card.loadingPeriods = false;
-              
+
               const todayStr = new Date().toISOString().split('T')[0];
-              const overdueCount = card.availablePeriods.filter(p => !p.paid && p.endDate <= todayStr && p.periodId !== c.periodId).length;
+              const overdueCount = card.availablePeriods.filter(
+                (p: any) => !p.paid && p.endDate <= todayStr && p.periodId !== c.periodId
+              ).length;
               card.overduePeriodsCount = overdueCount;
+
+              // Forzar re-render del signal para que el navegador muestre el periodo correcto
+              this.cards.set([...this.cards()]);
             },
             error: () => {
               card.loadingPeriods = false;
