@@ -174,7 +174,7 @@
               </span>
             </div>
 
-            <button class="period-nav-btn" [disabled]="getPeriodIndex(card) >= card.availablePeriods.length - 1"
+            <button class="period-nav-btn" [disabled]="getPeriodIndex(card) >= (card.availablePeriods?.length ?? 0) - 1"
               (click)="navigatePeriod(card, 1)" title="Periodo siguiente">
               ›
             </button>
