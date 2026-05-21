@@ -498,6 +498,34 @@ export class ReportsComponent implements OnInit, OnDestroy {
   formatDate = (d: string) => new Date(d).toLocaleDateString('es-MX', { day: '2-digit', month: 'short' });
   getStatusClass = (s: string) => s === 'PAID' ? 'paid' : s === 'OVERDUE' ? 'overdue' : 'pending';
 
+  // ── Navegación de periodos con flechas ──────────────────────────────────
+  getPeriodIndex(card: any): number {
+    if (!card.availablePeriods?.length) return 0;
+    const idx = card.availablePeriods.findIndex((p: any) => p.periodId === card.periodId);
+    return idx >= 0 ? idx : 0;
+  }
+
+  getPeriodLabel(card: any): string {
+    if (!card.availablePeriods?.length) return '—';
+    const period = card.availablePeriods.find((p: any) => p.periodId === card.periodId);
+    if (!period) return '—';
+    return `${this.formatDate(period.startDate)} – ${this.formatDate(period.endDate)}`;
+  }
+
+  isPeriodPaid(card: any): boolean {
+    if (!card.availablePeriods?.length) return false;
+    const period = card.availablePeriods.find((p: any) => p.periodId === card.periodId);
+    return period?.paid ?? false;
+  }
+
+  navigatePeriod(card: any, direction: -1 | 1): void {
+    const idx = this.getPeriodIndex(card);
+    const newIdx = idx + direction;
+    if (newIdx < 0 || newIdx >= card.availablePeriods.length) return;
+    const newPeriod = card.availablePeriods[newIdx];
+    this.onPeriodChange(card, newPeriod.periodId);
+  }
+
   // ── Visualización de gastos ─────────────────────────────────────────────
   vizPeriod = signal<number>(3);
   loadingViz = signal(false);

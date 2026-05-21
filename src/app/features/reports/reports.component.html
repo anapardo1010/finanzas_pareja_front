@@ -146,25 +146,38 @@
               </span>
             </div>
 
-            <!-- Selector de periodo -->
+            <!-- Navegación de periodo con flechas -->
             <div class="card-period-navigation" (click)="$event.stopPropagation()">
               @if (card.loadingPeriods) {
                 <span class="loading-periods-text">Cargando periodos...</span>
               } @else {
                 <div class="period-navigator">
-                  <span class="nav-label">Periodo:</span>
-                  <select class="period-select" 
-                          [value]="card.periodId" 
-                          (change)="onPeriodChange(card, $any($event.target).value)">
-                    @for (period of card.availablePeriods; track period.periodId) {
-                      <option [value]="period.periodId">
-                        {{ formatDate(period.startDate) }} – {{ formatDate(period.endDate) }} 
-                        ({{ period.paid ? 'Pagado' : 'Pendiente' }})
-                      </option>
-                    }
-                  </select>
+                  <button class="period-nav-btn"
+                          [disabled]="getPeriodIndex(card) <= 0"
+                          (click)="navigatePeriod(card, -1)"
+                          title="Periodo anterior">
+                    ‹
+                  </button>
+
+                  <div class="period-display">
+                    <span class="period-range">
+                      {{ getPeriodLabel(card) }}
+                    </span>
+                    <span class="period-status-tag"
+                          [class.paid]="isPeriodPaid(card)"
+                          [class.pending]="!isPeriodPaid(card)">
+                      {{ isPeriodPaid(card) ? 'Pagado' : 'Pendiente' }}
+                    </span>
+                  </div>
+
+                  <button class="period-nav-btn"
+                          [disabled]="getPeriodIndex(card) >= card.availablePeriods.length - 1"
+                          (click)="navigatePeriod(card, 1)"
+                          title="Periodo siguiente">
+                    ›
+                  </button>
                 </div>
-                
+
                 @if (card.overduePeriodsCount && card.overduePeriodsCount > 0) {
                   <div class="overdue-periods-alert" title="Tienes periodos anteriores sin pagar">
                     ⚠️ {{ card.overduePeriodsCount }} corte(s) pendiente(s) anterior(es)
