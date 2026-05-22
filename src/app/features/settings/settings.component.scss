@@ -136,17 +136,18 @@
 // Responsive
 @media (max-width: 768px) {
   .settings-container {
-    padding: 1rem;
+    padding: 12px;
   }
 
   .settings-header h1 {
-    font-size: 2rem;
+    font-size: 1.5rem;
   }
 
   .tab-button {
     flex-direction: column;
     gap: 0.25rem;
-    padding: 0.75rem 1rem;
+    padding: 0.75rem 0.5rem;
+    min-width: 60px;
 
     lucide-icon {
       width: 20px;
@@ -154,7 +155,7 @@
     }
 
     .tab-label {
-      font-size: 0.75rem;
+      font-size: 0.7rem;
     }
   }
 }

@@ -498,13 +498,94 @@ $palette: (
 }
 
 @media (max-width: 640px) {
-  .dashboard-container { padding: 20px 16px; }
-  .dashboard-header { flex-direction: column; align-items: flex-start; gap: 16px; }
-  .header-actions { flex-direction: column; align-items: stretch; gap: 8px; }
-  .bento-grid { grid-template-columns: 1fr; gap: 12px; }
-  .main-balance, .categories-chart, .monthly-table-card { grid-column: span 1; }
-  .main-value { font-size: 32px; }
-  .category-row { grid-template-columns: 110px 1fr 100px; }
-  .monthly-table { font-size: 12px; }
-  .monthly-table th, .monthly-table td { padding: 8px 8px; }
+  .dashboard-container {
+    padding: 16px 12px;
+  }
+
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 16px;
+
+    h1 { font-size: 22px; }
+    .subtitle { font-size: 13px; margin-top: 2px; }
+  }
+
+  .header-actions {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  /* Period selector: scrollable horizontally */
+  .period-selector {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+  }
+
+  .period-btn {
+    padding: 8px 12px;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+
+  /* "Nueva Transacción" button full-width */
+  .btn-primary {
+    width: 100%;
+    justify-content: center;
+    padding: 14px 16px;
+    font-size: 15px;
+    border-radius: 12px;
+  }
+
+  /* Single column grid */
+  .bento-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    gap: 10px;
+  }
+
+  .main-balance,
+  .categories-chart,
+  .monthly-table-card {
+    grid-column: span 1;
+  }
+
+  /* Balance card: compact */
+  .main-balance {
+    .main-value { font-size: 30px; letter-spacing: -1px; }
+    .comparison { font-size: 12px; }
+  }
+
+  /* Stat cards: horizontal layout */
+  .stat-card {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+
+    .icon-box { margin-bottom: 0; flex-shrink: 0; }
+
+    .details {
+      flex: 1;
+      .value { font-size: 18px; }
+      .card-label { font-size: 10px; }
+    }
+
+    .card-hint { font-size: 10px; }
+  }
+
+  /* Categories: single column */
+  .categories-grid { grid-template-columns: 1fr; }
+  .category-row { grid-template-columns: 100px 1fr 90px; gap: 8px; }
+
+  /* Monthly table: horizontal scroll */
+  .monthly-table-card { padding: 16px 12px; }
+  .monthly-table { font-size: 11px; }
+  .monthly-table th, .monthly-table td { padding: 7px 6px; }
+
+  /* Categories chart: compact padding */
+  .categories-chart { padding: 16px 12px; }
 }

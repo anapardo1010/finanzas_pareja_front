@@ -144,3 +144,115 @@
     .btn-more.transfer { color: #f59e42; }
   }
 }
+
+/* ── Mobile (≤640px) ──────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .transactions-page {
+    padding: 12px;
+  }
+
+  .page-header {
+    margin-bottom: 16px;
+    .page-title { font-size: 20px; }
+    .page-subtitle { font-size: 12px; }
+  }
+
+  /* Summary cards: horizontal scroll */
+  .summary-cards {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+    flex-wrap: nowrap;
+
+    .summary-card {
+      flex-shrink: 0;
+      min-width: 140px;
+      padding: 12px 16px;
+
+      .amount { font-size: 15px; }
+      .label { font-size: 10px; }
+      .card-icon { width: 32px; height: 32px; }
+    }
+  }
+
+  /* Toolbar: compact */
+  .toolbar {
+    padding: 12px;
+    gap: 12px;
+
+    .filters-bar {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 0;
+
+      .filter-group {
+        min-width: 0;
+      }
+
+      .filter-input,
+      .filter-select {
+        font-size: 13px;
+        padding: 8px 10px;
+      }
+
+      label {
+        font-size: 11px;
+      }
+    }
+
+    .action-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+
+      .btn-action {
+        padding: 14px 8px;
+        font-size: 14px;
+        border-radius: 12px;
+        text-align: center;
+      }
+    }
+  }
+
+  /* Transaction items: condensed */
+  .transactions-list {
+    .transaction-item {
+      padding: 12px;
+
+      .item-left {
+        gap: 10px;
+        flex: 1;
+        min-width: 0;
+
+        .type-indicator {
+          width: 30px;
+          height: 30px;
+          flex-shrink: 0;
+        }
+
+        .description {
+          font-size: 14px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          max-width: 150px;
+        }
+
+        .meta {
+          font-size: 10px;
+          flex-wrap: wrap;
+          gap: 3px;
+        }
+      }
+
+      .item-right {
+        flex-shrink: 0;
+        gap: 8px;
+
+        .amount-value { font-size: 14px; }
+        .badge-shared { font-size: 9px; }
+      }
+    }
+  }
+}

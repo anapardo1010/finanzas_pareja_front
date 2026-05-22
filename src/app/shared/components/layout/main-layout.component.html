@@ -1,4 +1,12 @@
 <div class="app-container">
+
+  <!-- Mobile top header (visible sólo en móvil) -->
+  <header class="mobile-header">
+    <lucide-icon [img]="Wallet" [size]="22"></lucide-icon>
+    <span class="mobile-app-name">ParejaFinanzas</span>
+    <div class="mobile-user-avatar">{{ userName.charAt(0).toUpperCase() }}</div>
+  </header>
+
   <aside class="sidebar">
     <div class="sidebar-header">
       <lucide-icon [img]="Wallet" [size]="24"></lucide-icon>
@@ -46,4 +54,29 @@
   <main class="main-content">
     <router-outlet></router-outlet>
   </main>
+
+  <!-- Mobile bottom navigation (visible sólo en móvil) -->
+  <nav class="mobile-bottom-nav">
+    <a routerLink="/main/dashboard" routerLinkActive="active" class="mobile-nav-item">
+      <lucide-icon [img]="LayoutDashboard" [size]="24"></lucide-icon>
+      <span>Inicio</span>
+    </a>
+    <a routerLink="/main/transactions" routerLinkActive="active" class="mobile-nav-item">
+      <lucide-icon [img]="CreditCard" [size]="24"></lucide-icon>
+      <span>Gastos</span>
+    </a>
+    <a routerLink="/main/reports" routerLinkActive="active" class="mobile-nav-item">
+      <lucide-icon [img]="TrendingUp" [size]="24"></lucide-icon>
+      <span>Reportes</span>
+    </a>
+    <a routerLink="/main/couple" routerLinkActive="active" class="mobile-nav-item">
+      <lucide-icon [img]="Users" [size]="24"></lucide-icon>
+      <span>Pareja</span>
+    </a>
+    <a routerLink="/main/settings" routerLinkActive="active" class="mobile-nav-item">
+      <lucide-icon [img]="Settings" [size]="24"></lucide-icon>
+      <span>Config</span>
+    </a>
+  </nav>
+
 </div>

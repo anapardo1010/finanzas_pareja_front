@@ -6,14 +6,17 @@
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  padding: 16px;
 }
 
 .modal-content {
   background: #fff;
   border-radius: 12px;
   padding: 20px;
-  min-width: 320px;
+  width: 100%;
   max-width: 400px;
+  max-height: 90vh;
+  overflow-y: auto;
   box-shadow: 0 4px 16px rgba(0,0,0,0.12);
   font-size: 15px;
 }
@@ -157,4 +160,43 @@ button[type="button"] {
 button[disabled] {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* ── Mobile (≤640px) ─────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .modal-content {
+    padding: 16px;
+    max-height: 95vh;
+  }
+
+  /* Form grid: single column on mobile */
+  .form-grid {
+    grid-template-columns: 1fr;
+
+    .full { grid-column: span 1; }
+  }
+
+  .amount-field {
+    .input-wrapper {
+      .currency { font-size: 26px; }
+      input { font-size: 34px; width: 160px; }
+    }
+  }
+
+  /* Actions: full-width stacked */
+  .modal-actions {
+    flex-direction: column-reverse;
+
+    button {
+      width: 100%;
+      padding: 14px;
+      font-size: 16px;
+      border-radius: 12px;
+    }
+  }
+
+  .extra-options {
+    flex-direction: column;
+    gap: 8px;
+  }
 }

@@ -1090,3 +1090,22 @@ $msi-shadow: 0 2px 10px rgba(0,0,0,0.05);
   50% { transform: scale(1.01); }
   100% { transform: scale(1); }
 }
+
+/* ── Reports: Mobile (≤640px) ──────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .reports-page {
+    padding: 12px;
+  }
+
+  /* Cards with 480px min-width: force single column */
+  .cards-balances-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Page header: stack */
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
