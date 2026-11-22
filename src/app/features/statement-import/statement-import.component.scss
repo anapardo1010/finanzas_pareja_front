@@ -1,6 +1,8 @@
 @use '../../../styles/variables' as *;
 
 .import-page {
+  // Texto oscuro explícito: en modo oscuro el body hereda texto casi blanco y las tarjetas aquí son claras
+  color: #0f172a;
   padding: 24px;
   max-width: 1100px;
   margin: 0 auto;
@@ -151,6 +153,7 @@
 .inline-actions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 
 .instructions {
+  color: #0f172a;
   white-space: pre-wrap;
   word-break: break-word;
   font-size: 12px;

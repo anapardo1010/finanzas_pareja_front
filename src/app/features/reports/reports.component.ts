@@ -21,6 +21,19 @@ import { PaymentMethodService } from '../../core/services/payment-method.service
 import { TransactionService } from '../../core/services/transaction.service';
 import { AuthService } from '../../core/services/auth.service';
 import { UserService } from '../../core/services/user.service';
+import {
+  CardPeriod,
+  parseLocalDate,
+  periodOptionLabel,
+  periodState,
+  periodStatusText,
+  periodsNewestFirst,
+  pickCurrentPeriod,
+  todayIso
+} from './card-periods';
+
+/** Colores por persona para las barras de reparto. */
+const PERSON_COLORS = ['#6366f1', '#ec4899', '#14b8a6', '#f59e0b', '#8b5cf6'];
 
 @Component({
   selector: 'app-reports',
@@ -252,9 +265,9 @@ export class ReportsComponent implements OnInit, OnDestroy {
       next: (val) => {
         const items = val ?? [];
         const mappedItems = items.map(c => {
-          const card = { 
-            ...c, 
-            selected: false,
+          const card = {
+            ...c,
+            selected: true, // todas cuentan para "¿quién le debe a quién?" hasta que el usuario quite alguna
             availablePeriods: [] as any[],
             loadingPeriods: true,
             overduePeriodsCount: 0
@@ -264,22 +277,27 @@ export class ReportsComponent implements OnInit, OnDestroy {
             next: (periods) => {
               // Ordenar de más antiguo → más reciente para que el periodo actual
               // quede en el último índice y ‹ navegue hacia períodos anteriores
-              card.availablePeriods = (periods || []).sort(
-                (a: any, b: any) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
-              );
-              card.loadingPeriods = false;
+              card.availablePeriods = periodsNewestFirst(periods || []);
 
-              const todayStr = new Date().toISOString().split('T')[0];
-              const overdueCount = card.availablePeriods.filter(
-                (p: any) => !p.paid && p.endDate <= todayStr && p.periodId !== c.periodId
+              // Por defecto se muestra el último corte (el que toca pagar), no el pendiente más antiguo
+              const current = pickCurrentPeriod(card.availablePeriods);
+              card.overduePeriodsCount = card.availablePeriods.filter(
+                (p: CardPeriod) => periodState(p) === 'overdue' && p.periodId !== current?.periodId
               ).length;
-              card.overduePeriodsCount = overdueCount;
 
-              // Forzar re-render del signal para que el navegador muestre el periodo correcto
-              this.cards.set([...this.cards()]);
+              if (current && current.periodId !== card.periodId) {
+                this.onPeriodChange(card, current.periodId); // mantiene "cargando" hasta traer ese periodo
+              } else {
+                card.loadingPeriods = false;
+                this.cards.set(this.cards().map(x => x.paymentMethodId === card.paymentMethodId
+                  ? { ...x, availablePeriods: card.availablePeriods, overduePeriodsCount: card.overduePeriodsCount, loadingPeriods: false }
+                  : x));
+              }
             },
             error: () => {
               card.loadingPeriods = false;
+              this.cards.set(this.cards().map(x =>
+                x.paymentMethodId === card.paymentMethodId ? { ...x, loadingPeriods: false } : x));
             }
           });
           
@@ -294,9 +312,21 @@ export class ReportsComponent implements OnInit, OnDestroy {
   }
 
   toggleSelection(card: CreditCardProportionalPayment) {
-    card.selected = !card.selected;
-    this.cards.set([...this.cards()]);
+    this.cards.set(this.cards().map(c =>
+      c.paymentMethodId === card.paymentMethodId ? { ...c, selected: !c.selected } : c));
   }
+
+  /** Detalle de "quién le debe a quién" por tarjeta incluida. */
+  settlementLines = computed(() =>
+    this.selectedCards().flatMap(card =>
+      card.userShares
+        .filter(s => s.userId !== card.userId && (s.amountToPay ?? 0) > 0)
+        .map(s => ({
+          from: s.userName,
+          to: this.getCardOwnerName(card),
+          amount: s.amountToPay,
+          cardName: card.alias ? `${card.bankName} — ${card.alias}` : card.bankName
+        }))));
 
   markAsPaid(card: CreditCardProportionalPayment, event: Event) {
     event.stopPropagation(); // Evita seleccionar la tarjeta al hacer clic en el botón
@@ -432,11 +462,11 @@ export class ReportsComponent implements OnInit, OnDestroy {
   }
 
   onPeriodChange(card: any, periodId: string) {
-    if (!periodId || card.periodId === periodId) return;
+    if (!periodId) return;
 
-    // Forzar re-render del signal al mutar loadingPeriods
-    card.loadingPeriods = true;
-    this.cards.set([...this.cards()]);
+    // Marcar la tarjeta como "cargando" mientras llega el periodo elegido
+    this.cards.set(this.cards().map(c =>
+      c.paymentMethodId === card.paymentMethodId ? { ...c, loadingPeriods: true } : c));
 
     this.financeService.getCreditCardProportionalPayment(card.paymentMethodId, periodId).subscribe({
       next: (newCardData) => {
@@ -471,8 +501,8 @@ export class ReportsComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error('Error cargando el periodo de la tarjeta:', err);
-        card.loadingPeriods = false;
-        this.cards.set([...this.cards()]); // restaurar estado en error
+        this.cards.set(this.cards().map(c =>
+          c.paymentMethodId === card.paymentMethodId ? { ...c, loadingPeriods: false } : c));
       }
     });
   }
@@ -504,35 +534,43 @@ export class ReportsComponent implements OnInit, OnDestroy {
   }
 
   formatCurrency = (n: number) => new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(n);
-  formatDate = (d: string) => new Date(d).toLocaleDateString('es-MX', { day: '2-digit', month: 'short' });
+  // Las fechas 'YYYY-MM-DD' se leen en hora local; con new Date(d) se mostraban un día antes en México
+  formatDate = (d: string) => (d && /^\d{4}-\d{2}-\d{2}$/.test(d) ? parseLocalDate(d) : new Date(d))
+    .toLocaleDateString('es-MX', { day: '2-digit', month: 'short' });
   getStatusClass = (s: string) => s === 'PAID' ? 'paid' : s === 'OVERDUE' ? 'overdue' : 'pending';
 
-  // ── Navegación de periodos con flechas ──────────────────────────────────
-  getPeriodIndex(card: any): number {
-    if (!card.availablePeriods?.length) return 0;
-    const idx = card.availablePeriods.findIndex((p: any) => p.periodId === card.periodId);
-    return idx >= 0 ? idx : 0;
+  // ── Periodos y presentación de cada tarjeta ───────────────────────────
+  currentPeriod(card: CreditCardProportionalPayment): CardPeriod | null {
+    return (card.availablePeriods as CardPeriod[] | undefined)?.find(p => p.periodId === card.periodId) ?? null;
   }
 
-  getPeriodLabel(card: any): string {
-    if (!card.availablePeriods?.length) return '—';
-    const period = card.availablePeriods.find((p: any) => p.periodId === card.periodId);
-    if (!period) return '—';
-    return `${this.formatDate(period.startDate)} – ${this.formatDate(period.endDate)}`;
+  periodOptionLabel(period: CardPeriod): string {
+    return periodOptionLabel(period);
   }
 
-  isPeriodPaid(card: any): boolean {
-    if (!card.availablePeriods?.length) return false;
-    const period = card.availablePeriods.find((p: any) => p.periodId === card.periodId);
-    return period?.paid ?? false;
+  /** Estado del periodo mostrado: clase para el color y texto con días restantes. */
+  cardStatus(card: CreditCardProportionalPayment): { cls: string; text: string } {
+    const period = this.currentPeriod(card);
+    if (!period) return { cls: 'due', text: '' };
+    return { cls: periodState(period), text: periodStatusText(period) };
   }
 
-  navigatePeriod(card: any, direction: -1 | 1): void {
-    const idx = this.getPeriodIndex(card);
-    const newIdx = idx + direction;
-    if (newIdx < 0 || newIdx >= card.availablePeriods.length) return;
-    const newPeriod = card.availablePeriods[newIdx];
-    this.onPeriodChange(card, newPeriod.periodId);
+  getCardOwnerName(card: CreditCardProportionalPayment): string {
+    return card.userShares.find(s => s.userId === card.userId)?.userName ?? 'Titular';
+  }
+
+  personColor(userId: number): string {
+    const ids = [...new Set(this.cards().flatMap(c => c.userShares.map(s => s.userId)))].sort((a, b) => a - b);
+    const index = ids.indexOf(userId);
+    return PERSON_COLORS[(index >= 0 ? index : 0) % PERSON_COLORS.length];
+  }
+
+  sharePercent(card: CreditCardProportionalPayment, amount: number): number {
+    return card.totalDue > 0 ? (amount / card.totalDue) * 100 : 0;
+  }
+
+  get today(): string {
+    return todayIso();
   }
 
   // ── Visualización de gastos ─────────────────────────────────────────────

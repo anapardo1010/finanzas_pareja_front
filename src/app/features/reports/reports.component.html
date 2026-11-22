@@ -115,115 +115,125 @@
       <div class="spinner"></div>
     </div>
     } @else {
-    @if (finalSettlement(); as s) {
-    <div class="settlement-summary-card">
-      <h4 class="summary-title">
-        <lucide-icon [img]="icons.BarChart3" [size]="20"></lucide-icon>
-        Resumen de Liquidación
-      </h4>
-      <div class="settlement-breakdown">
-        <div class="breakdown-row">
-          <span class="label">Me deben (mis tarjetas):</span>
-          <span class="amount positive">{{ formatCurrency(s.owedToMe) }}</span>
-        </div>
-        <div class="breakdown-row">
-          <span class="label">Debo (tarjetas de {{ s.partnerName }}):</span>
-          <span class="amount negative">{{ formatCurrency(s.iOwe) }}</span>
-        </div>
+    <!-- ¿Quién le debe a quién? -->
+    <section class="settle-hero">
+      <div class="settle-main">
+        <span class="settle-eyebrow">¿Quién le debe a quién?</span>
+        @if (finalSettlement(); as s) {
+        <span class="settle-message">{{ s.message }}</span>
+        @if (s.netDifference > 0) {
+        <span class="settle-amount">{{ formatCurrency(s.netDifference) }}</span>
+        }
+        <span class="settle-sub">
+          Te deben {{ formatCurrency(s.owedToMe) }} · Debes {{ formatCurrency(s.iOwe) }}
+          · {{ selectedCards().length }} de {{ cards().length }} tarjetas incluidas
+        </span>
+        } @else {
+        <span class="settle-message">Incluye al menos una tarjeta para hacer la cuenta.</span>
+        }
       </div>
-      <div class="final-settlement">
-        <div class="settlement-result">
-          <span class="settlement-text">{{ s.message }}</span>
-          <span class="settlement-amount">{{ formatCurrency(s.netDifference) }}</span>
-        </div>
-      </div>
-    </div>
-    }
+      @if (settlementLines().length) {
+      <ul class="settle-lines">
+        @for (line of settlementLines(); track $index) {
+        <li>
+          <span class="line-who">{{ line.from }} → {{ line.to }}</span>
+          <span class="line-card">{{ line.cardName }}</span>
+          <span class="line-amount">{{ formatCurrency(line.amount) }}</span>
+        </li>
+        }
+      </ul>
+      }
+    </section>
 
     <div class="cards-balances-grid">
       @for (card of cards(); track card.paymentMethodId) {
-      <div class="card-balance-item" [class.selected]="card.selected"
-        [class]="'status-' + getStatusClass(card.paymentStatus)" (click)="toggleSelection(card)">
-        <div class="card-header">
-          <div class="title-group">
-            <h3 class="bank-name">{{ card.bankName }}</h3>
-            <span class="alias">{{ card.alias }}</span>
+      <div class="cc-card" [class.excluded]="!card.selected">
+        <div class="cc-top">
+          <div class="cc-identity">
+            <span class="cc-bank">{{ card.bankName }}@if (card.alias) {<span class="cc-alias"> · {{ card.alias }}</span>}</span>
+            <span class="cc-owner">Tarjeta de {{ getCardOwnerName(card) }}</span>
           </div>
-          <span class="status-badge" [class]="getStatusClass(card.paymentStatus)">
-            {{ card.paymentStatus }}
+          @if (cardStatus(card).text) {
+          <span class="cc-status {{ cardStatus(card).cls }}">{{ cardStatus(card).text }}</span>
+          }
+        </div>
+
+        <div class="cc-period">
+          <label [for]="'period-' + card.paymentMethodId">Mes</label>
+          @if (card.availablePeriods?.length) {
+          <select [id]="'period-' + card.paymentMethodId" [disabled]="card.loadingPeriods"
+            (change)="onPeriodChange(card, $any($event.target).value)">
+            @for (p of card.availablePeriods; track p.periodId) {
+            <option [value]="p.periodId" [selected]="p.periodId === card.periodId">{{ periodOptionLabel(p) }}</option>
+            }
+          </select>
+          } @else {
+          <span class="cc-muted">Cargando meses…</span>
+          }
+        </div>
+
+        @if (card.loadingPeriods) {
+        <div class="cc-skeleton" aria-label="Cargando">
+          <span></span><span></span><span></span>
+        </div>
+        } @else {
+        <div class="cc-total">
+          <span class="cc-total-label">Total a pagar</span>
+          <span class="cc-total-amount">{{ formatCurrency(card.totalDue) }}</span>
+          <span class="cc-total-sub">
+            Gastos {{ formatCurrency(card.currentBalance) }} · MSI {{ formatCurrency(card.pendingInstallments) }}
           </span>
         </div>
 
-        <!-- Navegación de periodo con flechas -->
-        <div class="card-period-navigation" (click)="$event.stopPropagation()">
-          @if (card.loadingPeriods) {
-          <span class="loading-periods-text">Cargando periodos...</span>
-          } @else {
-          <div class="period-navigator">
-            <button class="period-nav-btn" [disabled]="getPeriodIndex(card) <= 0" (click)="navigatePeriod(card, -1)"
-              title="Periodo anterior">
-              ‹
-            </button>
-
-            <div class="period-display">
-              <span class="period-range">
-                {{ getPeriodLabel(card) }}
-              </span>
-              <span class="period-status-tag" [class.paid]="isPeriodPaid(card)" [class.pending]="!isPeriodPaid(card)">
-                {{ isPeriodPaid(card) ? 'Pagado' : 'Pendiente' }}
-              </span>
+        <div class="cc-split">
+          <div class="cc-bar" role="img" [attr.aria-label]="'Reparto del total de ' + card.bankName">
+            @for (share of card.userShares; track share.userId) {
+            @if (share.amountToPay > 0) {
+            <span class="cc-bar-seg" [style.width.%]="sharePercent(card, share.amountToPay)"
+              [style.background]="personColor(share.userId)"
+              [title]="share.userName + ': ' + formatCurrency(share.amountToPay)"></span>
+            }
+            }
+          </div>
+          <div class="cc-legend">
+            @for (share of card.userShares; track share.userId) {
+            <div class="cc-legend-item">
+              <span class="cc-dot" [style.background]="personColor(share.userId)"></span>
+              <span class="cc-legend-name">{{ share.userName }}</span>
+              <span class="cc-legend-amount">{{ formatCurrency(share.amountToPay) }}</span>
             </div>
-
-            <button class="period-nav-btn" [disabled]="getPeriodIndex(card) >= (card.availablePeriods?.length ?? 0) - 1"
-              (click)="navigatePeriod(card, 1)" title="Periodo siguiente">
-              ›
-            </button>
+            }
           </div>
-
-          @if ((card.overduePeriodsCount ?? 0) > 0) {
-          <div class="overdue-periods-alert" title="Tienes periodos anteriores sin pagar">
-            ⚠️ {{ card.overduePeriodsCount }} corte(s) pendiente(s) anterior(es)
-          </div>
-          }
-          }
         </div>
 
-        <div class="card-balance-details">
-          <div class="balance-row total-due">
-            <span class="label">Total a pagar:</span>
-            <span class="value">{{ formatCurrency(card.totalDue) }}</span>
-          </div>
-          <div class="balance-row">
-            <span class="label">Gastos mes:</span>
-            <span class="value">{{ formatCurrency(card.currentBalance) }}</span>
-          </div>
-        </div>
-        <div class="user-shares-compact">
-          @for (share of card.userShares; track share.userId) {
-          <div class="share-row">
-            <span class="share-user">{{ share.userName }}</span>
-            <span class="share-amount">{{ formatCurrency(share.amountToPay) }}</span>
-          </div>
-          }
-        </div>
-        <div class="card-dates">
-          <div class="date-item">
-            <lucide-icon [img]="icons.Calendar" [size]="14"></lucide-icon>
-            <span>Corte: <strong>{{ formatDate(card.cutDate) }}</strong></span>
-          </div>
-          <div class="date-item">
-            <lucide-icon [img]="icons.DollarSign" [size]="14"></lucide-icon>
-            <span>Pago: <strong>{{ formatDate(card.paymentDate) }}</strong></span>
-          </div>
-        </div>
-        @if (card.paymentStatus !== 'PAID') {
-        <div class="card-actions">
-          <button class="btn-pay" (click)="togglePaymentPanel(card, $event)">
-            <lucide-icon [img]="icons.DollarSign" [size]="16"></lucide-icon>
-            {{ payingCardId() === card.paymentMethodId ? 'Cerrar Pago' : 'Registrar Pago' }}
-          </button>
+        <div class="cc-dates">
+          <lucide-icon [img]="icons.Calendar" [size]="14"></lucide-icon>
+          Corte {{ formatDate(card.cutDate) }} · Pagar antes del {{ formatDate(card.paymentDate) }}
         </div>
         }
+
+        @if ((card.overduePeriodsCount ?? 0) > 0) {
+        <div class="cc-warning" title="Cortes anteriores ya vencidos que no están marcados como pagados">
+          ⚠️ {{ card.overduePeriodsCount }} corte(s) anterior(es) sin marcar como pagado
+        </div>
+        }
+
+        <div class="cc-footer">
+          <label class="cc-include">
+            <input type="checkbox" [checked]="card.selected" (change)="toggleSelection(card)">
+            Incluir en la cuenta
+          </label>
+          <div class="cc-actions">
+            @if (card.paymentStatus !== 'PAID') {
+            <button class="cc-btn primary" type="button" (click)="togglePaymentPanel(card, $event)">
+              {{ payingCardId() === card.paymentMethodId ? 'Cerrar pago' : 'Registrar pago' }}
+            </button>
+            }
+            <button class="cc-btn" type="button" (click)="togglePeriodDetail(card, $event)">
+              {{ expandedCardId() === card.paymentMethodId ? 'Ocultar cargos' : 'Ver cargos' }}
+            </button>
+          </div>
+        </div>
 
         <!-- Panel de pago expandible -->
         @if (payingCardId() === card.paymentMethodId) {
@@ -309,15 +319,6 @@
           </div>
         </div>
         }
-
-        <!-- Botón Ver Desglose -->
-        <div class="card-actions detail-toggle">
-          <button class="btn-detail-toggle" (click)="togglePeriodDetail(card, $event)">
-            <lucide-icon [img]="expandedCardId() === card.paymentMethodId ? icons.ChevronUp : icons.ChevronDown"
-              [size]="16"></lucide-icon>
-            {{ expandedCardId() === card.paymentMethodId ? 'Ocultar Desglose' : 'Ver Desglose del Corte' }}
-          </button>
-        </div>
 
         <!-- Desglose expandido -->
         @if (expandedCardId() === card.paymentMethodId) {
