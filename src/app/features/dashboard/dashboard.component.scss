@@ -1,591 +1,328 @@
-// ── Variables ────────────────────────────────────────────────────────────────
-$slate-900:    #0f172a;
-$slate-700:    #334155;
-$slate-500:    #64748b;
-$slate-200:    #e2e8f0;
-$slate-50:     #f8fafc;
-$indigo:       #4338ca;
-$emerald:      #065f46;
-$rose:         #9f1239;
-$blue:         #0369a1;
+$ink: #0f172a;
+$muted: #64748b;
+$line: #e2e8f0;
+$indigo: #4f46e5;
+$green: #059669;
+$red: #dc2626;
+$amber: #d97706;
 
-// Dot/bar palette — 6 colores cíclicos
-$palette: (
-  0: (#6366f1, rgba(99,102,241,0.15)),
-  1: (#10b981, rgba(16,185,129,0.15)),
-  2: (#f43f5e, rgba(244,63,94,0.15)),
-  3: (#f59e0b, rgba(245,158,11,0.15)),
-  4: (#8b5cf6, rgba(139,92,246,0.15)),
-  5: (#06b6d4, rgba(6,182,212,0.15)),
-);
-
-// ── Base ─────────────────────────────────────────────────────────────────────
-.dashboard-container {
-  padding: 36px 40px;
-  max-width: 1280px;
+.dash {
+  max-width: 1200px;
   margin: 0 auto;
-  background: $slate-50;
-  min-height: 100vh;
+  padding: 24px;
+  color: $ink; // explícito: en modo oscuro el body hereda texto claro
+  font-family: 'Inter', sans-serif;
 }
 
-// ── Header ───────────────────────────────────────────────────────────────────
-.dashboard-header {
+.muted { color: $muted; margin: 2px 0 0; }
+
+// ---------- Encabezado ----------
+.dash-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 28px;
-
-  h1 {
-    font-size: 30px;
-    font-weight: 800;
-    color: $slate-900;
-    margin: 0;
-    letter-spacing: -0.5px;
-  }
-  .subtitle {
-    color: $slate-500;
-    font-size: 15px;
-    margin-top: 4px;
-  }
-}
-
-.btn-primary {
-  background: $slate-900;
-  color: white;
-  border: none;
-  padding: 12px 22px;
-  border-radius: 14px;
-  font-weight: 700;
-  font-size: 14px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.2s;
-  &:hover {
-    background: #000;
-    transform: translateY(-1px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.18);
-  }
-}
-
-// ── Header actions & period selector ─────────────────────────────────────────
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.period-selector {
-  display: flex;
-  background: white;
-  border: 1px solid $slate-200;
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.period-btn {
-  background: transparent;
-  border: none;
-  padding: 9px 16px;
-  font-size: 13px;
-  font-weight: 600;
-  color: $slate-500;
-  cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
-
-  &:hover {
-    color: $slate-900;
-    background: $slate-50;
-  }
-
-  &.active {
-    background: $slate-900;
-    color: white;
-  }
-}
-
-// ── Grid ─────────────────────────────────────────────────────────────────────
-// Fila 1: balance (2 cols) + 3 stat cards (1 col cada una)
-// Fila 2: categorías full width
-.bento-grid {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
-  grid-template-rows: 240px auto;
+  align-items: flex-end;
   gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+  h1 { font-size: 30px; font-weight: 800; margin: 0; letter-spacing: -0.02em; color: $ink; }
 }
+.header-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 
-.bento-item {
-  background: white;
-  border-radius: 20px;
-  padding: 18px;
-  border: 1px solid $slate-200;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03);
-}
-
-// ── Balance card ──────────────────────────────────────────────────────────────
-.main-balance {
-  display: flex;
-  flex-direction: column;
-  background: $slate-900 !important;
-  color: white;
-  overflow: hidden;
-  position: relative;
-
-  // Decorative circle
-  &::after {
-    content: '';
-    position: absolute;
-    top: -60px; right: -60px;
-    width: 220px; height: 220px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.03);
-    pointer-events: none;
-  }
-
-  .card-label {
-    color: #94a3b8;
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    margin-bottom: 6px;
-  }
-
-  .main-value {
-    font-size: 42px;
-    font-weight: 900;
-    letter-spacing: -1.5px;
-    line-height: 1;
-    color: white;
-  }
-
-  .comparison {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    margin-top: 10px;
-    padding: 5px 12px;
-    border-radius: 100px;
-    font-size: 13px;
-    font-weight: 700;
-    width: fit-content;
-
-    &.up   { background: #064e3b; color: #6ee7b7; }
-    &.down { background: #4c0519; color: #fda4af; }
-  }
-
-  .balance-chart-mini {
-    flex: 1;
-    margin-top: 16px;
-    min-height: 0;
-    canvas { width: 100% !important; height: 100% !important; }
-  }
-}
-
-// ── Stat cards ────────────────────────────────────────────────────────────────
-.stat-card {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-
-  .card-label {
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: $slate-500;
-    margin-bottom: 4px;
-  }
-
-  .icon-box {
-    width: 36px; height: 36px;
-    border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    margin-bottom: 10px;
-  }
-
-  .value {
-    font-size: 20px;
-    font-weight: 900;
-    letter-spacing: -0.5px;
-    line-height: 1;
-
-    small {
-      font-size: 12px;
-      font-weight: 500;
-      letter-spacing: 0;
-    }
-  }
-
-  &.income {
-    background: #f0fdf4;
-    border-color: #bbf7d0;
-    .icon-box { background: $emerald; color: white; }
-    .value { color: $emerald; }
-  }
-  &.expense {
-    background: #fff1f2;
-    border-color: #fecdd3;
-    .icon-box { background: $rose; color: white; }
-    .value { color: $rose; }
-  }
-  &.msi {
-    background: #f0f9ff;
-    border-color: #bae6fd;
-    .icon-box { background: $blue; color: white; }
-    .value { color: $blue; }
-  }
-
-  &.tarjetazos {
-    background: #fffbeb;
-    border-color: #fde68a;
-    .icon-box { background: #f59e0b; color: white; }
-    .card-label { color: #92400e; }
-    .value { color: #d97706; }
-  }
-
-  .card-hint {
-    font-size: 11px;
-    color: $slate-700;
-    margin-top: 2px;
-    font-weight: 500;
-  }
-}
-
-// ── Categories card ───────────────────────────────────────────────────────────
-.categories-chart {
-  grid-column: span 5;
-  padding: 24px 28px;
-
-  .card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-
-    h3 {
-      font-size: 16px;
-      font-weight: 800;
-      color: $slate-900;
-      margin: 0;
-    }
-  }
-
-  .month-badge {
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: $slate-900;
-    background: $slate-50;
-    border: 1px solid $slate-200;
-    padding: 4px 10px;
-    border-radius: 100px;
-  }
-}
-
-// Grid de 2 columnas para las categorías
-.categories-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+.btn {
+  display: inline-flex;
+  align-items: center;
   gap: 8px;
+  width: auto;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 12px;
+  padding: 10px 16px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  &.primary {
+    color: white;
+    background: linear-gradient(135deg, $indigo 0%, #7c3aed 100%);
+    box-shadow: 0 8px 18px -8px rgba(79, 70, 229, 0.7);
+    &:hover { filter: brightness(1.05); }
+  }
+  &.ghost {
+    color: $ink;
+    background: white;
+    border-color: $line;
+    &:hover { background: #f8fafc; }
+  }
 }
 
-.category-row {
-  display: grid;
-  grid-template-columns: 140px 1fr 120px;
+// ---------- Paneles ----------
+.panel {
+  background: white;
+  border: 1px solid #eef2f7;
+  border-radius: 20px;
+  padding: 20px 22px;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+  h2 { font-size: 16px; font-weight: 800; margin: 0; color: $ink; }
+}
+.panel-head {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
   gap: 12px;
-  padding: 9px 12px;
-  background: $slate-50;
-  border-radius: 10px;
-  border: 1px solid #f1f5f9;
-  transition: border-color 0.15s;
-
-  &:hover { border-color: $slate-200; }
+  flex-wrap: wrap;
+  margin-bottom: 14px;
 }
-
-.cat-left {
-  display: flex;
+.link {
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-
-.cat-dot {
-  width: 8px; height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  &.dot-0 { background: #6366f1; }
-  &.dot-1 { background: #10b981; }
-  &.dot-2 { background: #f43f5e; }
-  &.dot-3 { background: #f59e0b; }
-  &.dot-4 { background: #8b5cf6; }
-  &.dot-5 { background: #06b6d4; }
-}
-
-.cat-name {
-  font-size: 13px;
-  font-weight: 600;
-  color: $slate-900;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.cat-bar-wrap { display: flex; align-items: center; }
-
-.cat-bar-bg {
-  width: 100%;
-  height: 5px;
-  background: $slate-200;
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.cat-bar-fill {
-  height: 100%;
-  border-radius: 10px;
-  transition: width 0.6s ease;
-  &.bar-0 { background: #6366f1; }
-  &.bar-1 { background: #10b981; }
-  &.bar-2 { background: #f43f5e; }
-  &.bar-3 { background: #f59e0b; }
-  &.bar-4 { background: #8b5cf6; }
-  &.bar-5 { background: #06b6d4; }
-}
-
-.cat-right {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-}
-
-.cat-amount {
-  font-size: 13px;
-  font-weight: 700;
-  color: $slate-900;
-}
-
-.cat-pct {
-  font-size: 12px;
-  font-weight: 600;
-  color: $slate-500;
-  min-width: 32px;
-  text-align: right;
-}
-
-.empty-txt {
-  grid-column: span 2;
-  text-align: center;
-  color: $slate-500;
+  gap: 6px;
   font-size: 14px;
-  padding: 32px 0;
-}
-
-// ── Monthly comparison table card ─────────────────────────────────────────────
-.monthly-table-card {
-  grid-column: span 5;
-  padding: 24px 28px;
-
-  .card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-
-    h3 {
-      font-size: 16px;
-      font-weight: 800;
-      color: $slate-900;
-      margin: 0;
-    }
-  }
-}
-
-.monthly-table-wrapper {
-  overflow-x: auto;
-}
-
-.monthly-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  font-size: 13px;
-
-  th, td {
-    padding: 10px 14px;
-    text-align: left;
-  }
-
-  th {
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: $slate-500;
-    border-bottom: 2px solid $slate-200;
-  }
-
-  td {
-    border-bottom: 1px solid #f1f5f9;
-    font-weight: 500;
-    color: $slate-900;
-  }
-
-  .num {
-    text-align: right;
-  }
-
-  .month-cell {
-    font-weight: 700;
-    white-space: nowrap;
-  }
-
-  .income-text { color: $emerald; }
-  .expense-text { color: $rose; }
-  .tarjetazos-text { color: #d97706; }
-
-  .tx-count {
-    color: $slate-500;
-    font-weight: 600;
-  }
-
-  tbody tr {
-    transition: background 0.15s;
-    &:hover { background: $slate-50; }
-  }
-
-  tfoot .totals-row {
-    td {
-      border-top: 2px solid $slate-200;
-      border-bottom: none;
-      padding-top: 14px;
-    }
-  }
-}
-
-.variation-badge {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 100px;
-  font-size: 12px;
   font-weight: 700;
+  color: $indigo;
+  text-decoration: none;
+  &:hover { text-decoration: underline; }
+}
+.empty { color: $muted; font-size: 14px; margin: 8px 0 0; }
 
-  &.up {
-    background: rgba(16, 185, 129, 0.1);
-    color: $emerald;
-  }
-  &.down {
-    background: rgba(244, 63, 94, 0.1);
-    color: $rose;
+.skeleton-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  span {
+    height: 56px;
+    border-radius: 14px;
+    background: linear-gradient(90deg, #f1f5f9 0%, #e2e8f0 50%, #f1f5f9 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.2s infinite linear;
   }
 }
+@keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
 
-// ── Responsive ────────────────────────────────────────────────────────────────
-@media (max-width: 1100px) {
-  .bento-grid {
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto;
-  }
-  .main-balance { grid-column: span 2; }
-  .categories-chart { grid-column: span 5; }
-  .monthly-table-card { grid-column: span 5; }
-  .categories-grid { grid-template-columns: 1fr; }
+// ---------- Próximos pagos ----------
+.payments { margin-bottom: 20px; }
+.pay-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.pay-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: #f8fafc;
+  border-left: 4px solid #cbd5e1;
+  &.urgent { border-left-color: $red; background: #fef2f2; }
+  &.soon { border-left-color: $amber; background: #fffbeb; }
+  &.later { border-left-color: $indigo; }
+  &.paid { border-left-color: $green; opacity: 0.7; }
+}
+.pay-date {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: white;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  .pay-day { font-size: 18px; font-weight: 900; }
+  .pay-month { font-size: 11px; font-weight: 700; color: $muted; text-transform: uppercase; margin-top: 2px; }
+}
+.pay-info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.pay-card { font-weight: 800; }
+.pay-meta { font-size: 13px; color: $muted; }
+.pay-right { text-align: right; display: flex; flex-direction: column; }
+.pay-amount { font-size: 18px; font-weight: 900; font-variant-numeric: tabular-nums; }
+.pay-hint { font-size: 12px; font-weight: 700; color: $muted; white-space: nowrap; }
+.pay-item.urgent .pay-hint { color: $red; }
+.pay-item.soon .pay-hint { color: $amber; }
+.pay-item.paid .pay-hint { color: $green; }
+
+// ---------- Selector de mes ----------
+.month-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 8px 0 16px;
+}
+.month-title { font-size: 20px; font-weight: 800; min-width: 190px; text-align: center; }
+.nav-btn {
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid $line;
+  background: white;
+  color: $ink;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  &:hover:not(:disabled) { border-color: $indigo; color: $indigo; }
+  &:disabled { opacity: 0.35; cursor: not-allowed; }
 }
 
-@media (max-width: 640px) {
-  .dashboard-container {
-    padding: 16px 12px;
+// ---------- Rejilla ----------
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 20px;
+  transition: opacity 0.2s ease;
+  &.is-loading { opacity: 0.5; pointer-events: none; }
+}
+.history { grid-column: 1 / -1; }
+
+// ---------- Cómo van ----------
+.pace h2 { margin-bottom: 12px; }
+.spent { display: flex; flex-direction: column; margin-bottom: 12px; }
+.spent-label { font-size: 13px; font-weight: 700; color: $muted; }
+.spent-amount { font-size: 40px; font-weight: 900; letter-spacing: -0.02em; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.spent-sub { font-size: 13px; color: $muted; }
+
+.pace-bar {
+  position: relative;
+  height: 14px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  .pace-fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    border-radius: 999px;
+    background: $indigo;
   }
-
-  .dashboard-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-    margin-bottom: 16px;
-
-    h1 { font-size: 22px; }
-    .subtitle { font-size: 13px; margin-top: 2px; }
+  &.above .pace-fill { background: linear-gradient(90deg, #f59e0b, $red); }
+  &.below .pace-fill { background: linear-gradient(90deg, #34d399, $green); }
+  .pace-avg, .pace-today {
+    position: absolute;
+    top: -4px;
+    bottom: -4px;
+    width: 2px;
+    background: $ink;
+    border-radius: 2px;
   }
+  .pace-today { background: $amber; width: 3px; }
+}
+.pace-legend {
+  display: flex;
+  gap: 14px;
+  margin-top: 8px;
+  font-size: 12px;
+  color: $muted;
+  span { display: inline-flex; align-items: center; gap: 6px; }
+  i { display: inline-block; width: 0; height: 12px; }
+  .mk-avg { border-left: 2px solid $ink; }
+  .mk-today { border-left: 3px solid $amber; }
+}
+.pace-text {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 8px 0 16px;
+  color: $muted;
+  &.above { color: $red; }
+  &.below { color: $green; }
+}
 
-  .header-actions {
-    width: 100%;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
-  }
-
-  /* Period selector: scrollable horizontally */
-  .period-selector {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    width: 100%;
-  }
-
-  .period-btn {
-    padding: 8px 12px;
-    font-size: 12px;
-    flex-shrink: 0;
-  }
-
-  /* "Nueva Transacción" button full-width */
-  .btn-primary {
-    width: 100%;
-    justify-content: center;
-    padding: 14px 16px;
-    font-size: 15px;
+.flow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  > div {
+    background: #f8fafc;
     border-radius: 12px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
   }
+}
+.flow-label { font-size: 12px; font-weight: 700; color: $muted; }
+.flow-value { font-size: 17px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.income { color: $green; }
+.expense { color: $red; }
 
-  /* Single column grid */
-  .bento-grid {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto;
-    gap: 10px;
-  }
+.split { margin-top: 16px; }
+.split-title { display: block; font-size: 13px; font-weight: 700; color: $muted; margin-bottom: 8px; }
+.split-bar {
+  display: flex;
+  height: 12px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #f1f5f9;
+  span + span { border-left: 2px solid white; }
+}
+.split-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 8px; font-size: 13px; color: #475569; }
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  strong { color: $ink; }
+}
 
-  .main-balance,
-  .categories-chart,
-  .monthly-table-card {
-    grid-column: span 1;
-  }
+// ---------- Categorías ----------
+.cats h2 { margin-bottom: 12px; }
+.cat-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.cat-top { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; }
+.cat-name { font-weight: 700; }
+.cat-amount { font-weight: 800; font-variant-numeric: tabular-nums; }
+.cat-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  margin: 6px 0 4px;
+  span { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, $indigo, #a855f7); }
+}
+.cat-bottom { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: $muted; }
+.cat-change {
+  font-weight: 700;
+  &.up { color: $red; }
+  &.down { color: $green; }
+}
 
-  /* Balance card: compact */
-  .main-balance {
-    .main-value { font-size: 30px; letter-spacing: -1px; }
-    .comparison { font-size: 12px; }
-  }
+// ---------- Historial ----------
+.legend-inline {
+  display: inline-flex;
+  gap: 14px;
+  font-size: 12px;
+  color: $muted;
+  i.in { background: #34d399; }
+  i.out { background: #fb7185; }
+}
+.history-rows { display: flex; flex-direction: column; gap: 10px; }
+.h-row {
+  display: grid;
+  grid-template-columns: 70px minmax(0, 1fr) 110px;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  &.current .h-month { color: $indigo; }
+}
+.h-month { font-weight: 800; }
+.h-bars { display: flex; flex-direction: column; gap: 3px; }
+.h-bar {
+  height: 8px;
+  border-radius: 999px;
+  min-width: 2px;
+  &.in { background: #34d399; }
+  &.out { background: #fb7185; }
+}
+.h-net { text-align: right; font-weight: 800; font-variant-numeric: tabular-nums; }
+.footnote { font-size: 12px; color: $muted; margin: 14px 0 0; }
 
-  /* Stat cards: horizontal layout */
-  .stat-card {
-    flex-direction: row;
-    align-items: center;
-    gap: 12px;
-
-    .icon-box { margin-bottom: 0; flex-shrink: 0; }
-
-    .details {
-      flex: 1;
-      .value { font-size: 18px; }
-      .card-label { font-size: 10px; }
-    }
-
-    .card-hint { font-size: 10px; }
-  }
-
-  /* Categories: single column */
-  .categories-grid { grid-template-columns: 1fr; }
-  .category-row { grid-template-columns: 100px 1fr 90px; gap: 8px; }
-
-  /* Monthly table: horizontal scroll */
-  .monthly-table-card { padding: 16px 12px; }
-  .monthly-table { font-size: 11px; }
-  .monthly-table th, .monthly-table td { padding: 7px 6px; }
-
-  /* Categories chart: compact padding */
-  .categories-chart { padding: 16px 12px; }
+// ---------- Responsive ----------
+@media (max-width: 900px) {
+  .grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  .dash { padding: 16px 16px 96px; }
+  .dash-header h1 { font-size: 24px; }
+  .header-actions { width: 100%; .btn { flex: 1; justify-content: center; } }
+  .spent-amount { font-size: 32px; }
+  .flow { grid-template-columns: 1fr 1fr; > div:last-child { grid-column: 1 / -1; } }
+  .h-row { grid-template-columns: 56px minmax(0, 1fr) 92px; }
+  .pay-meta { display: none; }
+  .pay-item { gap: 10px; }
+  .pay-right { max-width: 48%; }
+  .pay-hint { white-space: normal; }
 }

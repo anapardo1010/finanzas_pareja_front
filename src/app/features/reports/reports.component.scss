@@ -909,6 +909,32 @@ $msi-shadow: 0 2px 10px rgba(0,0,0,0.05);
   .line-amount { font-weight: 800; font-variant-numeric: tabular-nums; }
 }
 
+.pay-month-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  background: white;
+  border: 1px solid $border-color;
+  border-radius: 14px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  label { font-size: 14px; font-weight: 800; color: #0f172a; }
+  select {
+    width: auto;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    color: #0f172a;
+    background: #eef2ff;
+    border: 1px solid #c7d2fe;
+    border-radius: 10px;
+    padding: 8px 12px;
+    cursor: pointer;
+  }
+  .pay-month-hint { font-size: 13px; color: #64748b; flex: 1; min-width: 220px; }
+}
+
 .cards-balances-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));

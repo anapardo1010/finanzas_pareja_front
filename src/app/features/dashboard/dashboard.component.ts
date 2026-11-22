@@ -1,282 +1,282 @@
-import { Component, OnInit, OnDestroy, signal, computed, inject, effect } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
+import { LucideAngularModule, Plus, FileUp, ChevronLeft, ChevronRight, ArrowRight, CreditCard } from 'lucide-angular';
 import { AuthService } from '../../core/services/auth.service';
 import { FinanceReportService } from '../../core/services/finance-report.service';
 import { TransactionService } from '../../core/services/transaction.service';
 import { CategoryService } from '../../core/services/category.service';
 import { PaymentMethodService } from '../../core/services/payment-method.service';
 import { UserService } from '../../core/services/user.service';
+import { Category, PaymentMethod, Transaction, User } from '../../core/models';
 import {
-  LucideAngularModule, TrendingUp, TrendingDown,
-  CreditCard, PieChart, Plus, Tag, Calendar, Wallet
-} from 'lucide-angular';
-import { Transaction, InstallmentMSI, Category, PaymentMethodBalance, PaymentMethod } from '../../core/models';
-import Chart from 'chart.js/auto';
+  CardPeriod,
+  parseLocalDate,
+  periodState,
+  shortDate,
+  todayIso
+} from '../../shared/utils/card-periods';
+import {
+  categoryBreakdown,
+  monthLabel,
+  monthRange,
+  monthStats,
+  pace,
+  personSplit,
+  shiftMonth
+} from './dashboard-stats';
 
-// Interfaz local que refleja exactamente el JSON del backend
-interface MonthlyBalanceItem {
-  tenantId:                number;
-  yearMonth:               string;
-  totalIncome:             number;
-  totalExpenses:           number;
-  netBalance:              number;
-  incomeTransactionCount:  number;
-  expenseTransactionCount: number;
+/** Un pago de tarjeta próximo (corte ya hecho por pagar, o corte en curso). */
+interface UpcomingPayment {
+  cardName: string;
+  cutDate: string;
+  paymentDate: string;
+  amount: number;
+  installments: number;
+  state: 'open' | 'due' | 'paid';
+  daysToPay: number;
 }
 
-export type PeriodMonths = 3 | 6 | 12;
+const UPCOMING_WINDOW_DAYS = 40;
+const HISTORY_MONTHS = 6;
+const AVERAGE_MONTHS = 3;
+const SHARED_COLOR = '#14b8a6';
+const PERSON_COLORS = ['#6366f1', '#ec4899', '#f59e0b', '#8b5cf6'];
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule],
+  imports: [CommonModule, LucideAngularModule, RouterLink],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'
 })
-export class DashboardComponent implements OnInit, OnDestroy {
-
-  private readonly authService          = inject(AuthService);
+export class DashboardComponent implements OnInit {
+  private readonly authService = inject(AuthService);
   private readonly financeReportService = inject(FinanceReportService);
-  private readonly transactionService   = inject(TransactionService);
-  private readonly categoryService      = inject(CategoryService);
+  private readonly transactionService = inject(TransactionService);
+  private readonly categoryService = inject(CategoryService);
   private readonly paymentMethodService = inject(PaymentMethodService);
-  private readonly userService           = inject(UserService);
-  private readonly router               = inject(Router);
+  private readonly userService = inject(UserService);
+  private readonly router = inject(Router);
 
-  readonly icons = { TrendingUp, TrendingDown, CreditCard, PieChart, Plus, Tag, Calendar, Wallet };
+  readonly icons = { Plus, FileUp, ChevronLeft, ChevronRight, ArrowRight, CreditCard };
+  readonly sharedColor = SHARED_COLOR;
+  readonly currentYm = todayIso().slice(0, 7);
 
-  readonly today = new Date().toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' });
+  userName = signal('');
+  selectedYm = signal(this.currentYm);
+  loading = signal(true);
+  transactions = signal<Transaction[]>([]);
+  categories = signal<Category[]>([]);
+  paymentMethods = signal<PaymentMethod[]>([]);
+  users = signal<User[]>([]);
 
-  readonly periodOptions: { label: string; value: PeriodMonths }[] = [
-    { label: '3 meses', value: 3 },
-    { label: '6 meses', value: 6 },
-    { label: '1 año',   value: 12 },
-  ];
+  loadingPayments = signal(true);
+  upcoming = signal<UpcomingPayment[]>([]);
 
-  // ── Signals ────────────────────────────────────────────────────────────────
-  loading               = signal(false);
-  userName              = signal('Usuario');
-  selectedPeriod        = signal<PeriodMonths>(6);
-  transactions          = signal<Transaction[]>([]);
-  monthlyBalances       = signal<MonthlyBalanceItem[]>([]);
-  upcomingInstallments  = signal<InstallmentMSI[]>([]);
-  categories            = signal<Category[]>([]);
-  paymentMethodBalances = signal<PaymentMethodBalance[]>([]);
-  allPaymentMethods     = signal<PaymentMethod[]>([]);
-  creditCardIds         = signal<Set<number>>(new Set());
+  private readonly creditCardIds = computed(() =>
+    new Set(this.paymentMethods().filter(m => m.accountType === 'CREDIT').map(m => m.id)));
 
-  private chartRef: Chart | null = null;
+  readonly monthTitle = computed(() => monthLabel(this.selectedYm()));
+  readonly isCurrentMonth = computed(() => this.selectedYm() === this.currentYm);
 
-  // ── Computed ───────────────────────────────────────────────────────────────
-  summary = computed(() => {
-    const txs = this.transactions();
-    const ccIds = this.creditCardIds();
-    const income  = txs.filter(t => t.transactionType === 'INCOME').reduce((s, t) => s + t.amount, 0);
-    // Gastos reales: EXPENSE de no-crédito + CREDIT_PAYMENT
-    const realExpense = txs
-      .filter(t => t.transactionType === 'CREDIT_PAYMENT' || (t.transactionType === 'EXPENSE' && !ccIds.has(t.paymentMethodId)))
-      .reduce((s, t) => s + t.amount, 0);
-    // Tarjetazos: todo EXPENSE sin importar método de pago
-    const tarjetazos = txs.filter(t => t.transactionType === 'EXPENSE').reduce((s, t) => s + t.amount, 0);
-    return { income, expense: realExpense, tarjetazos, net: income - realExpense };
+  readonly stats = computed(() => monthStats(this.transactions(), this.selectedYm(), this.creditCardIds()));
+
+  readonly pace = computed(() => {
+    const previous = monthRange(shiftMonth(this.selectedYm(), -1), AVERAGE_MONTHS)
+      .map(ym => monthStats(this.transactions(), ym, this.creditCardIds()).spent);
+    return pace(this.stats().spent, previous, this.selectedYm());
   });
 
-  topCategories = computed(() => {
-    const txs   = this.transactions().filter(t => t.transactionType === 'EXPENSE');
-    const total = this.summary().expense;
-    if (total === 0) return [];
-
-    const groups = txs.reduce((acc, t) => {
-      const name = this.categories().find(c => c.id === t.categoryId)?.name ?? 'Otros';
-      acc[name] = (acc[name] ?? 0) + t.amount;
-      return acc;
-    }, {} as Record<string, number>);
-
-    return Object.entries(groups)
-      .map(([name, amount]) => ({ name, amount, percentage: (amount / total) * 100 }))
-      .sort((a, b) => b.amount - a.amount)
-      .slice(0, 10);
+  readonly split = computed(() => {
+    const s = personSplit(this.transactions(), this.selectedYm());
+    const total = s.shared + s.people.reduce((acc, p) => acc + p.amount, 0);
+    const segments = [
+      { label: 'Compartido', amount: s.shared, color: SHARED_COLOR },
+      ...s.people.map(p => ({ label: this.userLabel(p.userId), amount: p.amount, color: this.personColor(p.userId) }))
+    ].filter(x => x.amount > 0);
+    return { total, segments };
   });
 
-  comparison = computed(() => {
-    const breakdown = this.monthlyBreakdown();
-    const current  = breakdown[breakdown.length - 1]?.net ?? 0;
-    const previous = breakdown[breakdown.length - 2]?.net ?? 0;
-    const diff     = current - previous;
-    const percent  = previous !== 0 ? (diff / Math.abs(previous)) * 100 : 0;
-    return { current, percent, isPositive: diff >= 0 };
-  });
+  readonly categoriesOfMonth = computed(() =>
+    categoryBreakdown(this.transactions(), this.selectedYm(),
+      id => this.categories().find(c => c.id === id)?.name ?? 'Sin categoría'));
 
-  /** Desglose mensual para la tabla de comparación */
-  monthlyBreakdown = computed(() => {
-    const balances = this.monthlyBalances();
-    const txs = this.transactions();
-    const ccIds = this.creditCardIds();
+  readonly history = computed(() =>
+    monthRange(this.selectedYm(), HISTORY_MONTHS).reverse()
+      .map(ym => ({ ...monthStats(this.transactions(), ym, this.creditCardIds()), label: monthLabel(ym, 'short') })));
 
-    return balances.map((b, i) => {
-      // Calcular gastos reales y tarjetazos por mes
-      const [year, month] = b.yearMonth.split('-').map(Number);
-      const monthTxs = txs.filter(t => {
-        const d = new Date(t.date);
-        return d.getFullYear() === year && (d.getMonth() + 1) === month;
-      });
+  readonly historyMax = computed(() =>
+    Math.max(1, ...this.history().map(h => Math.max(h.income, h.outflow))));
 
-      const income = monthTxs.filter(t => t.transactionType === 'INCOME').reduce((s, t) => s + t.amount, 0);
-      const realExpense = monthTxs
-        .filter(t => t.transactionType === 'CREDIT_PAYMENT' || (t.transactionType === 'EXPENSE' && !ccIds.has(t.paymentMethodId)))
-        .reduce((s, t) => s + t.amount, 0);
-      const tarjetazos = monthTxs.filter(t => t.transactionType === 'EXPENSE').reduce((s, t) => s + t.amount, 0);
-      const net = income - realExpense;
-
-      const prev = balances[i - 1];
-      let prevNet = 0;
-      if (prev) {
-        const [py, pm] = prev.yearMonth.split('-').map(Number);
-        const prevTxs = txs.filter(t => {
-          const d = new Date(t.date);
-          return d.getFullYear() === py && (d.getMonth() + 1) === pm;
-        });
-        const prevIncome = prevTxs.filter(t => t.transactionType === 'INCOME').reduce((s, t) => s + t.amount, 0);
-        const prevRealExp = prevTxs
-          .filter(t => t.transactionType === 'CREDIT_PAYMENT' || (t.transactionType === 'EXPENSE' && !ccIds.has(t.paymentMethodId)))
-          .reduce((s, t) => s + t.amount, 0);
-        prevNet = prevIncome - prevRealExp;
-      }
-
-      const diffNet = prev ? net - prevNet : 0;
-      const pctNet = prev && prevNet !== 0 ? (diffNet / Math.abs(prevNet)) * 100 : 0;
-
-      return {
-        yearMonth: b.yearMonth,
-        income,
-        expense: realExpense,
-        tarjetazos,
-        net,
-        diffNet,
-        pctNet,
-        txCount: b.incomeTransactionCount + b.expenseTransactionCount,
-      };
-    });
-  });
-
-  /** Totales acumulados del periodo */
-  periodTotals = computed(() => {
-    const s = this.summary();
-    return { totalIncome: s.income, totalExpenses: s.expense, tarjetazos: s.tarjetazos, net: s.net };
-  });
-
-  // ── Lifecycle ──────────────────────────────────────────────────────────────
   ngOnInit(): void {
-    // Cargar nombre real del usuario
     const user = this.authService.currentUser();
+    this.userName.set(user?.name?.split(' ')[0] ?? '');
     if (user?.id) {
       this.userService.getUserById(user.id).subscribe({
-        next: u => this.userName.set(u.name ?? 'Usuario'),
-        error: () => this.userName.set(user.name ?? 'Usuario'),
+        next: u => this.userName.set(u.name?.split(' ')[0] ?? ''),
+        error: () => {}
       });
-    } else {
-      this.userName.set(user?.name ?? 'Usuario');
     }
-    this.loadData();
+    this.loadMonthData();
+    this.loadUpcomingPayments();
   }
 
-  selectPeriod(months: PeriodMonths): void {
-    this.selectedPeriod.set(months);
-    this.loadData();
+  // ===========================================================================
+  // Navegación de mes
+  // ===========================================================================
+
+  changeMonth(delta: number): void {
+    const next = shiftMonth(this.selectedYm(), delta);
+    if (next > this.currentYm) return;
+    this.selectedYm.set(next);
+    this.loadMonthData();
   }
 
-  async loadData(): Promise<void> {
+  // ===========================================================================
+  // Datos
+  // ===========================================================================
+
+  /** Trae los 6 meses que terminan en el mes elegido (más uno extra para comparar categorías y promedio). */
+  async loadMonthData(): Promise<void> {
     const tenantId = this.authService.getTenantId();
     if (!tenantId) return;
-
     this.loading.set(true);
-    const now   = new Date();
-    const months = this.selectedPeriod();
-    const start = new Date(now.getFullYear(), now.getMonth() - months, 1);
-    const startDate = start.toISOString().split('T')[0];
-    const today     = now.toISOString().split('T')[0];
+
+    const firstYm = shiftMonth(this.selectedYm(), -HISTORY_MONTHS);
+    const [ly, lm] = this.selectedYm().split('-').map(Number);
+    const lastDay = new Date(ly, lm, 0).getDate();
 
     try {
-      const [txs, balances, installments, cats, methodBalances, allMethods] = await Promise.all([
-        this.transactionService.getTransactionsByDateRange(tenantId, startDate, today).toPromise(),
-        this.financeReportService.getMonthlyBalances(tenantId, months, 'accrual').toPromise(),
-        this.financeReportService.getUpcomingInstallments(tenantId).toPromise(),
-        this.categoryService.getByTenant(tenantId, 0, 100).toPromise(),
-        this.financeReportService.getBalanceByPaymentMethod(tenantId, now.getFullYear(), now.getMonth() + 1).toPromise(),
-        this.paymentMethodService.getByTenant(tenantId, 0, 100).toPromise(),
+      const [txs, cats, methods, users] = await Promise.all([
+        firstValueFrom(this.transactionService.getTransactionsByDateRange(
+          tenantId, `${firstYm}-01`, `${this.selectedYm()}-${String(lastDay).padStart(2, '0')}`)),
+        this.categories().length ? Promise.resolve(null) : firstValueFrom(this.categoryService.getByTenant(tenantId, 0, 200)),
+        this.paymentMethods().length ? Promise.resolve(null) : firstValueFrom(this.paymentMethodService.getByTenant(tenantId, 0, 100)),
+        this.users().length ? Promise.resolve(null) : firstValueFrom(this.userService.getUsersByTenant(tenantId))
       ]);
-
       this.transactions.set(txs ?? []);
-      this.monthlyBalances.set((balances as unknown as MonthlyBalanceItem[]) ?? []);
-
-      this.upcomingInstallments.set(installments ?? []);
-      this.categories.set(cats?.content ?? []);
-      this.paymentMethodBalances.set(methodBalances ?? []);
-      this.allPaymentMethods.set(allMethods?.content ?? []);
-      // Identificar IDs de tarjetas de crédito
-      const ccIds = new Set((allMethods?.content ?? []).filter(m => m.accountType === 'CREDIT').map(m => m.id));
-      this.creditCardIds.set(ccIds);
-
-      setTimeout(() => this.renderBalanceChart(), 0);
+      if (cats) this.categories.set(cats.content ?? []);
+      if (methods) this.paymentMethods.set(methods.content ?? []);
+      if (users) this.users.set(users ?? []);
     } catch (e) {
-      console.error('Error cargando dashboard:', e);
+      console.error('Error cargando el dashboard', e);
     } finally {
       this.loading.set(false);
     }
   }
 
-  renderBalanceChart(): void {
-    const breakdown = this.monthlyBreakdown();
-    if (!breakdown.length) return;
-
-    const ctx = document.getElementById('balanceChart') as HTMLCanvasElement;
-    if (!ctx) return;
-
-    const labels = breakdown.map(b => b.yearMonth);
-    const data   = breakdown.map(b => b.net);
-
-    if (this.chartRef) this.chartRef.destroy();
-
-    this.chartRef = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels,
-        datasets: [{
-          data,
-          backgroundColor: data.map(v => v >= 0 ? 'rgba(255,255,255,0.15)' : 'rgba(253,164,175,0.3)'),
-          borderColor:     data.map(v => v >= 0 ? 'rgba(255,255,255,0.5)' : '#fda4af'),
-          borderWidth: 1.5,
-          borderRadius: 4,
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: '#1c2030',
-            borderColor: 'rgba(255,255,255,0.07)',
-            borderWidth: 1,
-            titleColor: '#64748b',
-            bodyColor: '#f1f5f9',
-            callbacks: {
-              label: ctx => `$${(ctx.parsed.y ?? 0).toLocaleString('es-MX')}`
-            }
-          }
-        },
-        scales: {
-          x: { display: false },
-          y: { display: false, grid: { display: false } }
-        }
+  /** Pagos de tarjeta de los próximos días: siempre la situación de hoy, sin importar el mes elegido. */
+  async loadUpcomingPayments(): Promise<void> {
+    const tenantId = this.authService.getTenantId();
+    if (!tenantId) return;
+    this.loadingPayments.set(true);
+    try {
+      let methods = this.paymentMethods();
+      if (!methods.length) {
+        methods = (await firstValueFrom(this.paymentMethodService.getByTenant(tenantId, 0, 100))).content ?? [];
+        this.paymentMethods.set(methods);
       }
-    });
+      const today = todayIso();
+      const limit = this.addDays(today, UPCOMING_WINDOW_DAYS);
+      const cards = methods.filter(m => m.accountType === 'CREDIT' && m.isActive !== false);
+
+      const perCard = await Promise.all(cards.map(async card => {
+        try {
+          const periods = (await firstValueFrom(this.financeReportService.getAvailablePeriods(card.id))) as CardPeriod[];
+          const soon = (periods || []).filter(p => p.paymentDate >= today && p.paymentDate <= limit);
+          return await Promise.all(soon.map(async p => {
+            const data = await firstValueFrom(this.financeReportService.getCreditCardProportionalPayment(card.id, p.periodId));
+            const state = periodState(p, today);
+            return {
+              cardName: card.alias ? `${card.bankName} · ${card.alias}` : card.bankName,
+              cutDate: p.endDate,
+              paymentDate: p.paymentDate,
+              amount: Number(data?.totalDue ?? 0),
+              installments: Number(data?.pendingInstallments ?? 0),
+              state: state === 'overdue' ? 'due' : state,
+              daysToPay: this.daysBetween(today, p.paymentDate)
+            } as UpcomingPayment;
+          }));
+        } catch {
+          return [];
+        }
+      }));
+
+      this.upcoming.set(perCard.flat().sort((a, b) => a.paymentDate.localeCompare(b.paymentDate)));
+    } finally {
+      this.loadingPayments.set(false);
+    }
   }
 
-  navigateTo(path: string): void { this.router.navigate([path]); }
+  // ===========================================================================
+  // Helpers de plantilla
+  // ===========================================================================
 
-  ngOnDestroy(): void {
-    if (this.chartRef) this.chartRef.destroy();
+  paymentHint(p: UpcomingPayment): string {
+    if (p.state === 'paid') return 'Pagado';
+    if (p.state === 'open') return `Corte en curso · cierra el ${shortDate(p.cutDate)}`;
+    if (p.daysToPay === 0) return 'Se paga hoy';
+    return `Pagar en ${p.daysToPay} día${p.daysToPay === 1 ? '' : 's'}`;
+  }
+
+  urgency(p: UpcomingPayment): 'paid' | 'urgent' | 'soon' | 'later' {
+    if (p.state === 'paid') return 'paid';
+    if (p.state === 'open') return 'later';
+    return p.daysToPay <= 3 ? 'urgent' : p.daysToPay <= 10 ? 'soon' : 'later';
+  }
+
+  formatShort = (iso: string) => shortDate(iso);
+
+  dayOfMonth(iso: string): number {
+    return parseLocalDate(iso).getDate();
+  }
+
+  monthAbbrev(iso: string): string {
+    return parseLocalDate(iso).toLocaleDateString('es-MX', { month: 'short' }).replace('.', '');
+  }
+
+  paceVerdictText(): string {
+    const p = this.pace();
+    if (p.verdict === 'none') return 'Todavía no hay meses anteriores para comparar.';
+    const pct = Math.round(p.ratio * 100);
+    if (p.monthElapsed === null) {
+      return p.verdict === 'above' ? `Gastaron ${pct}% de lo habitual: más que otros meses.`
+        : p.verdict === 'below' ? `Gastaron ${pct}% de lo habitual: menos que otros meses.`
+        : `Gastaron ${pct}% de lo habitual: un mes normal.`;
+    }
+    const elapsed = Math.round(p.monthElapsed * 100);
+    return p.verdict === 'above' ? `Llevan ${pct}% de lo habitual y va el ${elapsed}% del mes: van por arriba.`
+      : p.verdict === 'below' ? `Llevan ${pct}% de lo habitual y va el ${elapsed}% del mes: van bien.`
+      : `Llevan ${pct}% de lo habitual y va el ${elapsed}% del mes: van en lo normal.`;
+  }
+
+  barPercent(value: number, max: number): number {
+    return max > 0 ? Math.min(100, (value / max) * 100) : 0;
+  }
+
+  userLabel(userId: number): string {
+    return this.users().find(u => u.id === userId)?.name?.split(' ')[0] ?? 'Persona';
+  }
+
+  personColor(userId: number): string {
+    const ids = this.users().map(u => u.id).sort((a, b) => a - b);
+    const index = ids.indexOf(userId);
+    return PERSON_COLORS[(index >= 0 ? index : 0) % PERSON_COLORS.length];
+  }
+
+  go(path: string): void {
+    this.router.navigate([path]);
+  }
+
+  private addDays(iso: string, days: number): string {
+    const d = parseLocalDate(iso);
+    d.setDate(d.getDate() + days);
+    return todayIso(d);
+  }
+
+  private daysBetween(from: string, to: string): number {
+    return Math.round((parseLocalDate(to).getTime() - parseLocalDate(from).getTime()) / 86_400_000);
   }
 }

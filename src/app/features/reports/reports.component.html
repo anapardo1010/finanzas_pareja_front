@@ -145,6 +145,24 @@
       }
     </section>
 
+    <div class="pay-month-bar">
+      <label for="payMonth">Pagos de</label>
+      <select id="payMonth" [value]="payMonth()" (change)="applyPayMonth($any($event.target).value)">
+        <option value="" [selected]="!payMonth()">Elige un mes de pago…</option>
+        @for (ym of payMonths(); track ym) {
+        <option [value]="ym" [selected]="ym === payMonth()">{{ payMonthLabel(ym) }}</option>
+        }
+      </select>
+      <span class="pay-month-hint">
+        @if (payMonth()) {
+        Cada tarjeta muestra el corte que se paga en {{ payMonthLabel(payMonth()) }}. Puedes ajustar cualquiera.
+        @if (cardsWithoutPayMonth().length) { Sin corte ese mes: {{ cardsWithoutPayMonth().join(', ') }}. }
+        } @else {
+        Pone todas las tarjetas en los cortes que se pagan ese mes.
+        }
+      </span>
+    </div>
+
     <div class="cards-balances-grid">
       @for (card of cards(); track card.paymentMethodId) {
       <div class="cc-card" [class.excluded]="!card.selected">
@@ -162,7 +180,7 @@
           <label [for]="'period-' + card.paymentMethodId">Mes</label>
           @if (card.availablePeriods?.length) {
           <select [id]="'period-' + card.paymentMethodId" [disabled]="card.loadingPeriods"
-            (change)="onPeriodChange(card, $any($event.target).value)">
+            (change)="onCardPeriodSelect(card, $any($event.target).value)">
             @for (p of card.availablePeriods; track p.periodId) {
             <option [value]="p.periodId" [selected]="p.periodId === card.periodId">{{ periodOptionLabel(p) }}</option>
             }

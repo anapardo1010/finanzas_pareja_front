@@ -1,168 +1,193 @@
-<div class="dashboard-container">
-
-  <header class="dashboard-header">
-    <div class="welcome">
-      <h1>Hola, {{ userName() }} 👋</h1>
-      <p class="subtitle">Este es el estado de tus finanzas hoy.</p>
+<div class="dash">
+  <!-- ============ Encabezado ============ -->
+  <header class="dash-header">
+    <div>
+      <h1>Hola{{ userName() ? ', ' + userName() : '' }} 👋</h1>
+      <p class="muted">Así van sus finanzas.</p>
     </div>
     <div class="header-actions">
-      <div class="period-selector">
-        @for (opt of periodOptions; track opt.value) {
-          <button
-            class="period-btn"
-            [class.active]="selectedPeriod() === opt.value"
-            (click)="selectPeriod(opt.value)">
-            {{ opt.label }}
-          </button>
-        }
-      </div>
-      <button class="btn-primary" (click)="navigateTo('/main/transactions')">
-        <lucide-icon [img]="icons.Plus" [size]="18"></lucide-icon>
-        Nueva Transacción
+      <button type="button" class="btn ghost" (click)="go('/main/import')">
+        <lucide-icon [img]="icons.FileUp" [size]="16"></lucide-icon>
+        Importar estado de cuenta
+      </button>
+      <button type="button" class="btn primary" (click)="go('/main/transactions')">
+        <lucide-icon [img]="icons.Plus" [size]="16"></lucide-icon>
+        Registrar gasto
       </button>
     </div>
   </header>
 
-  <div class="bento-grid">
-
-    <!-- BALANCE PRINCIPAL -->
-    <div class="bento-item main-balance">
-      <span class="card-label">Balance Real ({{ selectedPeriod() }} meses)</span>
-      <div class="main-value">{{ periodTotals().net | currency:'MXN':'symbol':'1.0-0' }}</div>
-      <div class="comparison" [class.up]="comparison().isPositive" [class.down]="!comparison().isPositive">
-        <lucide-icon [img]="comparison().isPositive ? icons.TrendingUp : icons.TrendingDown" [size]="14"></lucide-icon>
-        <span>{{ comparison().percent | number:'1.1-1' }}% vs mes anterior</span>
-      </div>
-      <div class="balance-chart-mini">
-        <canvas id="balanceChart"></canvas>
-      </div>
+  <!-- ============ Próximos pagos (siempre la situación de hoy) ============ -->
+  <section class="panel payments">
+    <div class="panel-head">
+      <h2>Próximos pagos de tarjeta</h2>
+      <a routerLink="/main/reports" class="link">
+        Hacer cuentas de pareja
+        <lucide-icon [img]="icons.ArrowRight" [size]="16"></lucide-icon>
+      </a>
     </div>
 
-    <!-- INGRESOS -->
-    <div class="bento-item stat-card income">
-      <div class="icon-box"><lucide-icon [img]="icons.TrendingUp" [size]="18"></lucide-icon></div>
-      <div class="details">
-        <span class="card-label">Ingresos ({{ selectedPeriod() }}m)</span>
-        <span class="value">{{ periodTotals().totalIncome | currency:'MXN':'symbol':'1.0-0' }}</span>
-      </div>
-    </div>
-
-    <!-- GASTOS REALES -->
-    <div class="bento-item stat-card expense">
-      <div class="icon-box"><lucide-icon [img]="icons.Wallet" [size]="18"></lucide-icon></div>
-      <div class="details">
-        <span class="card-label">Gastos Reales ({{ selectedPeriod() }}m)</span>
-        <span class="value">{{ periodTotals().totalExpenses | currency:'MXN':'symbol':'1.0-0' }}</span>
-        <span class="card-hint">Efectivo + Débito + Pagos TC</span>
-      </div>
-    </div>
-
-    <!-- TARJETAZOS -->
-    <div class="bento-item stat-card tarjetazos">
-      <div class="icon-box"><lucide-icon [img]="icons.CreditCard" [size]="18"></lucide-icon></div>
-      <div class="details">
-        <span class="card-label">Tarjetazos ({{ selectedPeriod() }}m)</span>
-        <span class="value">{{ periodTotals().tarjetazos | currency:'MXN':'symbol':'1.0-0' }}</span>
-        <span class="card-hint">Todo EXPENSE (no refleja flujo real)</span>
-      </div>
-    </div>
-
-    <!-- MSI -->
-    <div class="bento-item stat-card msi">
-      <div class="icon-box"><lucide-icon [img]="icons.Calendar" [size]="18"></lucide-icon></div>
-      <div class="details">
-        <span class="card-label">Cuotas MSI</span>
-        <span class="value">{{ upcomingInstallments().length }} <small>pendientes</small></span>
-      </div>
-    </div>
-
-    <!-- COMPARACIÓN MENSUAL -->
-    <div class="bento-item monthly-table-card">
-      <div class="card-header">
-        <h3>Comparación Mensual</h3>
-        <span class="month-badge">Últimos {{ selectedPeriod() }} meses</span>
-      </div>
-
-      <div class="monthly-table-wrapper">
-        <table class="monthly-table">
-          <thead>
-            <tr>
-              <th>Mes</th>
-              <th class="num">Ingresos</th>
-              <th class="num">Gastos Reales</th>
-              <th class="num">Tarjetazos</th>
-              <th class="num">Balance Real</th>
-              <th class="num">Variación</th>
-              <th class="num">Txs</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (row of monthlyBreakdown(); track row.yearMonth) {
-              <tr>
-                <td class="month-cell">{{ row.yearMonth }}</td>
-                <td class="num income-text">{{ row.income | currency:'MXN':'symbol':'1.0-0' }}</td>
-                <td class="num expense-text">{{ row.expense | currency:'MXN':'symbol':'1.0-0' }}</td>
-                <td class="num tarjetazos-text">{{ row.tarjetazos | currency:'MXN':'symbol':'1.0-0' }}</td>
-                <td class="num" [class.income-text]="row.net >= 0" [class.expense-text]="row.net < 0">
-                  {{ row.net | currency:'MXN':'symbol':'1.0-0' }}
-                </td>
-                <td class="num">
-                  <span class="variation-badge" [class.up]="row.pctNet >= 0" [class.down]="row.pctNet < 0">
-                    {{ row.pctNet | number:'1.1-1' }}%
-                  </span>
-                </td>
-                <td class="num tx-count">{{ row.txCount }}</td>
-              </tr>
-            } @empty {
-              <tr><td colspan="7" class="empty-txt">Sin datos para el periodo.</td></tr>
-            }
-          </tbody>
-          <tfoot>
-            <tr class="totals-row">
-              <td><strong>Total</strong></td>
-              <td class="num income-text"><strong>{{ periodTotals().totalIncome | currency:'MXN':'symbol':'1.0-0' }}</strong></td>
-              <td class="num expense-text"><strong>{{ periodTotals().totalExpenses | currency:'MXN':'symbol':'1.0-0' }}</strong></td>
-              <td class="num tarjetazos-text"><strong>{{ periodTotals().tarjetazos | currency:'MXN':'symbol':'1.0-0' }}</strong></td>
-              <td class="num" [class.income-text]="periodTotals().net >= 0" [class.expense-text]="periodTotals().net < 0">
-                <strong>{{ periodTotals().net | currency:'MXN':'symbol':'1.0-0' }}</strong>
-              </td>
-              <td class="num"></td>
-              <td class="num"></td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-    </div>
-
-    <!-- CATEGORÍAS -->
-    <div class="bento-item categories-chart">
-      <div class="card-header">
-        <h3>Top Gastos por Categoría</h3>
-        <span class="month-badge">Últimos {{ selectedPeriod() }} meses</span>
-      </div>
-
-      <div class="categories-grid">
-        @for (cat of topCategories(); track cat.name; let i = $index) {
-          <div class="category-row">
-            <div class="cat-left">
-              <span class="cat-dot" [ngClass]="'dot-' + (i % 6)"></span>
-              <span class="cat-name">{{ cat.name }}</span>
+    @if (loadingPayments()) {
+      <div class="skeleton-rows"><span></span><span></span></div>
+    } @else if (upcoming().length === 0) {
+      <p class="empty">No hay pagos de tarjeta en los próximos 40 días.</p>
+    } @else {
+      <ul class="pay-list">
+        @for (p of upcoming(); track p.cardName + p.paymentDate) {
+          <li class="pay-item {{ urgency(p) }}">
+            <div class="pay-date" aria-hidden="true">
+              <span class="pay-day">{{ dayOfMonth(p.paymentDate) }}</span>
+              <span class="pay-month">{{ monthAbbrev(p.paymentDate) }}</span>
             </div>
-            <div class="cat-bar-wrap">
-              <div class="cat-bar-bg">
-                <div class="cat-bar-fill" [ngClass]="'bar-' + (i % 6)" [style.width.%]="cat.percentage"></div>
-              </div>
+            <div class="pay-info">
+              <span class="pay-card">{{ p.cardName }}</span>
+              <span class="pay-meta">Corte {{ formatShort(p.cutDate) }} · paga el {{ formatShort(p.paymentDate) }}
+                @if (p.installments > 0) { · incluye MSI {{ p.installments | currency:'MXN':'symbol-narrow':'1.0-0' }} }
+              </span>
             </div>
-            <div class="cat-right">
-              <span class="cat-amount">{{ cat.amount | currency:'MXN':'symbol':'1.0-0' }}</span>
-              <span class="cat-pct">{{ cat.percentage | number:'1.0-0' }}%</span>
+            <div class="pay-right">
+              <span class="pay-amount">{{ p.amount | currency:'MXN':'symbol-narrow':'1.0-0' }}</span>
+              <span class="pay-hint">{{ paymentHint(p) }}</span>
             </div>
-          </div>
-        } @empty {
-          <p class="empty-txt">No hay gastos en este periodo.</p>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+
+  <!-- ============ Selector de mes ============ -->
+  <div class="month-nav" role="group" aria-label="Mes">
+    <button type="button" class="nav-btn" (click)="changeMonth(-1)" aria-label="Mes anterior">
+      <lucide-icon [img]="icons.ChevronLeft" [size]="20"></lucide-icon>
+    </button>
+    <span class="month-title">{{ monthTitle() }}</span>
+    <button type="button" class="nav-btn" (click)="changeMonth(1)" [disabled]="isCurrentMonth()" aria-label="Mes siguiente">
+      <lucide-icon [img]="icons.ChevronRight" [size]="20"></lucide-icon>
+    </button>
+  </div>
+
+  <div class="grid" [class.is-loading]="loading()">
+    <!-- ============ Cómo vamos ============ -->
+    <section class="panel pace">
+      <h2>{{ isCurrentMonth() ? 'Cómo van este mes' : 'Cómo les fue' }}</h2>
+
+      <div class="spent">
+        <span class="spent-label">Gastado</span>
+        <span class="spent-amount">{{ stats().spent | currency:'MXN':'symbol-narrow':'1.0-0' }}</span>
+        @if (pace().avg > 0) {
+          <span class="spent-sub">Su promedio de los 3 meses anteriores: {{ pace().avg | currency:'MXN':'symbol-narrow':'1.0-0' }}</span>
         }
       </div>
-    </div>
 
+      @if (pace().avg > 0) {
+        <div class="pace-bar" [class]="'pace-bar ' + pace().verdict">
+          <span class="pace-fill" [style.width.%]="barPercent(pace().ratio, 1.25)"></span>
+          <span class="pace-avg" [style.left.%]="80" title="Su promedio"></span>
+          @if (pace().monthElapsed !== null) {
+            <span class="pace-today" [style.left.%]="pace().monthElapsed! * 80" title="Lo esperado a esta altura del mes"></span>
+          }
+        </div>
+      }
+      @if (pace().avg > 0) {
+        <div class="pace-legend">
+          <span><i class="mk-avg"></i>Su promedio</span>
+          @if (pace().monthElapsed !== null) { <span><i class="mk-today"></i>Lo esperado a hoy</span> }
+        </div>
+      }
+      <p class="pace-text {{ pace().verdict }}">{{ paceVerdictText() }}</p>
+
+      <div class="flow">
+        <div>
+          <span class="flow-label">Entró</span>
+          <span class="flow-value income">{{ stats().income | currency:'MXN':'symbol-narrow':'1.0-0' }}</span>
+        </div>
+        <div title="Gastos con débito o efectivo más los pagos de tarjeta">
+          <span class="flow-label">Salió de sus cuentas</span>
+          <span class="flow-value">{{ stats().outflow | currency:'MXN':'symbol-narrow':'1.0-0' }}</span>
+        </div>
+        <div>
+          <span class="flow-label">{{ stats().net >= 0 ? 'Les sobró' : 'Les faltó' }}</span>
+          <span class="flow-value" [class.income]="stats().net >= 0" [class.expense]="stats().net < 0">
+            {{ (stats().net < 0 ? -stats().net : stats().net) | currency:'MXN':'symbol-narrow':'1.0-0' }}
+          </span>
+        </div>
+      </div>
+
+      @if (split().total > 0) {
+        <div class="split">
+          <span class="split-title">¿De quién fue el gasto?</span>
+          <div class="split-bar">
+            @for (s of split().segments; track s.label) {
+              <span [style.width.%]="(s.amount / split().total) * 100" [style.background]="s.color" [title]="s.label"></span>
+            }
+          </div>
+          <div class="split-legend">
+            @for (s of split().segments; track s.label) {
+              <span class="legend-item">
+                <i [style.background]="s.color"></i>{{ s.label }}
+                <strong>{{ s.amount | currency:'MXN':'symbol-narrow':'1.0-0' }}</strong>
+              </span>
+            }
+          </div>
+        </div>
+      }
+    </section>
+
+    <!-- ============ Categorías ============ -->
+    <section class="panel cats">
+      <h2>En qué se va el dinero</h2>
+      @if (categoriesOfMonth().length === 0) {
+        <p class="empty">No hay gastos registrados en {{ monthTitle() }}.</p>
+      } @else {
+        <ul class="cat-list">
+          @for (c of categoriesOfMonth(); track c.name) {
+            <li>
+              <div class="cat-top">
+                <span class="cat-name">{{ c.name }}</span>
+                <span class="cat-amount">{{ c.amount | currency:'MXN':'symbol-narrow':'1.0-0' }}</span>
+              </div>
+              <div class="cat-bar"><span [style.width.%]="c.percent"></span></div>
+              <div class="cat-bottom">
+                <span>{{ c.percent | number:'1.0-0' }}% del gasto</span>
+                @if (c.change !== null) {
+                  <span class="cat-change" [class.up]="c.change > 5" [class.down]="c.change < -5">
+                    {{ c.change > 5 ? '↑' : c.change < -5 ? '↓' : '=' }}
+                    {{ (c.change < 0 ? -c.change : c.change) | number:'1.0-0' }}% vs mes anterior
+                  </span>
+                } @else {
+                  <span class="cat-change">nuevo este mes</span>
+                }
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+    <!-- ============ Últimos 6 meses ============ -->
+    <section class="panel history">
+      <div class="panel-head">
+        <h2>Últimos 6 meses</h2>
+        <span class="legend-inline">
+          <span class="legend-item"><i class="in"></i>Entró</span>
+          <span class="legend-item"><i class="out"></i>Salió</span>
+        </span>
+      </div>
+      <div class="history-rows">
+        @for (h of history(); track h.ym) {
+          <div class="h-row" [class.current]="h.ym === history()[0].ym">
+            <span class="h-month">{{ h.label }}</span>
+            <div class="h-bars">
+              <span class="h-bar in" [style.width.%]="barPercent(h.income, historyMax())"></span>
+              <span class="h-bar out" [style.width.%]="barPercent(h.outflow, historyMax())"></span>
+            </div>
+            <span class="h-net" [class.income]="h.net >= 0" [class.expense]="h.net < 0">
+              {{ h.net >= 0 ? '+' : '−' }}{{ (h.net < 0 ? -h.net : h.net) | currency:'MXN':'symbol-narrow':'1.0-0' }}
+            </span>
+          </div>
+        }
+      </div>
+      <p class="footnote">"Salió" = gastos con débito o efectivo más pagos de tarjeta. Las compras con tarjeta cuentan cuando pagas la tarjeta.</p>
+    </section>
   </div>
 </div>

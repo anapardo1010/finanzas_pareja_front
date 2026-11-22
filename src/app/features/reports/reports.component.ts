@@ -30,7 +30,7 @@ import {
   periodsNewestFirst,
   pickCurrentPeriod,
   todayIso
-} from './card-periods';
+} from '../../shared/utils/card-periods';
 
 /** Colores por persona para las barras de reparto. */
 const PERSON_COLORS = ['#6366f1', '#ec4899', '#14b8a6', '#f59e0b', '#8b5cf6'];
@@ -572,6 +572,49 @@ export class ReportsComponent implements OnInit, OnDestroy {
   get today(): string {
     return todayIso();
   }
+
+  // ── "Pagos de": poner todas las tarjetas en los cortes que se pagan en un mes ──
+  /** Mes de pago elegido ('YYYY-MM'); vacío cuando las tarjetas se ajustaron una por una. */
+  payMonth = signal('');
+
+  /** Meses de pago disponibles (del más reciente al más antiguo), según los periodos de las tarjetas. */
+  payMonths = computed(() => {
+    const months = new Set<string>();
+    this.cards().forEach(c => (c.availablePeriods as CardPeriod[] | undefined ?? [])
+      .forEach(p => months.add(p.paymentDate.slice(0, 7))));
+    return [...months].sort().reverse();
+  });
+
+  payMonthLabel(ym: string): string {
+    const [y, m] = ym.split('-').map(Number);
+    const text = new Date(y, m - 1, 15).toLocaleDateString('es-MX', { month: 'long', year: 'numeric' }).replace(' de ', ' ');
+    return text.charAt(0).toUpperCase() + text.slice(1);
+  }
+
+  applyPayMonth(ym: string): void {
+    this.payMonth.set(ym);
+    if (!ym) return;
+    for (const card of this.cards()) {
+      const period = (card.availablePeriods as CardPeriod[] | undefined ?? [])
+        .find(p => p.paymentDate.slice(0, 7) === ym);
+      if (period && period.periodId !== card.periodId) this.onPeriodChange(card, period.periodId);
+    }
+  }
+
+  /** Cambio manual del mes de una tarjeta: el selector general pasa a "personalizado". */
+  onCardPeriodSelect(card: CreditCardProportionalPayment, periodId: string): void {
+    this.payMonth.set('');
+    this.onPeriodChange(card, periodId);
+  }
+
+  /** Tarjetas sin un corte que se pague en el mes elegido. */
+  cardsWithoutPayMonth = computed(() => {
+    const ym = this.payMonth();
+    if (!ym) return [];
+    return this.cards()
+      .filter(c => !(c.availablePeriods as CardPeriod[] | undefined ?? []).some(p => p.paymentDate.slice(0, 7) === ym))
+      .map(c => c.alias || c.bankName);
+  });
 
   // ── Visualización de gastos ─────────────────────────────────────────────
   vizPeriod = signal<number>(3);
