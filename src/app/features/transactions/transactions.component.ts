@@ -1,5 +1,6 @@
 import { Component, OnInit, signal, computed, inject, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Transaction, TransactionRequest, Category, PaymentMethod, User } from '../../core/models';
 import { TransactionService } from '../../core/services/transaction.service';
@@ -28,7 +29,7 @@ type TransactionTypeExtended = 'EXPENSE' | 'INCOME' | 'CREDIT_PAYMENT' | 'TRANSF
 @Component({
   selector: 'app-transactions',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule, TransactionFormComponent],
+  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule, TransactionFormComponent, RouterLink],
   templateUrl: './transactions.component.html',
   styleUrl: './transactions.component.scss'
 })

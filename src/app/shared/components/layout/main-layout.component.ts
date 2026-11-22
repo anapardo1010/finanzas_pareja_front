@@ -2,7 +2,7 @@ import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
-import { LucideAngularModule, Wallet, LayoutDashboard, CreditCard, TrendingUp, Users, Settings, LogOut } from 'lucide-angular';
+import { LucideAngularModule, Wallet, LayoutDashboard, CreditCard, TrendingUp, Users, Settings, LogOut, FileUp } from 'lucide-angular';
 
 @Component({
   selector: 'app-main-layout',
@@ -18,6 +18,7 @@ export class MainLayoutComponent {
   // Lucide Icons
   readonly Wallet = Wallet;
   readonly LayoutDashboard = LayoutDashboard;
+  readonly FileUp = FileUp;
   readonly CreditCard = CreditCard;
   readonly TrendingUp = TrendingUp;
   readonly Users = Users;

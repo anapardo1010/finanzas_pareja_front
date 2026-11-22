@@ -1,0 +1,300 @@
+<div class="import-page">
+  @switch (view()) {
+
+    <!-- ===================== PASO 1: PEGAR ===================== -->
+    @case ('setup') {
+      <header class="page-header">
+        <h1 class="page-title">Importar estado de cuenta</h1>
+        <p class="page-subtitle">Tu Claude lee el PDF y aquí revisas los movimientos antes de guardarlos</p>
+      </header>
+
+      @if (savedDraft(); as saved) {
+        <section class="card resume">
+          <div>
+            <strong>Tienes una revisión sin terminar</strong>
+            <p class="muted">
+              {{ paymentMethodName(saved.paymentMethodId) }} ·
+              {{ saved.createdAt | date:'d MMM, HH:mm' }}
+            </p>
+          </div>
+          <div class="resume-actions">
+            <button type="button" class="btn" (click)="discardSavedDraft()">Descartar</button>
+            <button type="button" class="btn btn-primary" (click)="resumeDraft()">Continuar</button>
+          </div>
+        </section>
+      }
+
+      <section class="card steps">
+        <div class="step">
+          <span class="step-number">1</span>
+          <div class="step-body">
+            <label for="pm" class="step-title">¿De qué tarjeta o cuenta es el estado de cuenta?</label>
+            <select id="pm" class="input"
+                    [ngModel]="selectedPaymentMethodId()"
+                    (ngModelChange)="selectedPaymentMethodId.set($event)">
+              <option [ngValue]="null">Selecciona…</option>
+              @for (pm of paymentMethods(); track pm.id) {
+                <option [ngValue]="pm.id">{{ pm.alias ? pm.bankName + ' — ' + pm.alias : pm.bankName }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <div class="step">
+          <span class="step-number">2</span>
+          <div class="step-body">
+            <span class="step-title">Pídele a tu Claude que lo lea</span>
+            <p class="muted">
+              Copia las instrucciones, ábrelas en <a href="https://claude.ai" target="_blank" rel="noopener">claude.ai</a>,
+              adjunta el PDF y envía el mensaje.
+            </p>
+            <div class="inline-actions">
+              <button type="button" class="btn btn-dark" (click)="copyInstructions()">
+                {{ copied() ? '✓ Copiadas' : 'Copiar instrucciones' }}
+              </button>
+              <button type="button" class="link-button" (click)="showInstructions.set(!showInstructions())">
+                {{ showInstructions() ? 'Ocultar instrucciones' : 'Ver instrucciones' }}
+              </button>
+            </div>
+            @if (showInstructions()) {
+              <pre class="instructions">{{ instructions }}</pre>
+            }
+            <p class="tip">
+              💡 Para no copiarlas cada mes: en claude.ai crea un <strong>Proyecto</strong> (por ejemplo "Estados de cuenta")
+              y pega estas instrucciones en sus instrucciones. Después solo adjuntas el PDF y escribes "procésalo".
+            </p>
+          </div>
+        </div>
+
+        <div class="step">
+          <span class="step-number">3</span>
+          <div class="step-body">
+            <label for="pasted" class="step-title">Pega aquí la respuesta de Claude</label>
+            <textarea id="pasted" class="input paste-area" rows="8" spellcheck="false"
+                      placeholder='Pega la respuesta completa; empieza con ```json o con {'
+                      [ngModel]="pastedText()" (ngModelChange)="pastedText.set($event)"></textarea>
+            @if (loadError()) {
+              <p class="alert alert-error">{{ loadError() }}</p>
+            }
+            <div class="step-footer">
+              <button type="button" class="btn btn-primary"
+                      [disabled]="!selectedPaymentMethodId() || !pastedText().trim() || loading()"
+                      (click)="loadMovements()">
+                {{ loading() ? 'Cargando…' : 'Cargar movimientos' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    }
+
+    <!-- ===================== PASO 2: REVISAR ===================== -->
+    @case ('review') {
+      <header class="page-header">
+        <h1 class="page-title">{{ paymentMethodName(draft()?.paymentMethodId) }}</h1>
+        <p class="page-subtitle">
+          {{ draft()?.bank || 'Estado de cuenta' }}
+          @if (draft()?.periodStart && draft()?.periodEnd) {
+            · {{ draft()!.periodStart | date:'d MMM' }} al {{ draft()!.periodEnd | date:'d MMM y' }}
+          }
+        </p>
+      </header>
+
+      @if (draft()?.skipped) {
+        <p class="alert alert-warning">
+          {{ draft()!.skipped }} movimiento(s) de la respuesta venían incompletos y no se cargaron.
+          Compáralos con tu PDF por si falta alguno.
+        </p>
+      }
+      @if (counts().failed > 0 && !importing()) {
+        <p class="alert alert-error">
+          {{ counts().failed }} movimiento(s) no se pudieron guardar. Revisa el error en cada uno y vuelve a confirmar.
+        </p>
+      }
+
+      <div class="tabs" role="tablist">
+        <button type="button" role="tab" class="tab" [class.active]="rowFilter() === 'PENDING'" (click)="rowFilter.set('PENDING')">
+          Por importar <span class="tab-count">{{ counts().pending }}</span>
+        </button>
+        <button type="button" role="tab" class="tab" [class.active]="rowFilter() === 'DISCARDED'" (click)="rowFilter.set('DISCARDED')">
+          Descartados <span class="tab-count">{{ counts().discarded }}</span>
+        </button>
+        <button type="button" role="tab" class="tab" [class.active]="rowFilter() === 'ALL'" (click)="rowFilter.set('ALL')">
+          Todos <span class="tab-count">{{ counts().all }}</span>
+        </button>
+      </div>
+
+      @if (selectedIds().size > 0 && !importing()) {
+        <div class="bulk-bar">
+          <span class="bulk-count">{{ selectedIds().size }} seleccionados</span>
+          <button type="button" class="chip" (click)="bulkUpdate({ isShared: true })">Pareja</button>
+          <button type="button" class="chip" (click)="bulkUpdate({ isShared: false })">Personal</button>
+          <button type="button" class="chip" (click)="bulkUpdate({ transactionType: 'EXPENSE' })">Gasto</button>
+          <button type="button" class="chip" (click)="bulkUpdate({ transactionType: 'INCOME' })">Ingreso</button>
+          <select class="chip-select" aria-label="Categoría para los seleccionados"
+                  (change)="bulkCategory($any($event.target).value); $any($event.target).value = ''">
+            <option value="">Categoría…</option>
+            <option value="none">Sin categoría</option>
+            @for (c of categories(); track c.id) { <option [value]="c.id">{{ c.name }}</option> }
+          </select>
+          <select class="chip-select" aria-label="Quién pagó los seleccionados"
+                  (change)="bulkUser($any($event.target).value); $any($event.target).value = ''">
+            <option value="">Quién pagó…</option>
+            @for (u of users(); track u.id) { <option [value]="u.id">{{ u.name }}</option> }
+          </select>
+          @if (rowFilter() === 'DISCARDED') {
+            <button type="button" class="chip" (click)="bulkUpdate({ status: 'PENDING' })">Restaurar</button>
+          } @else {
+            <button type="button" class="chip chip-danger" (click)="bulkUpdate({ status: 'DISCARDED' })">Descartar</button>
+          }
+        </div>
+      }
+
+      @if (visibleRows().length === 0) {
+        <p class="muted empty">No hay movimientos en esta vista.</p>
+      } @else {
+        <div class="rows">
+          @if (!importing()) {
+            <label class="select-all">
+              <input type="checkbox" [checked]="allVisibleSelected()" (change)="toggleSelectAll()">
+              Seleccionar todos
+            </label>
+          }
+          @for (row of visibleRows(); track row.id) {
+            <article class="row-card"
+                     [class.discarded]="row.status === 'DISCARDED'"
+                     [class.imported]="row.status === 'IMPORTED'"
+                     [class.failed]="!!row.error"
+                     [class.selected]="isSelected(row.id)">
+              <div class="row-top">
+                @if (row.status !== 'IMPORTED' && !importing()) {
+                  <input type="checkbox" class="row-check" [attr.aria-label]="'Seleccionar ' + row.description"
+                         [checked]="isSelected(row.id)" (change)="toggleSelect(row.id)">
+                }
+                <div class="row-info">
+                  <span class="row-desc">{{ row.description }}</span>
+                  <span class="row-meta">
+                    {{ row.date | date:'d MMM y' }}
+                    @if (row.installmentNumber && row.totalInstallments) {
+                      · mensualidad {{ row.installmentNumber }} de {{ row.totalInstallments }}
+                    }
+                    @if (row.fromHistory) {
+                      · <span class="history-hint" title="Se copió cómo clasificaste antes este comercio">según tu historial</span>
+                    }
+                  </span>
+                  @if (row.flag) {
+                    <span class="flag" [title]="flagHint(row.flag)">⚠ {{ flagLabel(row.flag) }}</span>
+                  }
+                  @if (row.error) {
+                    <span class="row-error">No se guardó: {{ row.error }}</span>
+                  }
+                </div>
+                <span class="row-amount" [class.income]="row.transactionType === 'INCOME'">
+                  {{ row.transactionType === 'INCOME' ? '+' : '-' }}{{ row.amount | currency:'MXN':'symbol-narrow':'1.2-2' }}
+                </span>
+                @if (row.status === 'IMPORTED') {
+                  <span class="status-chip status-completed">Importado</span>
+                } @else if (!importing()) {
+                  <button type="button" class="icon-button"
+                          [title]="row.status === 'DISCARDED' ? 'Restaurar' : 'Descartar'"
+                          [attr.aria-label]="row.status === 'DISCARDED' ? 'Restaurar' : 'Descartar'"
+                          (click)="toggleDiscard(row)">
+                    {{ row.status === 'DISCARDED' ? '↺' : '✕' }}
+                  </button>
+                }
+              </div>
+
+              @if (row.status !== 'DISCARDED') {
+                <div class="row-controls" [class.readonly]="row.status === 'IMPORTED' || importing()">
+                  <div class="segmented" role="group" aria-label="Tipo">
+                    <button type="button" [class.on]="row.transactionType === 'EXPENSE'"
+                            (click)="updateRow(row, { transactionType: 'EXPENSE' })">Gasto</button>
+                    <button type="button" [class.on]="row.transactionType === 'INCOME'"
+                            (click)="updateRow(row, { transactionType: 'INCOME' })">Ingreso</button>
+                  </div>
+
+                  <div class="segmented" role="group" aria-label="Pareja o personal">
+                    <button type="button" [class.on]="!row.isShared" (click)="updateRow(row, { isShared: false })">Personal</button>
+                    <button type="button" [class.on]="row.isShared" (click)="updateRow(row, { isShared: true })">Pareja</button>
+                  </div>
+
+                  <select class="control-select" aria-label="Quién pagó"
+                          (change)="onUserChange(row, $any($event.target).value)">
+                    @for (u of users(); track u.id) {
+                      <option [value]="u.id" [selected]="u.id === row.userId">{{ u.name }}</option>
+                    }
+                  </select>
+
+                  <select class="control-select" aria-label="Categoría"
+                          (change)="onCategoryChange(row, $any($event.target).value)">
+                    <option value="" [selected]="!row.categoryId">Sin categoría</option>
+                    @for (c of categories(); track c.id) {
+                      <option [value]="c.id" [selected]="c.id === row.categoryId">{{ c.name }}</option>
+                    }
+                  </select>
+
+                  @if (row.transactionType === 'EXPENSE') {
+                    <label class="msi">
+                      <input type="checkbox" [checked]="row.hasInstallments"
+                             (change)="updateRow(row, { hasInstallments: $any($event.target).checked })">
+                      MSI
+                      @if (row.hasInstallments) {
+                        <select class="control-select small" aria-label="Meses"
+                                (change)="onInstallmentsChange(row, $any($event.target).value)">
+                          @for (m of msiOptions; track m) {
+                            <option [value]="m" [selected]="m === row.totalInstallments">{{ m }} meses</option>
+                          }
+                          @if (isCustomMsi(row.totalInstallments)) {
+                            <option [value]="row.totalInstallments" selected>{{ row.totalInstallments }} meses</option>
+                          }
+                        </select>
+                      }
+                    </label>
+                  }
+                </div>
+              }
+            </article>
+          }
+        </div>
+      }
+
+      <footer class="confirm-bar">
+        @if (importing()) {
+          <div class="confirm-summary">
+            <strong>Importando {{ progress().done }} de {{ progress().total }}…</strong>
+            <span>No cierres esta página.</span>
+          </div>
+        } @else {
+          <div class="confirm-summary">
+            <strong>{{ summary().count }} por importar</strong>
+            <span>
+              Gastos {{ summary().expenses | currency:'MXN':'symbol-narrow':'1.0-0' }}
+              (pareja {{ summary().shared | currency:'MXN':'symbol-narrow':'1.0-0' }},
+              personal {{ summary().personal | currency:'MXN':'symbol-narrow':'1.0-0' }})
+              · Ingresos {{ summary().incomes | currency:'MXN':'symbol-narrow':'1.0-0' }}
+            </span>
+          </div>
+          <div class="confirm-actions">
+            <button type="button" class="btn" (click)="cancelReview()">Cancelar</button>
+            <button type="button" class="btn btn-primary" [disabled]="summary().count === 0" (click)="confirmImport()">
+              Confirmar e importar
+            </button>
+          </div>
+        }
+      </footer>
+    }
+
+    <!-- ===================== LISTO ===================== -->
+    @case ('done') {
+      <section class="card done">
+        <div class="done-icon" aria-hidden="true">✓</div>
+        <h1 class="page-title">Listo</h1>
+        <p class="muted">Se importaron {{ importedCount() }} movimientos.</p>
+        <div class="resume-actions">
+          <button type="button" class="btn" (click)="importAnother()">Importar otro</button>
+          <button type="button" class="btn btn-primary" (click)="goToTransactions()">Ver transacciones</button>
+        </div>
+      </section>
+    }
+  }
+</div>

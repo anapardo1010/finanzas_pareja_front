@@ -91,6 +91,11 @@
       &.income { background: #10b981; color: #fff; &:hover { background: #059669; } }
       &.credit { background: #8b5cf6; color: #fff; &:hover { background: #6d28d9; } }
       &.transfer { background: linear-gradient(90deg, #fbbf24 0%, #f59e42 100%); color: #fff; &:hover { background: linear-gradient(90deg, #f59e42 0%, #fbbf24 100%); } }
+      &.import {
+        background: #0f172a; color: #fff; text-decoration: none;
+        display: inline-flex; align-items: center; justify-content: center;
+        &:hover { background: #1e293b; color: #fff; }
+      }
     }
   }
 }
@@ -212,6 +217,8 @@
         border-radius: 12px;
         text-align: center;
       }
+
+      .btn-action.import { grid-column: 1 / -1; }
     }
   }
 
