@@ -1,37 +1,167 @@
-<div class="auth-container glass">
-  <div class="auth-card">
-    <h2>{{ isLogin ? 'Iniciar sesión' : 'Registrarse' }}</h2>
-    <form *ngIf="isLogin" (ngSubmit)="login()" autocomplete="off">
-      <div class="form-group">
-        <label for="loginEmail">Email</label>
-        <input id="loginEmail" type="email" [(ngModel)]="loginForm.email" name="email" required />
-      </div>
-      <div class="form-group">
-        <label for="loginPassword">Contraseña</label>
-        <input id="loginPassword" type="password" [(ngModel)]="loginForm.password" name="password" required />
-      </div>
-      <button class="btn-primary" type="submit" [disabled]="loading">Entrar</button>
-    </form>
+<div class="auth-page">
+  <!-- ============ Panel de marca ============ -->
+  <section class="brand" aria-hidden="true">
+    <div class="brand-glow glow-1"></div>
+    <div class="brand-glow glow-2"></div>
 
-    <form *ngIf="!isLogin" (ngSubmit)="register()" autocomplete="off">
-      <div class="form-group">
-        <label for="registerName">Nombre</label>
-        <input id="registerName" type="text" [(ngModel)]="registerForm.name" name="name" required />
-      </div>
-      <div class="form-group">
-        <label for="registerEmail">Email</label>
-        <input id="registerEmail" type="email" [(ngModel)]="registerForm.email" name="email" required />
-      </div>
-      <div class="form-group">
-        <label for="registerPassword">Contraseña</label>
-        <input id="registerPassword" type="password" [(ngModel)]="registerForm.password" name="password" required />
-      </div>
-      <button class="btn-primary" type="submit" [disabled]="loading">Registrarse</button>
-    </form>
+    <div class="brand-top">
+      <span class="logo-mark">
+        <span class="ring ring-a"></span>
+        <span class="ring ring-b"></span>
+      </span>
+      <span class="logo-text">ParejaFinanzas</span>
+    </div>
 
-    <div *ngIf="error" class="error-message">{{ error }}</div>
-    <button class="btn-link" type="button" (click)="switchMode()">
-      {{ isLogin ? '¿No tienes cuenta? Regístrate' : '¿Ya tienes cuenta? Inicia sesión' }}
-    </button>
-  </div>
+    <div class="brand-copy">
+      <h1>Cuentas claras,<br><em>amor largo.</em></h1>
+      <p>Registren sus gastos, repartan lo compartido y sepan siempre quién le debe a quién. Sin hojas de cálculo, sin discusiones.</p>
+    </div>
+
+    <!-- Tarjetas flotantes ilustrativas -->
+    <div class="showcase">
+      <div class="float-card settle">
+        <span class="fc-eyebrow">¿Quién le debe a quién?</span>
+        <span class="fc-title">Tu pareja te debe</span>
+        <span class="fc-amount">$1,240.00</span>
+        <div class="fc-row"><span>Súper de la semana</span><span>$860</span></div>
+        <div class="fc-row"><span>Cena del viernes</span><span>$380</span></div>
+      </div>
+
+      <div class="float-card split">
+        <div class="fc-split-head">
+          <span class="fc-chip"></span>
+          <span class="fc-split-title">Tarjeta compartida</span>
+        </div>
+        <div class="fc-bar"><span class="seg seg-a"></span><span class="seg seg-b"></span></div>
+        <div class="fc-legend">
+          <span><i class="dot dot-a"></i>Tú · 60%</span>
+          <span><i class="dot dot-b"></i>Pareja · 40%</span>
+        </div>
+      </div>
+
+      <div class="float-pill">
+        <span class="pill-check">✓</span>
+        Pagado a tiempo
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Formulario ============ -->
+  <main class="form-side">
+    <div class="form-card">
+      <div class="mobile-logo">
+        <span class="logo-mark small">
+          <span class="ring ring-a"></span>
+          <span class="ring ring-b"></span>
+        </span>
+        <span class="logo-text">ParejaFinanzas</span>
+      </div>
+
+      <div class="mode-switch" role="tablist" aria-label="Elegir acción">
+        <span class="mode-thumb" [class.right]="!isLogin"></span>
+        <button type="button" role="tab" [attr.aria-selected]="isLogin" [class.active]="isLogin" (click)="setMode(true)">
+          Entrar
+        </button>
+        <button type="button" role="tab" [attr.aria-selected]="!isLogin" [class.active]="!isLogin" (click)="setMode(false)">
+          Crear cuenta
+        </button>
+      </div>
+
+      <header class="form-head">
+        <h2>{{ isLogin ? 'Qué gusto verte' : 'Empiecen juntos' }}</h2>
+        <p>{{ isLogin ? 'Inicia sesión para ver cómo van sus cuentas.' : 'Crea tu cuenta; después puedes invitar a tu pareja.' }}</p>
+      </header>
+
+      @if (isLogin) {
+      <form (ngSubmit)="login()" class="auth-form">
+        <label class="field">
+          <span class="field-label">Correo</span>
+          <span class="field-box">
+            <lucide-icon [img]="icons.Mail" [size]="18" class="field-icon"></lucide-icon>
+            <input type="email" name="email" autocomplete="email" placeholder="tu@correo.com"
+                   [(ngModel)]="loginForm.email" required>
+          </span>
+        </label>
+
+        <label class="field">
+          <span class="field-label">Contraseña</span>
+          <span class="field-box">
+            <lucide-icon [img]="icons.Lock" [size]="18" class="field-icon"></lucide-icon>
+            <input [type]="showPassword ? 'text' : 'password'" name="password" autocomplete="current-password"
+                   placeholder="••••••••" [(ngModel)]="loginForm.password" required>
+            <button type="button" class="eye" (click)="showPassword = !showPassword"
+                    [attr.aria-label]="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'">
+              <lucide-icon [img]="showPassword ? icons.EyeOff : icons.Eye" [size]="18"></lucide-icon>
+            </button>
+          </span>
+        </label>
+
+        @if (error) {
+        <p class="form-error" role="alert">{{ error }}</p>
+        }
+
+        <button class="submit" type="submit" [disabled]="loading || !loginForm.email || !loginForm.password">
+          @if (loading) {
+          <span class="spinner" aria-hidden="true"></span> Entrando…
+          } @else {
+          Entrar <lucide-icon [img]="icons.ArrowRight" [size]="18"></lucide-icon>
+          }
+        </button>
+      </form>
+      } @else {
+      <form (ngSubmit)="register()" class="auth-form">
+        <label class="field">
+          <span class="field-label">Nombre</span>
+          <span class="field-box">
+            <lucide-icon [img]="icons.User" [size]="18" class="field-icon"></lucide-icon>
+            <input type="text" name="name" autocomplete="name" placeholder="¿Cómo te llamas?"
+                   [(ngModel)]="registerForm.name" required>
+          </span>
+        </label>
+
+        <label class="field">
+          <span class="field-label">Correo</span>
+          <span class="field-box">
+            <lucide-icon [img]="icons.Mail" [size]="18" class="field-icon"></lucide-icon>
+            <input type="email" name="email" autocomplete="email" placeholder="tu@correo.com"
+                   [(ngModel)]="registerForm.email" required>
+          </span>
+        </label>
+
+        <label class="field">
+          <span class="field-label">Contraseña</span>
+          <span class="field-box">
+            <lucide-icon [img]="icons.Lock" [size]="18" class="field-icon"></lucide-icon>
+            <input [type]="showPassword ? 'text' : 'password'" name="password" autocomplete="new-password"
+                   placeholder="Crea una contraseña" [(ngModel)]="registerForm.password" required>
+            <button type="button" class="eye" (click)="showPassword = !showPassword"
+                    [attr.aria-label]="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'">
+              <lucide-icon [img]="showPassword ? icons.EyeOff : icons.Eye" [size]="18"></lucide-icon>
+            </button>
+          </span>
+        </label>
+
+        @if (error) {
+        <p class="form-error" role="alert">{{ error }}</p>
+        }
+
+        <button class="submit" type="submit"
+                [disabled]="loading || !registerForm.name || !registerForm.email || !registerForm.password">
+          @if (loading) {
+          <span class="spinner" aria-hidden="true"></span> Creando cuenta…
+          } @else {
+          Crear cuenta <lucide-icon [img]="icons.ArrowRight" [size]="18"></lucide-icon>
+          }
+        </button>
+      </form>
+      }
+
+      <p class="form-foot">
+        {{ isLogin ? '¿Primera vez aquí?' : '¿Ya tienes cuenta?' }}
+        <button type="button" class="link" (click)="setMode(!isLogin)">
+          {{ isLogin ? 'Crea una cuenta' : 'Inicia sesión' }}
+        </button>
+      </p>
+    </div>
+  </main>
 </div>
