@@ -261,6 +261,36 @@ function flagDuplicates(rows: ReviewRow[], existing: Transaction[]): void {
   }
 }
 
+/**
+ * Al cambiar de tarjeta durante la revisión: quita las marcas de duplicado anteriores
+ * y vuelve a buscar duplicados contra las transacciones de la nueva tarjeta.
+ * El dueño de la tarjeta anterior, si seguía como "quién pagó", pasa a ser el de la nueva.
+ */
+export function reassignCard(rows: ReviewRow[], existingOnNewCard: Transaction[],
+                             previousOwnerId: number | null, newOwnerId: number | null): ReviewRow[] {
+  const updated = rows.map(r => {
+    if (r.status === 'IMPORTED') return { ...r };
+    const row = { ...r };
+    if (row.flag === 'POSIBLE_DUPLICADO') {
+      row.flag = null;
+      row.status = 'PENDING';
+    }
+    if (newOwnerId !== null && row.userId === previousOwnerId) row.userId = newOwnerId;
+    return row;
+  });
+  flagDuplicates(updated, existingOnNewCard);
+  return updated;
+}
+
+/** Rango de fechas (con tolerancia) de las filas en revisión, para buscar duplicados. */
+export function rowsSearchRange(rows: ReviewRow[]): { startDate: string; endDate: string } {
+  const dates = rows.map(r => r.date).sort();
+  return {
+    startDate: shiftDate(dates[0], -DUPLICATE_DAYS_TOLERANCE),
+    endDate: shiftDate(dates[dates.length - 1], DUPLICATE_DAYS_TOLERANCE)
+  };
+}
+
 /** Rango de fechas (con tolerancia) para buscar duplicados en la tarjeta. */
 export function duplicateSearchRange(statement: ExtractedStatement): { startDate: string; endDate: string } {
   const dates = statement.movements.map(m => m.date).sort();

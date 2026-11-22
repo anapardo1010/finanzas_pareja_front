@@ -1,5 +1,5 @@
 import { Transaction } from '../../core/models';
-import { buildRows, duplicateSearchRange, normalizeMerchant, parseClaudeResponse } from './statement-import.logic';
+import { buildRows, duplicateSearchRange, normalizeMerchant, parseClaudeResponse, reassignCard, rowsSearchRange } from './statement-import.logic';
 
 function tx(partial: Partial<Transaction>): Transaction {
   return {
@@ -129,6 +129,38 @@ describe('statement-import logic', () => {
         '{"movements":[{"date":"2026-11-01","description":"UBER EATS PEDIDO","merchant":"Uber Eats","amount":120,"direction":"CARGO","kind":"COMPRA"}]}');
       const rows = buildRows(s, { ownerUserId: 7, existingOnCard: [], history });
       expect(rows[0].fromHistory).toBeFalse();
+    });
+  });
+
+  describe('reassignCard', () => {
+    const { statement } = parseClaudeResponse(CLAUDE_REPLY);
+
+    it('re-checks duplicates against the new card and moves the default payer', () => {
+      const oldCardExisting = [tx({ description: 'Cafe', amount: 6, date: '2026-11-03' })];
+      const rows = buildRows(statement, { ownerUserId: 7, existingOnCard: oldCardExisting, history: [] });
+      expect(rows.find(r => r.description === 'CAFETERIA ESQUINA')!.flag).toBe('POSIBLE_DUPLICADO');
+      rows.find(r => r.description === 'DEVOLUCION AMAZON')!.userId = 8; // elegido a mano
+
+      const newCardExisting = [tx({ description: 'Farmacia', amount: 2400, date: '2026-11-05' })];
+      const updated = reassignCard(rows, newCardExisting, 7, 9);
+      const byDesc = (d: string) => updated.find(r => r.description === d)!;
+
+      expect(byDesc('CAFETERIA ESQUINA').flag).toBeNull();
+      expect(byDesc('CAFETERIA ESQUINA').status).toBe('PENDING');
+      expect(byDesc('FARMACIA DEL CENTRO').flag).toBe('POSIBLE_DUPLICADO');
+      expect(byDesc('FARMACIA DEL CENTRO').status).toBe('DISCARDED');
+      expect(byDesc('CAFETERIA ESQUINA').userId).toBe(9);
+      expect(byDesc('DEVOLUCION AMAZON').userId).toBe(8);
+      // Las demás marcas no cambian
+      expect(byDesc('SU PAGO GRACIAS').flag).toBe('PAGO_TARJETA');
+      expect(byDesc('COPPEL').flag).toBe('MSI_PREVIO');
+      // No modifica las filas originales
+      expect(rows.find(r => r.description === 'CAFETERIA ESQUINA')!.userId).toBe(7);
+    });
+
+    it('computes the search range from the rows', () => {
+      const rows = buildRows(statement, { ownerUserId: 7, existingOnCard: [], history: [] });
+      expect(rowsSearchRange(rows)).toEqual({ startDate: '2026-10-17', endDate: '2026-11-09' });
     });
   });
 

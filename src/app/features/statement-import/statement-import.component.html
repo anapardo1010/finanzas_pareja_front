@@ -91,7 +91,19 @@
     <!-- ===================== PASO 2: REVISAR ===================== -->
     @case ('review') {
       <header class="page-header">
-        <h1 class="page-title">{{ paymentMethodName(draft()?.paymentMethodId) }}</h1>
+        <div class="card-picker">
+          <label for="reviewPm">Tarjeta o cuenta</label>
+          <select id="reviewPm" class="input"
+                  [disabled]="!canChangeCard()"
+                  (change)="changePaymentMethod($any($event.target))">
+            @for (pm of paymentMethods(); track pm.id) {
+              <option [value]="pm.id" [selected]="pm.id === draft()?.paymentMethodId">
+                {{ pm.alias ? pm.bankName + ' — ' + pm.alias : pm.bankName }}
+              </option>
+            }
+          </select>
+          @if (changingCard()) { <span class="muted">Revisando duplicados…</span> }
+        </div>
         <p class="page-subtitle">
           {{ draft()?.bank || 'Estado de cuenta' }}
           @if (draft()?.periodStart && draft()?.periodEnd) {
@@ -100,6 +112,9 @@
         </p>
       </header>
 
+      @if (cardError()) {
+        <p class="alert alert-error">{{ cardError() }}</p>
+      }
       @if (draft()?.skipped) {
         <p class="alert alert-warning">
           {{ draft()!.skipped }} movimiento(s) de la respuesta venían incompletos y no se cargaron.

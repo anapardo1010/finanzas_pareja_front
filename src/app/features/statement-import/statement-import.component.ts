@@ -15,6 +15,8 @@ import {
   buildRows,
   duplicateSearchRange,
   parseClaudeResponse,
+  reassignCard,
+  rowsSearchRange,
   shiftDate
 } from './statement-import.logic';
 
@@ -75,6 +77,9 @@ export class StatementImportComponent implements OnInit {
   rowFilter = signal<RowFilter>('PENDING');
   selectedIds = signal<Set<number>>(new Set());
 
+  changingCard = signal(false);
+  cardError = signal<string | null>(null);
+
   // Paso 3: confirmar
   importing = signal(false);
   progress = signal({ done: 0, total: 0 });
@@ -111,6 +116,10 @@ export class StatementImportComponent implements OnInit {
       personal: sum(expenses.filter(r => !r.isShared))
     };
   });
+
+  /** La tarjeta solo se puede cambiar mientras no se haya guardado ningún movimiento. */
+  readonly canChangeCard = computed(() =>
+    !this.importing() && !this.changingCard() && !this.rows().some(r => r.status === 'IMPORTED'));
 
   readonly allVisibleSelected = computed(() => {
     const editable = this.visibleRows().filter(r => r.status !== 'IMPORTED');
@@ -181,8 +190,7 @@ export class StatementImportComponent implements OnInit {
         firstValueFrom(this.transactionService.filterTransactions(tenantId, { ...range, paymentMethodId })),
         firstValueFrom(this.transactionService.getTransactionsByDateRange(tenantId, shiftDate(today, -HISTORY_DAYS), today))
       ]);
-      const owner = this.paymentMethods().find(pm => pm.id === paymentMethodId)?.userId
-        ?? this.authService.currentUser()?.id ?? null;
+      const owner = this.ownerOf(paymentMethodId) ?? this.authService.currentUser()?.id ?? null;
 
       const rows = buildRows(parsed.statement, {
         ownerUserId: owner,
@@ -298,6 +306,38 @@ export class StatementImportComponent implements OnInit {
       : '¿Cerrar esta revisión?';
     if (!confirm(message)) return;
     this.resetToSetup();
+  }
+
+  async changePaymentMethod(select: HTMLSelectElement): Promise<void> {
+    const draft = this.draft();
+    const tenantId = this.authService.getTenantId();
+    const newId = Number(select.value);
+    if (!draft || !tenantId || !newId || newId === draft.paymentMethodId || !this.canChangeCard()) {
+      if (draft) select.value = String(draft.paymentMethodId);
+      return;
+    }
+
+    this.changingCard.set(true);
+    this.cardError.set(null);
+    try {
+      const existing = await firstValueFrom(this.transactionService.filterTransactions(
+        tenantId, { ...rowsSearchRange(this.rows()), paymentMethodId: newId }));
+      const previousOwner = this.ownerOf(draft.paymentMethodId);
+      const newOwner = this.ownerOf(newId);
+      this.rows.set(reassignCard(this.rows(), existing || [], previousOwner, newOwner));
+      this.draft.set({ ...draft, paymentMethodId: newId });
+      this.selectedIds.set(new Set());
+      this.persist();
+    } catch (err) {
+      this.cardError.set(this.errorMessage(err, 'No se pudo cambiar la tarjeta. Intenta de nuevo.'));
+      select.value = String(draft.paymentMethodId);
+    } finally {
+      this.changingCard.set(false);
+    }
+  }
+
+  private ownerOf(paymentMethodId: number): number | null {
+    return this.paymentMethods().find(pm => pm.id === paymentMethodId)?.userId ?? null;
   }
 
   private normalizeRow(row: ReviewRow): ReviewRow {
