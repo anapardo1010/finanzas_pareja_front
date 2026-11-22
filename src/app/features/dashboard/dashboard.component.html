@@ -17,44 +17,6 @@
     </div>
   </header>
 
-  <!-- ============ Próximos pagos (siempre la situación de hoy) ============ -->
-  <section class="panel payments">
-    <div class="panel-head">
-      <h2>Próximos pagos de tarjeta</h2>
-      <a routerLink="/main/reports" class="link">
-        Hacer cuentas de pareja
-        <lucide-icon [img]="icons.ArrowRight" [size]="16"></lucide-icon>
-      </a>
-    </div>
-
-    @if (loadingPayments()) {
-      <div class="skeleton-rows"><span></span><span></span></div>
-    } @else if (upcoming().length === 0) {
-      <p class="empty">No hay pagos de tarjeta en los próximos 40 días.</p>
-    } @else {
-      <ul class="pay-list">
-        @for (p of upcoming(); track p.cardName + p.paymentDate) {
-          <li class="pay-item {{ urgency(p) }}">
-            <div class="pay-date" aria-hidden="true">
-              <span class="pay-day">{{ dayOfMonth(p.paymentDate) }}</span>
-              <span class="pay-month">{{ monthAbbrev(p.paymentDate) }}</span>
-            </div>
-            <div class="pay-info">
-              <span class="pay-card">{{ p.cardName }}</span>
-              <span class="pay-meta">Corte {{ formatShort(p.cutDate) }} · paga el {{ formatShort(p.paymentDate) }}
-                @if (p.installments > 0) { · incluye MSI {{ p.installments | currency:'MXN':'symbol-narrow':'1.0-0' }} }
-              </span>
-            </div>
-            <div class="pay-right">
-              <span class="pay-amount">{{ p.amount | currency:'MXN':'symbol-narrow':'1.0-0' }}</span>
-              <span class="pay-hint">{{ paymentHint(p) }}</span>
-            </div>
-          </li>
-        }
-      </ul>
-    }
-  </section>
-
   <!-- ============ Selector de mes ============ -->
   <div class="month-nav" role="group" aria-label="Mes">
     <button type="button" class="nav-btn" (click)="changeMonth(-1)" aria-label="Mes anterior">
@@ -72,8 +34,15 @@
       <h2>{{ isCurrentMonth() ? 'Cómo van este mes' : 'Cómo les fue' }}</h2>
 
       <div class="spent">
-        <span class="spent-label">Gastado</span>
+        <span class="spent-label">Gastado (salió de sus cuentas)</span>
         <span class="spent-amount">{{ stats().spent | currency:'MXN':'symbol-narrow':'1.0-0' }}</span>
+        @if (spentSources().length) {
+          <div class="sources">
+            @for (src of spentSources(); track src.label) {
+              <span class="source">{{ src.label }} <strong>{{ src.amount | currency:'MXN':'symbol-narrow':'1.0-0' }}</strong></span>
+            }
+          </div>
+        }
         @if (pace().avg > 0) {
           <span class="spent-sub">Su promedio de los 3 meses anteriores: {{ pace().avg | currency:'MXN':'symbol-narrow':'1.0-0' }}</span>
         }
@@ -83,15 +52,11 @@
         <div class="pace-bar" [class]="'pace-bar ' + pace().verdict">
           <span class="pace-fill" [style.width.%]="barPercent(pace().ratio, 1.25)"></span>
           <span class="pace-avg" [style.left.%]="80" title="Su promedio"></span>
-          @if (pace().monthElapsed !== null) {
-            <span class="pace-today" [style.left.%]="pace().monthElapsed! * 80" title="Lo esperado a esta altura del mes"></span>
-          }
         </div>
       }
       @if (pace().avg > 0) {
         <div class="pace-legend">
           <span><i class="mk-avg"></i>Su promedio</span>
-          @if (pace().monthElapsed !== null) { <span><i class="mk-today"></i>Lo esperado a hoy</span> }
         </div>
       }
       <p class="pace-text {{ pace().verdict }}">{{ paceVerdictText() }}</p>
@@ -101,21 +66,22 @@
           <span class="flow-label">Entró</span>
           <span class="flow-value income">{{ stats().income | currency:'MXN':'symbol-narrow':'1.0-0' }}</span>
         </div>
-        <div title="Gastos con débito o efectivo más los pagos de tarjeta">
-          <span class="flow-label">Salió de sus cuentas</span>
-          <span class="flow-value">{{ stats().outflow | currency:'MXN':'symbol-narrow':'1.0-0' }}</span>
-        </div>
         <div>
           <span class="flow-label">{{ stats().net >= 0 ? 'Les sobró' : 'Les faltó' }}</span>
           <span class="flow-value" [class.income]="stats().net >= 0" [class.expense]="stats().net < 0">
             {{ (stats().net < 0 ? -stats().net : stats().net) | currency:'MXN':'symbol-narrow':'1.0-0' }}
           </span>
         </div>
+        <div title="Compras con tarjeta de crédito hechas este mes; cuentan como gasto cuando pagues la tarjeta">
+          <span class="flow-label">Compras con tarjeta</span>
+          <span class="flow-value">{{ stats().cardPurchases | currency:'MXN':'symbol-narrow':'1.0-0' }}</span>
+          <span class="flow-note">se pagan después</span>
+        </div>
       </div>
 
       @if (split().total > 0) {
         <div class="split">
-          <span class="split-title">¿De quién fue el gasto?</span>
+          <span class="split-title">¿De quién fueron las compras del mes?</span>
           <div class="split-bar">
             @for (s of split().segments; track s.label) {
               <span [style.width.%]="(s.amount / split().total) * 100" [style.background]="s.color" [title]="s.label"></span>
@@ -135,7 +101,11 @@
 
     <!-- ============ Categorías ============ -->
     <section class="panel cats">
-      <h2>En qué se va el dinero</h2>
+      <h2>Compras del mes por categoría</h2>
+      <p class="panel-sub">
+        Incluye las compras con tarjeta de crédito para ver en qué gastan. <strong>No es el gasto real del mes:</strong>
+        lo que se compró con tarjeta se paga después.
+      </p>
       @if (categoriesOfMonth().length === 0) {
         <p class="empty">No hay gastos registrados en {{ monthTitle() }}.</p>
       } @else {
@@ -148,7 +118,7 @@
               </div>
               <div class="cat-bar"><span [style.width.%]="c.percent"></span></div>
               <div class="cat-bottom">
-                <span>{{ c.percent | number:'1.0-0' }}% del gasto</span>
+                <span>{{ c.percent | number:'1.0-0' }}% de las compras</span>
                 @if (c.change !== null) {
                   <span class="cat-change" [class.up]="c.change > 5" [class.down]="c.change < -5">
                     {{ c.change > 5 ? '↑' : c.change < -5 ? '↓' : '=' }}
@@ -179,7 +149,7 @@
             <span class="h-month">{{ h.label }}</span>
             <div class="h-bars">
               <span class="h-bar in" [style.width.%]="barPercent(h.income, historyMax())"></span>
-              <span class="h-bar out" [style.width.%]="barPercent(h.outflow, historyMax())"></span>
+              <span class="h-bar out" [style.width.%]="barPercent(h.spent, historyMax())"></span>
             </div>
             <span class="h-net" [class.income]="h.net >= 0" [class.expense]="h.net < 0">
               {{ h.net >= 0 ? '+' : '−' }}{{ (h.net < 0 ? -h.net : h.net) | currency:'MXN':'symbol-narrow':'1.0-0' }}
@@ -187,7 +157,7 @@
           </div>
         }
       </div>
-      <p class="footnote">"Salió" = gastos con débito o efectivo más pagos de tarjeta. Las compras con tarjeta cuentan cuando pagas la tarjeta.</p>
+      <p class="footnote">"Salió" = gastos con efectivo, débito o vales más los pagos de tarjeta. Las compras con tarjeta cuentan cuando pagas la tarjeta.</p>
     </section>
   </div>
 </div>

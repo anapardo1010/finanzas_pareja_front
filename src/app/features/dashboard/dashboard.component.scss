@@ -97,47 +97,6 @@ $amber: #d97706;
 }
 @keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
 
-// ---------- Próximos pagos ----------
-.payments { margin-bottom: 20px; }
-.pay-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
-.pay-item {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 10px 12px;
-  border-radius: 14px;
-  background: #f8fafc;
-  border-left: 4px solid #cbd5e1;
-  &.urgent { border-left-color: $red; background: #fef2f2; }
-  &.soon { border-left-color: $amber; background: #fffbeb; }
-  &.later { border-left-color: $indigo; }
-  &.paid { border-left-color: $green; opacity: 0.7; }
-}
-.pay-date {
-  flex-shrink: 0;
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: white;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
-  .pay-day { font-size: 18px; font-weight: 900; }
-  .pay-month { font-size: 11px; font-weight: 700; color: $muted; text-transform: uppercase; margin-top: 2px; }
-}
-.pay-info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.pay-card { font-weight: 800; }
-.pay-meta { font-size: 13px; color: $muted; }
-.pay-right { text-align: right; display: flex; flex-direction: column; }
-.pay-amount { font-size: 18px; font-weight: 900; font-variant-numeric: tabular-nums; }
-.pay-hint { font-size: 12px; font-weight: 700; color: $muted; white-space: nowrap; }
-.pay-item.urgent .pay-hint { color: $red; }
-.pay-item.soon .pay-hint { color: $amber; }
-.pay-item.paid .pay-hint { color: $green; }
-
 // ---------- Selector de mes ----------
 .month-nav {
   display: flex;
@@ -179,6 +138,20 @@ $amber: #d97706;
 .spent-label { font-size: 13px; font-weight: 700; color: $muted; }
 .spent-amount { font-size: 40px; font-weight: 900; letter-spacing: -0.02em; line-height: 1.1; font-variant-numeric: tabular-nums; }
 .spent-sub { font-size: 13px; color: $muted; }
+.sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0 4px;
+}
+.source {
+  font-size: 12px;
+  color: #475569;
+  background: #f1f5f9;
+  border-radius: 999px;
+  padding: 4px 10px;
+  strong { color: $ink; font-variant-numeric: tabular-nums; }
+}
 
 .pace-bar {
   position: relative;
@@ -193,7 +166,7 @@ $amber: #d97706;
   }
   &.above .pace-fill { background: linear-gradient(90deg, #f59e0b, $red); }
   &.below .pace-fill { background: linear-gradient(90deg, #34d399, $green); }
-  .pace-avg, .pace-today {
+  .pace-avg {
     position: absolute;
     top: -4px;
     bottom: -4px;
@@ -201,7 +174,6 @@ $amber: #d97706;
     background: $ink;
     border-radius: 2px;
   }
-  .pace-today { background: $amber; width: 3px; }
 }
 .pace-legend {
   display: flex;
@@ -212,7 +184,6 @@ $amber: #d97706;
   span { display: inline-flex; align-items: center; gap: 6px; }
   i { display: inline-block; width: 0; height: 12px; }
   .mk-avg { border-left: 2px solid $ink; }
-  .mk-today { border-left: 3px solid $amber; }
 }
 .pace-text {
   font-size: 14px;
@@ -238,6 +209,16 @@ $amber: #d97706;
 }
 .flow-label { font-size: 12px; font-weight: 700; color: $muted; }
 .flow-value { font-size: 17px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.flow-note { font-size: 11px; color: $muted; }
+.panel-sub {
+  font-size: 13px;
+  color: #92400e;
+  background: #fffbeb;
+  border-radius: 10px;
+  padding: 8px 10px;
+  margin: 8px 0 14px;
+  strong { color: #92400e; }
+}
 .income { color: $green; }
 .expense { color: $red; }
 
@@ -261,7 +242,7 @@ $amber: #d97706;
 }
 
 // ---------- Categorías ----------
-.cats h2 { margin-bottom: 12px; }
+.cats h2 { margin-bottom: 0; }
 .cat-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
 .cat-top { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; }
 .cat-name { font-weight: 700; }
@@ -321,8 +302,4 @@ $amber: #d97706;
   .spent-amount { font-size: 32px; }
   .flow { grid-template-columns: 1fr 1fr; > div:last-child { grid-column: 1 / -1; } }
   .h-row { grid-template-columns: 56px minmax(0, 1fr) 92px; }
-  .pay-meta { display: none; }
-  .pay-item { gap: 10px; }
-  .pay-right { max-width: 48%; }
-  .pay-hint { white-space: normal; }
 }

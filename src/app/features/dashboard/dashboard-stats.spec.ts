@@ -32,12 +32,15 @@ describe('dashboard stats', () => {
 
   it('computes month stats without shifting the 1st into the previous month', () => {
     const nov = monthStats(TXS, '2026-11', CREDIT);
-    expect(nov.spent).toBe(450);          // 100 + 300 + 50
-    expect(nov.cardPurchases).toBe(350);   // 300 + 50
-    expect(nov.outflow).toBe(300);         // 100 débito + 200 pago de tarjeta
+    // Gasto real = lo que salió de las cuentas: 100 débito (día 1) + 200 pago de tarjeta
+    expect(nov.spent).toBe(300);
+    expect(nov.directSpent).toBe(100);
+    expect(nov.cardPayments).toBe(200);
+    expect(nov.purchases).toBe(450);       // 100 + 300 + 50, cualquier forma de pago
+    expect(nov.cardPurchases).toBe(350);   // 300 + 50, se pagarán después
     expect(nov.income).toBe(1000);
     expect(nov.net).toBe(700);
-    expect(monthStats(TXS, '2026-10', CREDIT).spent).toBe(475);
+    expect(monthStats(TXS, '2026-10', CREDIT).spent).toBe(75); // la compra con tarjeta de octubre no cuenta hasta pagarse
   });
 
   it('category percentages add up to 100 and compare with the previous month', () => {
@@ -52,13 +55,16 @@ describe('dashboard stats', () => {
     expect(sup.change).toBe(100); // 75 → 150
   });
 
-  it('judges the pace against the average and how much of the month has passed', () => {
-    const today = new Date(2026, 10, 15); // 15 nov: la mitad del mes
-    expect(pace(500, [1000, 1000, 1000], '2026-11', today).verdict).toBe('normal');
-    expect(pace(900, [1000, 1000, 1000], '2026-11', today).verdict).toBe('above');
-    expect(pace(100, [1000, 1000, 1000], '2026-11', today).verdict).toBe('below');
-    expect(pace(1000, [1000, 0, 1000], '2026-10', today).monthElapsed).toBeNull();
-    expect(pace(1000, [1000, 0, 1000], '2026-10', today).avg).toBe(1000); // ignora meses vacíos
+  it('judges the month against the usual spending without false alarms mid-month', () => {
+    const today = new Date(2026, 10, 15);
+    // Mes en curso: aunque ya se pagaron tarjetas grandes, solo avisa si se superó lo habitual
+    expect(pace(900, [1000, 1000, 1000], '2026-11', today).verdict).toBe('normal');
+    expect(pace(100, [1000, 1000, 1000], '2026-11', today).verdict).toBe('normal');
+    expect(pace(1200, [1000, 1000, 1000], '2026-11', today).verdict).toBe('above');
+    expect(pace(900, [1000, 1000, 1000], '2026-11', today).inProgress).toBeTrue();
+    // Mes terminado: sí dice si fue menor
+    expect(pace(800, [1000, 0, 1000], '2026-10', today).verdict).toBe('below');
+    expect(pace(800, [1000, 0, 1000], '2026-10', today).avg).toBe(1000); // ignora meses vacíos
     expect(pace(100, [0, 0, 0], '2026-11', today).verdict).toBe('none');
   });
 
